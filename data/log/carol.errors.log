@@ -1,0 +1,146 @@
+
+
+***********************************
+
+2011-07-14 20:03:56.213651 32 carol/doc/usermanual/example/FooJNDIServer.java 32
+	line 20:1 mismatched input u'}' expecting ';'
+	MismatchedTokenException(45!=27)
+
+
+***********************************
+
+2011-07-14 20:03:56.320816 32 carol/doc/usermanual/example/Foo.java 32
+	line 6:17 mismatched input u'implement' expecting '{'
+	MismatchedTokenException(4!=44)
+2011-07-14 20:03:56.320918 32 carol/doc/usermanual/example/Foo.java 32
+	line 9:11 no viable alternative at input u'Integer'
+	NoViableAltException(4!=[''])
+2011-07-14 20:03:56.320983 32 carol/doc/usermanual/example/Foo.java 32
+	line 11:4 missing EOF at u'}'
+	MissingTokenException(inserted <antlr3.tokens.CommonToken object at 0x1adf190> at u'}')
+
+
+***********************************
+
+2011-07-14 20:03:56.390353 32 carol/doc/usermanual/example/FooExplicit.java 32
+	line 6:17 mismatched input u'implement' expecting '{'
+	MismatchedTokenException(4!=44)
+2011-07-14 20:03:56.390456 32 carol/doc/usermanual/example/FooExplicit.java 32
+	line 9:11 no viable alternative at input u'Foo'
+	NoViableAltException(4!=[''])
+2011-07-14 20:03:56.390521 32 carol/doc/usermanual/example/FooExplicit.java 32
+	line 11:4 missing EOF at u'}'
+	MissingTokenException(inserted <antlr3.tokens.CommonToken object at 0x1ae2950> at u'}')
+
+
+***********************************
+
+2011-07-14 20:04:03.739461 36 carol/doc/usermanual/example/FooJNDIServer.java 35
+	line 20:1 mismatched input u'}' expecting ';'
+	MismatchedTokenException(45!=27)
+
+
+***********************************
+
+2011-07-14 20:04:03.812767 36 carol/doc/usermanual/example/FooJNDIServer.java 36
+	line 20:1 mismatched input u'}' expecting ';'
+	MismatchedTokenException(45!=27)
+
+
+***********************************
+
+2011-07-14 20:04:03.968081 36 carol/doc/usermanual/example/Foo.java 35
+	line 6:17 mismatched input u'implement' expecting '{'
+	MismatchedTokenException(4!=44)
+2011-07-14 20:04:03.968182 36 carol/doc/usermanual/example/Foo.java 35
+	line 9:11 no viable alternative at input u'Integer'
+	NoViableAltException(4!=[''])
+2011-07-14 20:04:03.968247 36 carol/doc/usermanual/example/Foo.java 35
+	line 11:4 missing EOF at u'}'
+	MissingTokenException(inserted <antlr3.tokens.CommonToken object at 0x1a9d810> at u'}')
+
+
+***********************************
+
+2011-07-14 20:04:04.025897 36 carol/doc/usermanual/example/Foo.java 36
+	line 6:17 mismatched input u'implement' expecting '{'
+	MismatchedTokenException(4!=44)
+2011-07-14 20:04:04.026004 36 carol/doc/usermanual/example/Foo.java 36
+	line 9:11 no viable alternative at input u'Integer'
+	NoViableAltException(4!=[''])
+2011-07-14 20:04:04.026068 36 carol/doc/usermanual/example/Foo.java 36
+	line 11:4 missing EOF at u'}'
+	MissingTokenException(inserted <antlr3.tokens.CommonToken object at 0x1a971d0> at u'}')
+
+
+***********************************
+
+2011-07-14 20:04:04.085845 36 carol/doc/usermanual/example/FooExplicit.java 35
+	line 6:17 mismatched input u'implement' expecting '{'
+	MismatchedTokenException(4!=44)
+2011-07-14 20:04:04.085947 36 carol/doc/usermanual/example/FooExplicit.java 35
+	line 9:11 no viable alternative at input u'Foo'
+	NoViableAltException(4!=[''])
+2011-07-14 20:04:04.086013 36 carol/doc/usermanual/example/FooExplicit.java 35
+	line 11:4 missing EOF at u'}'
+	MissingTokenException(inserted <antlr3.tokens.CommonToken object at 0x1a95c90> at u'}')
+
+
+***********************************
+
+2011-07-14 20:04:04.155517 36 carol/doc/usermanual/example/FooExplicit.java 36
+	line 6:17 mismatched input u'implement' expecting '{'
+	MismatchedTokenException(4!=44)
+2011-07-14 20:04:04.155620 36 carol/doc/usermanual/example/FooExplicit.java 36
+	line 9:11 no viable alternative at input u'Foo'
+	NoViableAltException(4!=[''])
+2011-07-14 20:04:04.155684 36 carol/doc/usermanual/example/FooExplicit.java 36
+	line 11:4 missing EOF at u'}'
+	MissingTokenException(inserted <antlr3.tokens.CommonToken object at 0x1a9f150> at u'}')
+
+
+***********************************
+
+2011-07-14 20:05:15.478840 63 carol/doc/usermanual/example/FooJNDIServer.java 62
+	line 20:1 mismatched input u'}' expecting ';'
+	MismatchedTokenException(45!=27)
+
+
+***********************************
+
+2011-07-14 20:05:15.568145 63 carol/doc/usermanual/example/FooJNDIServer.java 63
+	line 24:1 mismatched input u'}' expecting ';'
+	MismatchedTokenException(45!=27)
+
+
+***********************************
+
+2011-07-14 20:39:10.131522 1355 carol/doc/usermanual/example/FooJNDIServer.java 1355
+	line 24:1 mismatched input u'}' expecting ';'
+	MismatchedTokenException(45!=27)
+
+
+***********************************
+
+2011-07-14 20:39:10.246767 1355 carol/doc/usermanual/example/Foo.java 1355
+	line 6:17 mismatched input u'implement' expecting '{'
+	MismatchedTokenException(4!=44)
+2011-07-14 20:39:10.246869 1355 carol/doc/usermanual/example/Foo.java 1355
+	line 9:11 no viable alternative at input u'Integer'
+	NoViableAltException(4!=[''])
+2011-07-14 20:39:10.246935 1355 carol/doc/usermanual/example/Foo.java 1355
+	line 11:4 missing EOF at u'}'
+	MissingTokenException(inserted <antlr3.tokens.CommonToken object at 0x394b890> at u'}')
+
+
+***********************************
+
+2011-07-14 20:39:10.309995 1355 carol/doc/usermanual/example/FooExplicit.java 1355
+	line 6:17 mismatched input u'implement' expecting '{'
+	MismatchedTokenException(4!=44)
+2011-07-14 20:39:10.310100 1355 carol/doc/usermanual/example/FooExplicit.java 1355
+	line 9:11 no viable alternative at input u'Foo'
+	NoViableAltException(4!=[''])
+2011-07-14 20:39:10.310164 1355 carol/doc/usermanual/example/FooExplicit.java 1355
+	line 11:4 missing EOF at u'}'
+	MissingTokenException(inserted <antlr3.tokens.CommonToken object at 0x21ffb10> at u'}')

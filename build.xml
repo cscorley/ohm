@@ -1,0 +1,151 @@
+<!--
+[The "New BSD" license]
+Copyright (c) 2011 The Board of Trustees of The University of Alabama
+All rights reserved.
+
+See LICENSE for details.
+ -->
+<project name="ohm" default="all" basedir=".">
+   <property file="ohm.properties" />
+
+   <property name="src"       location="src" />
+   <property name="lib"       location="lib" />
+   <property name="grammar"   location="grammar" />
+
+   <!--  - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -->
+   <!--  Paths             -->
+   <!--  - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -->
+   <path id="compile.classpath">
+      <pathelement location="${compile.antlr3.classpath}" />
+   </path>
+
+   <!--  - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -->
+   <!--  Public Targets                 -->
+   <!--  - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -->
+   <target
+      name        = "all"
+      depends     = "build"
+      />
+
+   <target
+      name        = "build"
+      depends     = "-build"
+      description = "Build ${project.name}"
+      />
+
+   <target
+      name        = "clean"
+      depends     = "-clean"
+      description = "Delete generated files"
+      />
+
+   <!--  - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -->
+   <!--  Private Meta-targets           -->
+   <!--  - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -->
+   <target
+      name        = "-build"
+      depends     = "-compile"
+      />
+
+   <target
+      name        = "-compile"
+      depends     = "-generate_parsers,-compile_python"
+      />
+
+   <target
+      name        = "-clean"
+      depends     = "-clean_generated,-clean_build"
+      />
+
+   <!--  - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -->
+   <!--  Private Targets                -->
+   <!--  - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -->
+   <target
+      name        = "-generate_parsers"
+      depends     = ""
+      description = "Translate ANTLR v3 grammars to Python source code"
+      >
+      <antlr3
+         grammar.name      = "${grammar.java.name}"
+         grammar.location  = "${dir.src.antlr3}"
+         parser.location   = "${dir.src.python}/${project.package}"
+         />
+   </target>
+
+   <!--  - - - - - - - - - - - - - - -  -->
+   <target
+      name = "-compile_python"
+      >
+      <py-compile
+         dir         = "${dir.src.python}/${project.package}"
+         optimize    = "${compile.python.optimize}"
+         quiet       = "${compile.python.quiet}"
+         />
+   </target>
+
+   <!--  - - - - - - - - - - - - - - -  -->
+   <target
+      name        = "-clean_generated"
+      description = "Delete ANTLR v3 generated files"
+      >
+      <delete
+         file  = "${dir.src.python}/${project.package}/${grammar.java.name}.tokens"
+         />
+      <delete
+         file  = "${dir.src.python}/${project.package}/${grammar.java.name}Lexer.py"
+         />
+      <delete
+         file  = "${dir.src.python}/${project.package}/${grammar.java.name}Parser.py"
+         />
+   </target>
+
+   <!--  - - - - - - - - - - - - - - -  -->
+   <target
+      name        = "-clean_build"
+      description = "Delete .pyc files"
+      >
+      <delete>
+         <fileset dir="${dir.src.python}">
+            <include name="**/*.pyc" />
+         </fileset>
+      </delete>
+   </target>
+
+
+   <!--  - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -->
+   <!--  Taskdefs          -->
+   <!--  - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -->
+   <taskdef
+      resource    = "${pyAnt.properties}"
+      classpath   = "${build.pyAnt.classpath}"
+      />
+
+   <!--  - - - - - - - - - - - - - - -  -->
+   <taskdef
+      name        = "ANTLR3"
+      classname   = "${build.antlr3.classname}"
+      classpath   = "${build.antlr3.classpath}"
+      />
+
+   <!--  - - - - - - - - - - - - - - -  -->
+   <macrodef name="antlr3">
+      <attribute name="grammar.name" />
+      <attribute name="grammar.location" />
+      <attribute name="parser.location" />
+      <sequential>
+         <echo message="antlr3 @{grammar.name}" />
+         <ANTLR3
+            target            = "@{grammar.location}/@{grammar.name}.g"
+            outputdirectory   = "@{parser.location}"
+            multithreaded     = "${compile.antlr3.multithreaded}"
+            report            = "${compile.antlr3.report}"
+            debug             = "${compile.antlr3.debug}"
+            >
+            <classpath>
+               <path refid="compile.classpath" />
+            </classpath>
+            <jvmarg value="${compile.antlr3.jvmarg}" />
+         </ANTLR3>
+      </sequential>
+   </macrodef>
+</project> 
