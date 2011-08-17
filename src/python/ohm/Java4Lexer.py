@@ -7,7 +7,7 @@
 # See LICENSE for details.
 
 __author__  = 'Christopher S. Corley <cscorley@crimson.ua.edu>'
-__version__ = '$Id: Java4Lexer.py 17613 2011-08-06 08:30:08Z cscorley $'
+__version__ = '$Id$'
 
 from JavaLexer import JavaLexer
 

@@ -9,7 +9,7 @@
 from __future__ import with_statement, print_function
 
 __author__  = 'Christopher S. Corley <cscorley@crimson.ua.edu>'
-__version__ = '$Id: viewdb.py 17701 2011-08-15 12:02:58Z cscorley $'
+__version__ = '$Id$'
 
 from snippets import _uniq
 import sys

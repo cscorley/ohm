@@ -10,7 +10,7 @@ from __future__ import with_statement
 from __future__ import print_function
 
 __author__  = 'Christopher S. Corley <cscorley@crimson.ua.edu>'
-__version__ = '$Id: Diff.py 17687 2011-08-13 09:57:15Z cscorley $'
+__version__ = '$Id$'
 
 import re
 import os

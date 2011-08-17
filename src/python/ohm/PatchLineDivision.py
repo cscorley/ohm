@@ -7,7 +7,7 @@
 # See LICENSE for details.
 
 __author__  = 'Christopher S. Corley <cscorley@crimson.ua.edu>'
-__version__ = '$Id: PatchLineDivision.py 17678 2011-08-12 07:25:13Z cscorley $'
+__version__ = '$Id$'
 
 import re
 from snippets import _uniq

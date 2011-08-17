@@ -9,7 +9,7 @@
 from __future__ import print_function
 
 __author__  = 'Christopher S. Corley <cscorley@crimson.ua.edu>'
-__version__ = '$Id: Repository.py 17720 2011-08-16 02:24:23Z cscorley $'
+__version__ = '$Id$'
 
 from snippets import _make_dir
 import pysvn

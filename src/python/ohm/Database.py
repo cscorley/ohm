@@ -7,7 +7,7 @@
 # See LICENSE for details.
 
 __author__  = 'Christopher S. Corley <cscorley@crimson.ua.edu>'
-__version__ = '$Id: Database.py 17720 2011-08-16 02:24:23Z cscorley $'
+__version__ = '$Id$'
 
 import psycopg2
 from TableConfigParser import TableConfigParser

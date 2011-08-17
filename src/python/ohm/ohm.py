@@ -9,7 +9,7 @@
 from __future__ import with_statement, print_function
 
 __author__  = 'Christopher S. Corley <cscorley@crimson.ua.edu>'
-__version__ = '$Id: ohm.py 17678 2011-08-12 07:25:13Z cscorley $'
+__version__ = '$Id$'
 
 import os
 import sys

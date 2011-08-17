@@ -7,7 +7,7 @@
 # See LICENSE for details.
 
 __author__  = 'Christopher S. Corley <cscorley@crimson.ua.edu>'
-__version__ = '$Id: Method.py 17700 2011-08-15 10:48:24Z cscorley $'
+__version__ = '$Id$'
 
 
 class Method:

@@ -9,7 +9,7 @@
 from __future__ import print_function
 
 __author__  = 'Nicholas A. Kraft <nkraft@cs.ua.edu>'
-__version__ = '$Id: TableConfigParser.py 17613 2011-08-06 08:30:08Z cscorley $'
+__version__ = '$Id$'
 
 from collections import defaultdict
 import re

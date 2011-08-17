@@ -7,7 +7,7 @@
 # See LICENSE for details.
 
 __author__  = 'Christopher S. Corley <cscorley@crimson.ua.edu>'
-__version__ = '$Id: dropdb.py 17538 2011-07-30 04:13:24Z nkraft $'
+__version__ = '$Id$'
 
 #(11860, 13022, 40, 1)
 #(14334, 16050, 40, 1)
