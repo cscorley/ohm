@@ -17,8 +17,6 @@ class File:
         for c in classes:
             c.setFile(self)
             self.classes.append(c)
-        self.startln = startln
-        self.endln = endln
         self.length = length
 
         self.added_lines = 0 

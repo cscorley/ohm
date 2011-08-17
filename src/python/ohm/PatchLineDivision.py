@@ -27,22 +27,13 @@ class PatchLineDivision:
         self.sigChangePairs = []
         self.blocks = []
 
-        for block in self.added_set:
-            self.blocks.append(block)
-
-        for block in self.removed_set:
-            lines = block.getLines()
-            block.setChanges(0, lines[1] - lines[0] + 1)
-            self.blocks.append(block)
-
-
     def digest(self, division):
         added_lines, removed_lines, pairs = self._getMappings(division)
 
         # and then add those blocks to our changed blocks list.
         for block in self.source_set:
-            if block in self.removed_set:
-                continue
+#            if block in self.removed_set:
+#                continue
             block_lines = block.getLineXRange()
 
             removed_count = 0
@@ -59,8 +50,8 @@ class PatchLineDivision:
                             None, removed_count)
 
         for block in self.patch_set:
-            if block in self.added_set:
-                continue
+#            if block in self.added_set:
+#                continue
             block_lines = block.getLineXRange()
 
             added_count = 0
@@ -75,6 +66,16 @@ class PatchLineDivision:
                 else:
                     self.blocks[self.blocks.index(block)].addChanges(
                             added_count, None)
+        
+#       for block in self.added_set:
+#            self.blocks.append(block)
+#
+#        for block in self.removed_set:
+#            lines = block.getLines()
+#            block.setChanges(0, lines[1] - lines[0] + 1)
+#            self.blocks.append(block)
+
+
 
     def _generateChangePairs(self, pairs):
         for block in self.removed_set:
