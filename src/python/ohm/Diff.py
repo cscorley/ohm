@@ -1,4 +1,4 @@
-#!/usr/bin/env python2.6
+#!/USR/BIn/env python2.6
 #
 # [The "New BSD" license]
 # Copyright (c) 2010,2011 The Board of Trustees of The University of Alabama
@@ -34,7 +34,7 @@ class Diff:
         self.cvs_file_path = None
         self.revision = None
         self.project_repo = project_repo
-    
+
         self.classes = []
         self.methods = []
         self.classSCP = []
@@ -230,12 +230,11 @@ class Diff:
         else:
             # what will this do for files which were renamed?
             self.file = File(self.old_source, old_classes, old_filelen)
-        
+
         self.file.setChanges(fileAdditions, fileDeletions)
 
-        
         self.classes, self.classSCP = self.digestBlock(old_classes, new_classes)
-        
+
         old_methods = []
         new_methods = []
         # need something much better than this.
@@ -252,7 +251,6 @@ class Diff:
 
         # yes, this is copying over sigChangePairs. need to better this as well
         self.methods, self.methodSCP = self.digestBlock(old_methods, new_methods)
-
 
         """
         while len(old_classes) > 0:
@@ -289,7 +287,6 @@ class Diff:
 
         """
 
-
     def digestBlock(self, old_blocks, new_blocks):
         blocks = []
         sigChangePairs = []
@@ -306,7 +303,7 @@ class Diff:
     def _getFileChanges(self):
         deletions = 0
         additions = 0
-        for division in self.diff_divisions:    
+        for division in self.diff_divisions:
             for line in division:
                 if ((line.startswith('-')) or (line.startswith('!'))):
                     deletions += 1

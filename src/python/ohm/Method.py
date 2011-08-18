@@ -84,10 +84,10 @@ class Method:
         return [self.startln, self.bodystart]
 
     def getLineRange(self):
-        return range(self.startln, self.endln+1)
+        return range(self.startln, self.endln + 1)
 
     def getLineXRange(self):
-        return xrange(self.startln, self.endln+1)
+        return xrange(self.startln, self.endln + 1)
 
     def getName(self):
         return self.name

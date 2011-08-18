@@ -19,7 +19,7 @@ class File:
             self.classes.append(c)
         self.length = length
 
-        self.added_lines = 0 
+        self.added_lines = 0
         self.removed_lines = 0
 
     def __repr__(self):
@@ -42,7 +42,7 @@ class File:
 
     def __len__(self):
         return self.length
-    
+
     def __contains__(self, item):
         return item in self.methods
 

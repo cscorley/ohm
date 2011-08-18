@@ -49,7 +49,7 @@ def selinupChanges(db, id, added, deleted):
 
     if len(result) == 0:
         propstr = ','.join(['additions', 'deletions'] + id.keys())
-        valstr = '%s,'*(len(id)+2)
+        valstr = '%s,' * (len(id) + 2)
         valstr = valstr.rstrip(',')
 
         db.execute('INSERT INTO change ({props}) VALUES ({vals});\
@@ -58,7 +58,7 @@ def selinupChanges(db, id, added, deleted):
     elif added != result[0][0] or deleted != result[0][1]:
         db.execute('UPDATE change SET additions=%s, deletions=%s WHERE ' +
                     wstr, (added, deleted) + tuple(id.values()))
-    
+
     db.commit()
 
 
@@ -68,7 +68,6 @@ def insertChanges(db, fileDict, log, id):
     if cursor.closed:
         # abort
         return False
-
 
     for file in fileDict:
         # get the file ID
@@ -114,10 +113,10 @@ def insertChanges(db, fileDict, log, id):
                             }
                     id['method'] = getUID(db, 'method', 'hash', propDict)
                     added, deleted = method.getChanges()
-    
+
                     selinupChanges(db, id, added, deleted)
                     affected_methods.remove(method)
-        
+
         # get the remaining methods, these should be all added/removed methods
         for method in affected_methods:
             aclass = method.getClass()
@@ -138,7 +137,7 @@ def insertChanges(db, fileDict, log, id):
                     }
             id['method'] = getUID(db, 'method', 'hash', propDict)
             added, deleted = method.getChanges()
-    
+
             selinupChanges(db, id, added, deleted)
     db.commit()
 
@@ -159,7 +158,7 @@ def getUID(db, table, id_key, propDict):
 
     if result is None:
         propstr = ','.join(propDict.keys())
-        valstr = '%s,'*len(propDict)
+        valstr = '%s,' * len(propDict)
         valstr = valstr.rstrip(',')
 
         # need to insert value!
@@ -177,7 +176,7 @@ def begin(name, url, drop_tables, verbose, starting_revision, ending_revision):
     db = Database()
     if verbose:
         db.setverbose()
-        
+
     if drop_tables:
         db._create_or_replace_tables()
 
@@ -192,7 +191,7 @@ def begin(name, url, drop_tables, verbose, starting_revision, ending_revision):
 
     propDict = {
             'name': name,
-            'url': url 
+            'url': url
             }
     # get the project id
     id['project'] = getUID(db, 'project', 'url', propDict)
@@ -220,7 +219,7 @@ def begin(name, url, drop_tables, verbose, starting_revision, ending_revision):
         # get the revision id
         propDict = {
                 'project': id['project'],
-                'number': log.revision.number, 
+                'number': log.revision.number,
                 'message': log.message,
                 'owner': id['owner']
                 }

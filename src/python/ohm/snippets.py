@@ -65,6 +65,7 @@ def _make_dir(dir):
             print('Failed to create "%s" directory!' % dir)
             sys.exit(e.errno)
 
+
 # file line length
 def _file_len(fname):
     with open(fname) as f:
