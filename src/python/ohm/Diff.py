@@ -252,16 +252,13 @@ class Diff:
                     self.methodSCP += self.digestSCP(old_methods, new_methods)
 
         # as a last resort, do not care which class the methods originate from
+        old_methods = []
+        new_methods = []
+
         for c in old_classes:
-            tmp_methods = list(c.getMethods())
-            for m in tmp_methods:
-                m.setClass(c)
-            old_methods += tmp_methods
+            old_methods += list(c.getMethods())
         for c in new_classes:
-            tmp_methods = list(c.getMethods())
-            for m in tmp_methods:
-                m.setClass(c)
-            new_methods += tmp_methods
+            new_methods += list(c.getMethods())
         self.methods = self.digestBlock(old_methods, new_methods)
         self.methodSCP += self.digestSCP(old_methods, new_methods)
 
