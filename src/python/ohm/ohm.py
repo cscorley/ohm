@@ -33,8 +33,11 @@ steel_svn_url = 'https://steel.cs.ua.edu/svn/projects/clones/src/ohm/trunk'
 
 
 def selinupChanges(db, id, added, deleted):
+    # these two strings will be used to build the WHERE section of our queries
     iscompare = '{key} is %s'
     eqcompare = '{key}=%s'
+
+    # build the list of WHERE comparison statements
     wherelist = []
     for key in id:
         # postgresql will expect None/NULL comparisons in "x is NULL" format
@@ -43,10 +46,12 @@ def selinupChanges(db, id, added, deleted):
         else:
             wherelist.append(eqcompare.format(key=key))
 
+    # join all of the WHERE comparisons and query for existing entries
     wstr = ' AND '.join(wherelist)
     result = db.execute('SELECT additions, deletions FROM change WHERE ' +
                         wstr, tuple(id.values()))
 
+    # INSERT an entry or UPDATE the existing entry
     if len(result) == 0:
         propstr = ','.join(['additions', 'deletions'] + id.keys())
         valstr = '%s,' * (len(id) + 2)
@@ -76,6 +81,8 @@ def insertChanges(db, fileDict, log, id):
                 'path': file.getName(),
                 'hash': hash(file)
                 }
+
+        # set the class/method entries to None to enter changes to files only
         id['file'] = getUID(db, 'file', 'hash', propDict)
         id['class'] = None
         id['method'] = None
@@ -180,6 +187,8 @@ def begin(name, url, drop_tables, verbose, starting_revision, ending_revision):
     if drop_tables:
         db._create_or_replace_tables()
 
+    # this dictionary is to hold the current collection of id's needed by
+    # various select queries. It should never be completely reassigned
     id = {
             'project': None,
             'revision': None,
@@ -189,6 +198,9 @@ def begin(name, url, drop_tables, verbose, starting_revision, ending_revision):
             'method': None
             }
 
+    # this dictionary is used throughout as a unique properties dictionary
+    # used to get the UID of the entries in the table its used for. It should
+    # always be reassigned when used.
     propDict = {
             'name': name,
             'url': url
@@ -206,8 +218,8 @@ def begin(name, url, drop_tables, verbose, starting_revision, ending_revision):
 
         print('Revision %d' % log.revision.number)
 
-        patch = Patch(diff, project_repo)
-        fileDict = patch.getFileDict()
+        # there are two id's which we can extract from the log for this
+        # revision
 
         # get the owner/commiter id
         propDict = {
@@ -225,7 +237,12 @@ def begin(name, url, drop_tables, verbose, starting_revision, ending_revision):
                 }
         id['revision'] = getUID(db, 'revision', 'number', propDict)
 
-        #insert into tables
+        # parse for the changes
+        patch = Patch(diff, project_repo)
+        patch.digest()
+        fileDict = patch.getDigestion()
+
+        # insert changes into tables
         insertChanges(db, fileDict, log, id)
 
 

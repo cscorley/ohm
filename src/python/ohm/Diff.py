@@ -29,8 +29,7 @@ import pysvn
 
 
 class Diff:
-    def __init__(self, source_file, project_repo):
-        self.source_file = source_file
+    def __init__(self, project_repo):
         self.cvs_file_path = None
         self.revision = None
         self.project_repo = project_repo
@@ -47,22 +46,17 @@ class Diff:
         self.old_source = None
         self.new_source = None
 
-        self.digest()
-
     def getClasses(self):
-        return self.classes
+        return self.classes, self.classSCP
 
     def getMethods(self):
-        return self.methods
+        return self.methods, self.methodSCP
 
     def getFile(self):
         return self.file
 
-    def getSignatureChangePairs(self):
-        return self.methodSCP
-
     def getDigestion(self):
-        return self.file, self.classes, self.methods, self.methodSCP
+        return self.file, self.classes, self.classSCP, self.methods, self.methodSCP
 
     def _printToLog(self, source, revision_number, log):
         if len(log) > 0:
@@ -115,7 +109,7 @@ class Diff:
         else:
             return results + (_file_len(filePath), )
 
-    def digest(self):
+    def digest(self, diff_file):
         # self.diff_divisions is a temporary list containing the diff text divided
         # based on line numbers in source.
         temp = []
@@ -127,13 +121,13 @@ class Diff:
         old_revision_number = 0
         new_revision_number = 0
 
-        while start < len(self.source_file) and not chunk_startu.match(self.source_file[start]):
-            m = old_file_svn.match(self.source_file[start])
+        while start < len(diff_file) and not chunk_startu.match(diff_file[start]):
+            m = old_file_svn.match(diff_file[start])
             if m:
                 self.old_source = m.group(1)
                 old_revision_number = int(m.group(2))
 
-                nm = new_file_svn.match(self.source_file[start + 1])
+                nm = new_file_svn.match(diff_file[start + 1])
                 if nm:
                     self.new_source = nm.group(1)
                     new_revision_number = int(nm.group(2))
@@ -158,8 +152,8 @@ class Diff:
             return
 
         # Divide the diff into separate chunks
-        for i in range(start + 1, len(self.source_file)):
-            tmp = self.source_file[i]
+        for i in range(start + 1, len(diff_file)):
+            tmp = diff_file[i]
             chunk_matcher = chunk_startu.match(tmp)
             if chunk_matcher:
                 if len(self.diff_divisions) == 0:
@@ -170,14 +164,14 @@ class Diff:
                     elif int(chunk_matcher.group(3)) == 0 and int(chunk_matcher.group(4)) == 0:
                         self.isRemovedFile = True
                 for j in range(start, i - 1):
-                    temp.append(self.source_file[j])
+                    temp.append(diff_file[j])
                 if len(temp) > 0:
                     self.diff_divisions.append(temp)
                 temp = []
                 start = i
 
-        for j in range(start, len(self.source_file)):
-            temp.append(self.source_file[j])
+        for j in range(start, len(diff_file)):
+            temp.append(diff_file[j])
         self.diff_divisions.append(temp)
 
         old_classes = []
@@ -193,7 +187,7 @@ class Diff:
                 return
             old_classes = res[0]
             log = res[1]
-            old_filelen = res[2]
+            old_file_len = res[2]
 
         self._printToLog(self.old_source, old_revision_number, log)
 
@@ -204,7 +198,7 @@ class Diff:
                 return
             new_classes = res[0]
             log = res[1]
-            new_filelen = res[2]
+            new_file_len = res[2]
 
         self._printToLog(self.new_source, new_revision_number, log)
 
@@ -217,27 +211,47 @@ class Diff:
 
         fileAdditions, fileDeletions = self._getFileChanges()
         if self.isNewFile:
-            self.file = File(self.new_source, new_classes, new_filelen)
-            if fileDeletions > 0:
-                print('whut')
-                print(self.new_source)
-                for each in self.diff_divisions:
-                    print('********** division')
-                    for l in each:
-                        print(l)
-                return
-
+            self.file = File(self.new_source, new_classes, new_file_len)
         else:
-            # what will this do for files which were renamed?
-            self.file = File(self.old_source, old_classes, old_filelen)
+            self.file = File(self.old_source, old_classes, old_file_len)
 
         self.file.setChanges(fileAdditions, fileDeletions)
 
-        self.classes, self.classSCP = self.digestBlock(old_classes, new_classes)
+        self.classes = self.digestBlock(old_classes, new_classes)
+        self.classSCP += self.digestSCP(old_classes, new_classes)
 
         old_methods = []
         new_methods = []
-        # need something much better than this.
+        
+        # first, for classes which have the same identifier, only compare
+        # those methods from each
+        while len(old_classes) > 0:
+            old_class = old_classes.pop()
+            if old_class in new_classes:
+                new_class = new_classes.pop(new_classes.index(old_class))
+                old_methods = old_class.getMethods()
+                new_methods = new_class.getMethods()
+
+                self.methods += self.digestBlock(old_methods, new_methods)
+                self.methodSCP += self.digestSCP(old_methods, new_methods)
+
+        # not sure how many class SCP it actually detects yet, considering
+        # class renames also come with the problem of the file itself being
+        # renamed as well (which may go untracked in subverison)
+
+        # second, try to pair up classes by the detected renamings
+        if len(old_classes) > 0 and len(new_classes) > 0:
+            for pair in self.classSCP:
+                if pair[0] in old_classes and pair[1] in new_classes:
+                    old_class = old_classes.pop(old_classes.index(pair[0]))
+                    new_class = new_classes.pop(new_classes.index(pair[1]))
+                    old_methods = old_class.getMethods()
+                    new_methods = new_class.getMethods()
+
+                    self.methods += self.digestBlock(old_methods, new_methods)
+                    self.methodSCP += self.digestSCP(old_methods, new_methods)
+
+        # as a last resort, do not care which class the methods originate from
         for c in old_classes:
             tmp_methods = list(c.getMethods())
             for m in tmp_methods:
@@ -248,32 +262,10 @@ class Diff:
             for m in tmp_methods:
                 m.setClass(c)
             new_methods += tmp_methods
-
-        # yes, this is copying over sigChangePairs. need to better this as well
-        self.methods, self.methodSCP = self.digestBlock(old_methods, new_methods)
+        self.methods = self.digestBlock(old_methods, new_methods)
+        self.methodSCP += self.digestSCP(old_methods, new_methods)
 
         """
-        while len(old_classes) > 0:
-            old_class = old_classes.pop()
-            if old_class in new_classes:
-                new_class = new_classes.pop(new_classes.index(old_class))
-                old_methods = old_class.getMethods()
-                new_methods = new_class.getMethods()
-
-                self.methods, self.methodSCP += self.digestBlock(old_methods,
-                        new_methods)
-        # this handles possible renaming (1:1), but will not handle
-        # merging/splitting at the moment
-        if len(old_classes) > 0 and len(new_classes) > 0:
-            for pair in self.classSCP:
-                if pair[0] in old_classes and pair[1] in new_classes:
-                    old_class = old_classes.pop(old_classes.index(pair[0]))
-                    new_class = new_classes.pop(new_classes.index(pair[1]))
-                    old_methods = old_class.getMethods()
-                    new_methods = new_class.getMethods()
-
-                    self.methods, self.methodSCP += self.digestBlock(old_methods,
-                            new_methods)
         while len(old_classes) > 0:
             old_class = old_classes.pop()
             old_methods = old_class.getMethods()
@@ -284,10 +276,9 @@ class Diff:
             new_methods = new_class.getMethods()
 
             self.methods, self.methodSCP += self.digestBlock([], new_methods)
-
         """
 
-    def digestBlock(self, old_blocks, new_blocks):
+    def digestBlocks(self, old_blocks, new_blocks):
         blocks = []
         sigChangePairs = []
 
@@ -297,17 +288,33 @@ class Diff:
         for l in self.diff_divisions:
             pld.digest(l)
 
-        blocks, sigChangePairs = pld.getDigestion()
-        return _uniq(blocks), _uniq(sigChangePairs)
+        blocks = pld.getDigestion()
+
+        return _uniq(blocks)
+
+    def digestSCP(self, old_blocks, new_blocks):
+        # this method does nothing!
+        return []
+
+        source_set = set(old_blocks)
+        patch_set = set(new_blocks)
+        modified_set = source_set & patch_set
+        added_set = patch_set - modified_set
+        removed_set = source_set - modified_set
+
+        possible_pairs = []
+        for r_block in removed_set:
+            for a_block in added_set:
+                possible_pairs.append((r_block, a_block))
 
     def _getFileChanges(self):
         deletions = 0
         additions = 0
         for division in self.diff_divisions:
             for line in division:
-                if ((line.startswith('-')) or (line.startswith('!'))):
+                if line.startswith('-'):
                     deletions += 1
-                elif (line.startswith('+')):
+                elif line.startswith('+'):
                     additions += 1
 
         return additions, deletions

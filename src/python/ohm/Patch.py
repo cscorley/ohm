@@ -25,28 +25,18 @@ class Patch:
         self.project_repo = project_repo
 
         #methods is the list of methods affected by the patch
-        self.methods = []
-        self.sigChangePairs = []
         self.fileDict = {}
         self.chunk_startu = re.compile('@@ -(\d+),(\d+) \+(\d+),(\d+) @@')
         self.chunk_startc = re.compile('\*\*\* (\d+),(\d+) \*\*\*')
-
-        self._parse()
 
     def printMethods(self):
         for method in self.methods:
             print(method)
 
-    def getMethods(self):
-        return self.methods
-
-    def getSignatureChangePairs(self):
-        return self.sigChangePairs
-
-    def getFileDict(self):
+    def getDigestion(self):
         return self.fileDict
 
-    def _parse(self):
+    def digest(self):
 #        with open(self.patch_file) as f:
  #           lines = f.readlines()
         lines = self.patch_file
@@ -102,12 +92,13 @@ class Patch:
             temp.append(lines[j])
         diffs.append(temp)
 
+        d = Diff(self.project_repo)
         for diff in diffs:
-            m = Diff(diff, self.project_repo)
-            file = m.getFile()
-            classes = m.getClasses()
-            methods = m.getMethods()
-            pairs = m.getSignatureChangePairs()
+            d.digest(diff)
+            file = d.getFile()
+            classes, classSCP = d.getClasses()
+            methods, methodSCP = d.getMethods()
+            pairs = classSCP + methodSCP
 
             # todo: to include classes and pairs
             if len(methods) == 0:
