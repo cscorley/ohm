@@ -15,6 +15,7 @@ __version__ = '$Id$'
 import re
 import os
 import codecs
+import difflib
 from datetime import datetime
 
 from PatchLineDivision import PatchLineDivision
@@ -237,7 +238,7 @@ class Diff:
 
         # not sure how many class SCP it actually detects yet, considering
         # class renames also come with the problem of the file itself being
-        # renamed as well (which may go untracked in subverison)
+        # renamed (which may go untracked in subverison)
 
         # second, try to pair up classes by the detected renamings
         if len(old_classes) > 0 and len(new_classes) > 0:
@@ -290,19 +291,54 @@ class Diff:
         return _uniq(blocks)
 
     def digestSCP(self, old_blocks, new_blocks):
-        # this method does nothing!
-        return []
-
         source_set = set(old_blocks)
         patch_set = set(new_blocks)
         modified_set = source_set & patch_set
         added_set = patch_set - modified_set
         removed_set = source_set - modified_set
 
+        # renames: yes, merges: no, splits: not handled, clones: yes
         possible_pairs = []
+        min_pair = None
         for r_block in removed_set:
+            min_pair = None
             for a_block in added_set:
-                possible_pairs.append((r_block, a_block))
+                relation_value = self._getRelationValue(r_block, a_block)
+                if min_pair is None:
+                    min_pair = (r_block, a_block, relation_value)
+                elif relation_value < min_pair[2]:
+                    min_pair = (r_block, a_block, relation_value)
+                elif relation_value == min_pair[2]:
+                    # tie breaker needed
+                    raw_input('tiebreaker needed: %s, %s, %s' % (r_block,
+                        a_block, min_pair[1]))
+
+            # since r_block->a_block pair has been found, should we remove
+            # a_block from the list of possiblities?
+            if min_pair is not None:
+                possible_pairs.append(min_pair)
+
+        return possible_pairs
+
+    def _getRelationValue(self, old_block, new_block):
+        # open the source files for diffing
+        with open(self.old_source, 'r') as f:
+            old_source_text = f.readlines()
+        with open(self.new_source, 'r') as f:
+            new_source_text = f.readlines()
+        
+        old_block_lines = old_block.getLines()
+        new_block_lines = new_block.getLines()
+
+        old_block_text = old_source_text[old_block_lines[0]:old_block_lines[1]]
+        new_block_text = new_source_text[new_block_lines[0]:new_block_lines[1]]
+        
+        for line in old_block_text:
+            print(line)
+        for line in new_block_text:
+            print(line)
+
+        return 0
 
     def _getFileChanges(self):
         deletions = 0
