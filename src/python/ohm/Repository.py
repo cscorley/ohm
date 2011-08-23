@@ -104,7 +104,8 @@ class Repository:
                         print('Failure 175002')
                         print('Code:', code, 'Message:', message)
                 else:
-                    print('Code:', code, 'Message:', message)
+                    print('Code:', code, 'Message:', message, '\n', fileName,
+                            revision_number)
 
         return output
 

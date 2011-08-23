@@ -15,7 +15,7 @@ __version__ = '$Id$'
 import re
 import os
 import codecs
-import difflib
+from difflib import SequenceMatcher
 from datetime import datetime
 
 from PatchLineDivision import PatchLineDivision
@@ -109,10 +109,11 @@ class Diff:
             return results + (_file_len(filePath), )
 
     def digest(self, diff_file):
-        self.new_source = None
         self.old_source = None
+        self.new_source = None
         self.old_source_text = None
         self.new_source_text = None
+        self.diff_divisions = []
         if len(diff_file) == 0:
             return None
 
@@ -187,12 +188,14 @@ class Diff:
             temp.append(diff_file[j])
         self.diff_divisions.append(temp)
 
+        if old_revision_number == 0:
+            isNewFile = True
+        if new_revision_number == 0:
+            isRemovedFile = True
+
         old_classes = []
         new_classes = []
         log = []
-        print(self.old_source, old_revision_number, isNewFile)
-        print(self.new_source, new_revision_number, isRemovedFile)
-
 
         # Begin prep to run ANTLR on the source files
         # Check out from SVN the original file
@@ -206,7 +209,6 @@ class Diff:
             old_file_len = res[2]
             with open('/tmp/ohm/' + self.old_source, 'r') as f:
                 self.old_source_text = f.readlines()
-
         
         self._printToLog(self.old_source, old_revision_number, log)
 
@@ -339,6 +341,8 @@ class Diff:
             if min_pair is not None:
                 possible_pairs.append(min_pair)
 
+        if len(possible_pairs) > 0:
+            print(possible_pairs)
         return possible_pairs
 
     def _getRelationValue(self, old_block, new_block):
@@ -348,17 +352,8 @@ class Diff:
         old_block_text = self.old_source_text[old_block_lines[0]-1:old_block_lines[1]]
         new_block_text = self.new_source_text[new_block_lines[0]-1:new_block_lines[1]]
         
-        print('old: %d,%d of %s' % (old_block_lines[0]-1, old_block_lines[1],
-            self.old_source))
-        for line in old_block_text:
-            print(line.strip('\n'))
-
-        print('new: %d,%d of %s' % (new_block_lines[0]-1, new_block_lines[1],
-            self.new_source))
-        for line in new_block_text:
-            print(line.strip('\n'))
-
-        return 0
+        s = SequenceMatcher(None, old_block_text, new_block_text)
+        return s.ratio()
 
     def _getFileChanges(self):
         deletions = 0
