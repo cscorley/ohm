@@ -29,24 +29,15 @@ class Patch:
         self.chunk_startu = re.compile('@@ -(\d+),(\d+) \+(\d+),(\d+) @@')
         self.chunk_startc = re.compile('\*\*\* (\d+),(\d+) \*\*\*')
 
-    def printMethods(self):
-        for method in self.methods:
-            print(method)
-
     def getDigestion(self):
         return self.fileDict
 
     def digest(self):
-#        with open(self.patch_file) as f:
- #           lines = f.readlines()
         lines = self.patch_file
 
         # Find the beginning of the first diff in the patch file
         first = 0
         while (not lines[first].startswith('Index:')):
-#                and (not lines[first].startswith('diff'))
-#                and (not lines[first].startswith('--- '))
-#                and (not lines[first].startswith('*** '))):
             first += 1
             if first == len(lines):
                 return
@@ -68,24 +59,6 @@ class Patch:
                 diffs.append(temp)
                 temp = []
                 start = i
-            elif (lines[i].startswith('diff') and lines[first].startswith('diff')):
-                for j in range(start, i):
-                    temp.append(lines[j])
-                diffs.append(temp)
-                temp = []
-                start = i
-            elif (lines[i].startswith('*** ') and lines[first].startswith('*** ')):
-                for j in range(start, i):
-                    temp.append(lines[j])
-                diffs.append(temp)
-                temp = []
-                start = i
-            elif (lines[i].startswith('--- ') and lines[first].startswith('--- ')):
-                for j in range(start, i):
-                    temp.append(lines[j])
-                diffs.append(temp)
-                temp = []
-                start = i
 
         # Writes last division since no more 'Index' lines to match
         for j in range(start, len(lines)):
@@ -94,7 +67,9 @@ class Patch:
 
         d = Diff(self.project_repo)
         for diff in diffs:
-            d.digest(diff)
+            res = d.digest(diff)
+            if res is None:
+                continue
             file = d.getFile()
             classes, classSCP = d.getClasses()
             methods, methodSCP = d.getMethods()

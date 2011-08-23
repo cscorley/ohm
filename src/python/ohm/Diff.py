@@ -42,8 +42,6 @@ class Diff:
         self.file = None
 
         self.diff_divisions = []
-        self.isNewFile = False
-        self.isRemovedFile = False
         self.old_source = None
         self.new_source = None
 
@@ -111,16 +109,26 @@ class Diff:
             return results + (_file_len(filePath), )
 
     def digest(self, diff_file):
+        self.new_source = None
+        self.old_source = None
+        self.old_source_text = None
+        self.new_source_text = None
+        if len(diff_file) == 0:
+            return None
+
         # self.diff_divisions is a temporary list containing the diff text divided
         # based on line numbers in source.
         temp = []
-        old_file_svn = re.compile('--- ([-/._\w ]+)\t\(revision (\d+)\)')
-        new_file_svn = re.compile('\+\+\+ ([-/._\w ]+)\t\(revision (\d+)\)')
+        old_file_svn = re.compile('--- ([-/._\w ]+.java)\t\(revision (\d+)\)')
+        new_file_svn = re.compile('\+\+\+ ([-/._\w ]+.java)\t\(revision (\d+)\)')
         chunk_startu = re.compile('@@ -(\d+)(?:,(\d+))? \+(\d+)(?:,(\d+))? @@')
         list_itr = None
         start = 0
         old_revision_number = 0
         new_revision_number = 0
+        
+        isNewFile = False
+        isRemovedFile = False
 
         while start < len(diff_file) and not chunk_startu.match(diff_file[start]):
             m = old_file_svn.match(diff_file[start])
@@ -133,25 +141,29 @@ class Diff:
                     self.new_source = nm.group(1)
                     new_revision_number = int(nm.group(2))
 
+
                 # allows for spaces in the filename
                 if '.java' in self.old_source and not self.old_source.endswith('.java'):
                     self.old_source = self.old_source.split('.java')[0] + '.java'
+                if '.java' in self.new_source and not self.new_source.endswith('.java'):
+                    self.new_source = self.new_source.split('.java')[0] + '.java'
 
-                #.java check
                 if not self.old_source.endswith('.java'):
-                    return
+                    return None
+                elif not self.new_source.endswith('.java'):
+                    return None
 
                 if (old_revision_number == 0):
-                    self.isNewFile = True
-
+                    isNewFile = True
+                
                 start += 1
                 break
             start += 1
 
         # catch diffs that are for only property changes
         if self.old_source is None and self.new_source is None:
-            return
-
+            return None
+        
         # Divide the diff into separate chunks
         for i in range(start + 1, len(diff_file)):
             tmp = diff_file[i]
@@ -159,11 +171,11 @@ class Diff:
             if chunk_matcher:
                 if len(self.diff_divisions) == 0:
                     if int(chunk_matcher.group(1)) == 0 and int(chunk_matcher.group(2)) == 0:
-                        if not self.isNewFile:
+                        if not isNewFile:
                             print('Uhh.... captain? New file not new?')
-                        self.isNewFile = True
+                        isNewFile = True
                     elif int(chunk_matcher.group(3)) == 0 and int(chunk_matcher.group(4)) == 0:
-                        self.isRemovedFile = True
+                        isRemovedFile = True
                 for j in range(start, i - 1):
                     temp.append(diff_file[j])
                 if len(temp) > 0:
@@ -178,40 +190,49 @@ class Diff:
         old_classes = []
         new_classes = []
         log = []
+        print(self.old_source, old_revision_number, isNewFile)
+        print(self.new_source, new_revision_number, isRemovedFile)
+
 
         # Begin prep to run ANTLR on the source files
         # Check out from SVN the original file
-        if not self.isNewFile:
+        if not isNewFile:
             res = self._getParserResults(self.old_source, old_revision_number)
             if res is None:
                 # some error has occured.
-                return
+                return None
             old_classes = res[0]
             log = res[1]
             old_file_len = res[2]
+            with open('/tmp/ohm/' + self.old_source, 'r') as f:
+                self.old_source_text = f.readlines()
 
+        
         self._printToLog(self.old_source, old_revision_number, log)
 
-        if not self.isRemovedFile:
+        if not isRemovedFile:
             res = self._getParserResults(self.new_source, new_revision_number)
             if res is None:
                 # some error has occured.
-                return
+                return None
             new_classes = res[0]
             log = res[1]
             new_file_len = res[2]
+
+            with open('/tmp/ohm/' + self.new_source, 'r') as f:
+                self.new_source_text = f.readlines()
 
         self._printToLog(self.new_source, new_revision_number, log)
 
         if old_classes == None:
             print('ANTLR error on old: %s' % self.new_source)
-            return
+            return None
         elif new_classes == None:
             print('ANTLR error on new: %s' % self.old_source)
-            return
+            return None
 
         fileAdditions, fileDeletions = self._getFileChanges()
-        if self.isNewFile:
+        if isNewFile:
             self.file = File(self.new_source, new_classes, new_file_len)
         else:
             self.file = File(self.old_source, old_classes, old_file_len)
@@ -276,7 +297,7 @@ class Diff:
             self.methods, self.methodSCP += self.digestBlock([], new_methods)
         """
 
-    def digestBlocks(self, old_blocks, new_blocks):
+    def digestBlock(self, old_blocks, new_blocks):
         blocks = []
         sigChangePairs = []
 
@@ -321,22 +342,21 @@ class Diff:
         return possible_pairs
 
     def _getRelationValue(self, old_block, new_block):
-        # open the source files for diffing
-        with open(self.old_source, 'r') as f:
-            old_source_text = f.readlines()
-        with open(self.new_source, 'r') as f:
-            new_source_text = f.readlines()
-        
         old_block_lines = old_block.getLines()
         new_block_lines = new_block.getLines()
 
-        old_block_text = old_source_text[old_block_lines[0]:old_block_lines[1]]
-        new_block_text = new_source_text[new_block_lines[0]:new_block_lines[1]]
+        old_block_text = self.old_source_text[old_block_lines[0]-1:old_block_lines[1]]
+        new_block_text = self.new_source_text[new_block_lines[0]-1:new_block_lines[1]]
         
+        print('old: %d,%d of %s' % (old_block_lines[0]-1, old_block_lines[1],
+            self.old_source))
         for line in old_block_text:
-            print(line)
+            print(line.strip('\n'))
+
+        print('new: %d,%d of %s' % (new_block_lines[0]-1, new_block_lines[1],
+            self.new_source))
         for line in new_block_text:
-            print(line)
+            print(line.strip('\n'))
 
         return 0
 

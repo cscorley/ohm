@@ -30,6 +30,8 @@ class PatchLineDivision:
         self.blocks = []
 
     def digest(self, division):
+        if len(division) == 0:
+            return
         added_lines, removed_lines, pairs = self._getMappings(division)
 
         # and then add those blocks to our changed blocks list.

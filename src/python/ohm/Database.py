@@ -28,8 +28,8 @@ class Database:
             user='ohm',
             password='r011T1d3',
             database='ohmdb',
-            host='yellowsubmarine.cs.ua.edu',
-#            host='localhost',
+#           host='yellowsubmarine.cs.ua.edu',
+            host='localhost',
             port='5432',
             sslmode='disable'
             )
