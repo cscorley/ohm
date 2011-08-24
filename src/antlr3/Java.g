@@ -40,7 +40,7 @@ See LICENSE for details.
  *  and some nasty looking enums from 1.5, but have not really
  *  tested for 1.5 compatibility.
  *
- *  I built this with: java -Xmx100M org.antlr.Tool java.g 
+ *  I built this with: java -Xmx100M org.antlr.Tool java.g
  *  and got two errors that are ok (for now):
  *  java.g:691:9: Decision can match input such as
  *    "'0'..'9'{'E', 'e'}{'+', '-'}'0'..'9'{'D', 'F', 'd', 'f'}"
@@ -75,9 +75,9 @@ See LICENSE for details.
  *      Factored out an annotationName rule and used it in the annotation rule.
  *          Not sure why, but typeName wasn't recognizing references to inner
  *          annotations (e.g. @InterfaceName.InnerAnnotation())
- *      Factored out the elementValue section of an annotation reference.  Created 
- *          elementValuePair and elementValuePairs rules, then used them in the 
- *          annotation rule.  Allows it to recognize annotation references with 
+ *      Factored out the elementValue section of an annotation reference.  Created
+ *          elementValuePair and elementValuePairs rules, then used them in the
+ *          annotation rule.  Allows it to recognize annotation references with
  *          multiple, comma separated attributes.
  *      Updated elementValueArrayInitializer so that it allows multiple elements.
  *          (It was only allowing 0 or 1 element).
@@ -85,15 +85,15 @@ See LICENSE for details.
  *          doesn't appear to indicate this is legal, but it does work as of at least
  *          JDK 1.5.0_06.
  *      Moved the Identifier portion of annotationTypeElementRest to annotationMethodRest.
- *          Because annotationConstantRest already references variableDeclarator which 
- *          has the Identifier portion in it, the parser would fail on constants in 
- *          annotation definitions because it expected two identifiers.  
+ *          Because annotationConstantRest already references variableDeclarator which
+ *          has the Identifier portion in it, the parser would fail on constants in
+ *          annotation definitions because it expected two identifiers.
  *      Added optional trailing ';' to the alternatives in annotationTypeElementRest.
  *          Wouldn't handle an inner interface that has a trailing ';'.
- *      Swapped the expression and type rule reference order in castExpression to 
+ *      Swapped the expression and type rule reference order in castExpression to
  *          make it check for genericized casts first.  It was failing to recognize a
  *          statement like  "Class<Byte> TYPE = (Class<Byte>)...;" because it was seeing
- *          'Class<Byte' in the cast expression as a less than expression, then failing 
+ *          'Class<Byte' in the cast expression as a less than expression, then failing
  *          on the '>'.
  *      Changed createdName to use typeArguments instead of nonWildcardTypeArguments.
  *          Again, JLS doesn't seem to allow this, but java.lang.Class has an example of
@@ -102,7 +102,7 @@ See LICENSE for details.
  *          just 'arguments'.  The case it couldn't handle was a call to an explicit
  *          generic method invocation (e.g. this.<E>doSomething()).  Using identifierSuffix
  *          may be overly aggressive--perhaps should create a more constrained thisSuffix rule?
- *      
+ *
  *  Version 1.0.4 -- Hiroaki Nakamura, May 3, 2007
  *
  *  Fixed formalParameterDecls, localVariableDeclaration, forInit,
@@ -114,13 +114,13 @@ See LICENSE for details.
  *  Version 1.0.6 -- John Ridgway, March 17, 2008
  *      Made "assert" a switchable keyword like "enum".
  *      Fixed compilationUnit to disallow "annotation importDeclaration ...".
- *      Changed "Identifier ('.' Identifier)*" to "qualifiedName" in more 
+ *      Changed "Identifier ('.' Identifier)*" to "qualifiedName" in more
  *          places.
  *      Changed modifier* and/or variableModifier* to classOrInterfaceModifiers,
  *          modifiers or variableModifiers, as appropriate.
  *      Renamed "bound" to "typeBound" to better match language in the JLS.
- *      Added "memberDeclaration" which rewrites to methodDeclaration or 
- *      fieldDeclaration and pulled type into memberDeclaration.  So we parse 
+ *      Added "memberDeclaration" which rewrites to methodDeclaration or
+ *      fieldDeclaration and pulled type into memberDeclaration.  So we parse
  *          type and then move on to decide whether we're dealing with a field
  *          or a method.
  *      Modified "constructorDeclaration" to use "constructorBody" instead of
@@ -129,15 +129,15 @@ See LICENSE for details.
  *          out of expressions allowed me to simplify "primary".
  *      Changed variableDeclarator to simplify it.
  *      Changed type to use classOrInterfaceType, thus simplifying it; of course
- *          I then had to add classOrInterfaceType, but it is used in several 
+ *          I then had to add classOrInterfaceType, but it is used in several
  *          places.
  *      Fixed annotations, old version allowed "@X(y,z)", which is illegal.
  *      Added optional comma to end of "elementValueArrayInitializer"; as per JLS.
- *      Changed annotationTypeElementRest to use normalClassDeclaration and 
- *          normalInterfaceDeclaration rather than classDeclaration and 
+ *      Changed annotationTypeElementRest to use normalClassDeclaration and
+ *          normalInterfaceDeclaration rather than classDeclaration and
  *          interfaceDeclaration, thus getting rid of a couple of grammar ambiguities.
  *      Split localVariableDeclaration into localVariableDeclarationStatement
- *          (includes the terminating semi-colon) and localVariableDeclaration.  
+ *          (includes the terminating semi-colon) and localVariableDeclaration.
  *          This allowed me to use localVariableDeclaration in "forInit" clauses,
  *           simplifying them.
  *      Changed switchBlockStatementGroup to use multiple labels.  This adds an
@@ -147,7 +147,7 @@ See LICENSE for details.
  *      Added semantic predicates to test for shift operations rather than other
  *          things.  Thus, for instance, the string "< <" will never be treated
  *          as a left-shift operator.
- *      In "creator" we rule out "nonWildcardTypeArguments" on arrayCreation, 
+ *      In "creator" we rule out "nonWildcardTypeArguments" on arrayCreation,
  *          which are illegal.
  *      Moved "nonWildcardTypeArguments into innerCreator.
  *      Removed 'super' superSuffix from explicitGenericInvocation, since that
@@ -159,15 +159,15 @@ See LICENSE for details.
  *      Lexer -- removed "Exponent?" from FloatingPointLiteral choice 4, since it
  *          led to an ambiguity.
  *
- *      This grammar successfully parses every .java file in the JDK 1.5 source 
+ *      This grammar successfully parses every .java file in the JDK 1.5 source
  *          tree (excluding those whose file names include '-', which are not
  *          valid Java compilation units).
  *
  *  Known remaining problems:
  *      "Letter" and "JavaIDDigit" are wrong.  The actual specification of
  *      "Letter" should be "a character for which the method
- *      Character.isJavaIdentifierStart(int) returns true."  A "Java 
- *      letter-or-digit is a character for which the method 
+ *      Character.isJavaIdentifierStart(int) returns true."  A "Java
+ *      letter-or-digit is a character for which the method
  *      Character.isJavaIdentifierPart(int) returns true."
  */
 grammar Java;
@@ -249,7 +249,7 @@ packageDeclaration
         {
             pkg_name = pkg_top.text
         }
-        ('.' pkg_sub=Identifier 
+        ('.' pkg_sub=Identifier
         {
             pkg_name += ('.' + pkg_sub.text)
         }
@@ -259,23 +259,23 @@ packageDeclaration
         }
         ';'
     ;
-    
+
 importDeclaration
     :   'import' 'static'? qualifiedName ('.' '*')? ';'
     ;
-    
+
 typeDeclaration
     :   classOrInterfaceDeclaration
     |   ';'
     ;
-    
+
 classOrInterfaceDeclaration
     :   {self.modifier_line = 99999999} classOrInterfaceModifiers (classDeclaration | interfaceDeclaration)
 //    {
 //        self.scopes.pop()
 //    }
     ;
-    
+
 classOrInterfaceModifiers
     :   classOrInterfaceModifier*
     ;
@@ -302,13 +302,13 @@ classDeclaration
 //NAK
 normalClassDeclaration
     :   'class' i=Identifier
-            {   self.scopes.append(('class', $i.getText())) } 
+            {   self.scopes.append(('class', $i.getText())) }
         typeParameters?
         ('extends' type)?
         ('implements' typeList)?
         classBody
     ;
-    
+
 typeParameters
     :   '<' typeParameter (',' typeParameter)* '>'
     ;
@@ -316,7 +316,7 @@ typeParameters
 typeParameter
     :   Identifier ('extends' typeBound)?
     ;
-        
+
 typeBound
     :   type ('&' type)*
     ;
@@ -329,7 +329,7 @@ enumDeclaration
 
 enumBody
     :   '{' enumConstants? ','? enumBodyDeclarations? '}'
-            { 
+            {
                 self.scopes.pop() }
 
     ;
@@ -337,11 +337,11 @@ enumBody
 enumConstants
     :   enumConstant (',' enumConstant)*
     ;
-    
+
 enumConstant
     :   annotations? Identifier arguments? classBody?
     ;
-    
+
 enumBodyDeclarations
     :   ';' (classBodyDeclaration)*
     ;
@@ -353,17 +353,17 @@ interfaceDeclaration
 //NAK
 normalInterfaceDeclaration
     :   'interface' i=Identifier
-            {   self.scopes.append(('interface', $i.getText())) } 
+            {   self.scopes.append(('interface', $i.getText())) }
         typeParameters? ('extends' typeList)? interfaceBody
     ;
-    
+
 typeList
     :   type (',' type)*
     ;
-    
+
 classBody
     :   l='{' classBodyDeclaration* r='}'
-            { 
+            {
                 self.addClass(min(self.modifier_line, $l.getLine()), $r.getLine(), $l.getLine())
                 self.modifier_line = 99999999
                 self.scopes.pop() }
@@ -371,7 +371,7 @@ classBody
 
 interfaceBody
     :   l='{' interfaceBodyDeclaration* r='}'
-            { 
+            {
                 self.addClass(min(self.modifier_line, $l.getLine()), $r.getLine(), $l.getLine())
                 self.modifier_line = 99999999
                 self.scopes.pop() }
@@ -387,17 +387,17 @@ memberDecl
     :   genericMethodOrConstructorDecl
     |   memberDeclaration
     |   'void' i=Identifier
-            {   self.scopes.append(('method', $i.getText())) 
+            {   self.scopes.append(('method', $i.getText()))
                 self.modifier_line = min($i.getLine(),self.modifier_line)}
         voidMethodDeclaratorRest
     |   i=Identifier
-            {   self.scopes.append(('method', $i.getText()))  
+            {   self.scopes.append(('method', $i.getText()))
                 self.modifier_line = min($i.getLine(),self.modifier_line)}
         constructorDeclaratorRest
     |   interfaceDeclaration
     |   classDeclaration
     ;
-    
+
 memberDeclaration
     :   type (methodDeclaration | fieldDeclaration)
         // return type for methods?
@@ -410,18 +410,18 @@ genericMethodOrConstructorDecl
 genericMethodOrConstructorRest
         // or is this the return type?
     :   (type | 'void') i=Identifier
-            {   self.scopes.append(('method', $i.getText()))  
+            {   self.scopes.append(('method', $i.getText()))
                 self.modifier_line = min($i.getLine(),self.modifier_line)}
         methodDeclaratorRest
     |   i=Identifier
-            {   self.scopes.append(('method', $i.getText())) 
+            {   self.scopes.append(('method', $i.getText()))
                 self.modifier_line = min($i.getLine(),self.modifier_line)}
         constructorDeclaratorRest
     ;
 //NAK
 methodDeclaration
     :   i=Identifier
-            {   self.scopes.append(('method', $i.getText()))  
+            {   self.scopes.append(('method', $i.getText()))
                 self.modifier_line = min($i.getLine(),self.modifier_line)}
         methodDeclaratorRest
     ;
@@ -430,7 +430,7 @@ fieldDeclaration
     :   variableDeclarators ';'
             {   self.modifier_line = 1e300000   }
     ;
-        
+
 interfaceBodyDeclaration
     :   modifiers interfaceMemberDecl
     |   ';'
@@ -443,16 +443,16 @@ interfaceMemberDecl
     |   interfaceDeclaration
     |   classDeclaration
     ;
-    
+
 interfaceMethodOrFieldDecl
     :   type Identifier interfaceMethodOrFieldRest
     ;
-    
+
 interfaceMethodOrFieldRest
     :   constantDeclaratorsRest ';'
     |   interfaceMethodDeclaratorRest
     ;
-    
+
 //                self.methods.append(self.addMethod(self.formals,self.modifier_line,$r.getLine()))
 methodDeclaratorRest
     :   formalParameters ('[' ']')*
@@ -466,7 +466,7 @@ methodDeclaratorRest
             }
         )
     ;
-    
+
 //                self.methods.append(self.addMethod(self.formals,self.modifier_line,$r.getLine()))
 voidMethodDeclaratorRest
     :   formalParameters ('throws' qualifiedNameList)?
@@ -479,28 +479,40 @@ voidMethodDeclaratorRest
             }
         )
     ;
-    
+
+// CSC
+// since the formals aren't used after this declaration, we should clear the
+// list
 interfaceMethodDeclaratorRest
     :   formalParameters ('[' ']')* ('throws' qualifiedNameList)? ';'
+        {
+            self.formals = []
+        }
     ;
-    
+
 interfaceGenericMethodDecl
     :   typeParameters (type | 'void') Identifier
         interfaceMethodDeclaratorRest
     ;
-    
+
 voidInterfaceMethodDeclaratorRest
     :   formalParameters ('throws' qualifiedNameList)? ';'
+        {
+            self.formals = []
+        }
     ;
-    
+
 constructorDeclaratorRest
     :   formalParameters ('throws' qualifiedNameList)? constructorBody
+        {
+            self.formals = []
+        }
     ;
 
 constantDeclarator
     :   Identifier constantDeclaratorRest
     ;
-    
+
 variableDeclarators
     :   variableDeclarator (',' variableDeclarator)*
     ;
@@ -508,7 +520,7 @@ variableDeclarators
 variableDeclarator
     :   variableDeclaratorId ('=' variableInitializer)?
     ;
-    
+
 constantDeclaratorsRest
     :   constantDeclaratorRest (',' constantDeclarator)*
     ;
@@ -516,7 +528,7 @@ constantDeclaratorsRest
 constantDeclaratorRest
     :   ('[' ']')* '=' variableInitializer
     ;
-    
+
 variableDeclaratorId
     :   Identifier ('[' ']')*
         // probably want the identifier
@@ -526,7 +538,7 @@ variableInitializer
     :   arrayInitializer
     |   expression
     ;
-        
+
 arrayInitializer
     :   '{' (variableInitializer (',' variableInitializer)* (',')? )? '}'
     ;
@@ -608,12 +620,12 @@ variableModifier
 typeArguments
     :   '<' typeArgument (',' typeArgument)* '>'
     ;
-    
+
 typeArgument
     :   type
     |   '?' (('extends' | 'super') type)?
     ;
-    
+
 qualifiedNameList
     :   qualifiedName (',' qualifiedName)*
     ;
@@ -621,12 +633,12 @@ qualifiedNameList
 formalParameters
     :   '(' formalParameterDecls? ')'
     ;
-    
+
 formalParameterDecls
     :   variableModifiers t=type formalParameterDeclsRest
         { self.formals.append($t.name) }
     ;
-    
+
 formalParameterDeclsRest
     :   i=variableDeclaratorId (',' formalParameterDecls)?
         // we'll propogate the Identifier for vDI to here
@@ -660,8 +672,8 @@ explicitConstructorInvocation
 qualifiedName
     :   Identifier ('.' Identifier)*
     ;
-    
-literal 
+
+literal
     :   integerLiteral
     |   FloatingPointLiteral
     |   CharacterLiteral
@@ -690,7 +702,7 @@ annotations
 annotation
     :   n='@' annotationName ( '(' ( elementValuePairs | elementValue )? ')' )? {self.modifier_line = min($n.getLine(),self.modifier_line)}
     ;
-    
+
 annotationName
     : Identifier ('.' Identifier)*
     ;
@@ -702,29 +714,29 @@ elementValuePairs
 elementValuePair
     :   Identifier '=' elementValue
     ;
-    
+
 elementValue
     :   conditionalExpression
     |   annotation
     |   elementValueArrayInitializer
     ;
-    
+
 elementValueArrayInitializer
     :   '{' (elementValue (',' elementValue)*)? (',')? '}'
     ;
-    
+
 annotationTypeDeclaration
     :   '@' 'interface' Identifier annotationTypeBody
     ;
-    
+
 annotationTypeBody
     :   '{' (annotationTypeElementDeclaration)* '}'
 ;
-    
+
 annotationTypeElementDeclaration
     :   modifiers annotationTypeElementRest
     ;
-    
+
 annotationTypeElementRest
     :   type annotationMethodOrConstantRest ';'
     |   normalClassDeclaration ';'?
@@ -732,20 +744,20 @@ annotationTypeElementRest
     |   enumDeclaration ';'?
     |   annotationTypeDeclaration ';'?
     ;
-    
+
 annotationMethodOrConstantRest
     :   annotationMethodRest
     |   annotationConstantRest
     ;
-    
+
 annotationMethodRest
     :   Identifier '(' ')' defaultValue?
     ;
-    
+
 annotationConstantRest
     :   variableDeclarators
     ;
-    
+
 defaultValue
     :   'default' elementValue
     ;
@@ -755,13 +767,13 @@ defaultValue
 block
     :   '{' blockStatement* '}'
     ;
-    
+
 blockStatement
     :   localVariableDeclarationStatement
     |   classOrInterfaceDeclaration
     |   statement
     ;
-    
+
 localVariableDeclarationStatement
     :    localVariableDeclaration ';'
     ;
@@ -769,7 +781,7 @@ localVariableDeclarationStatement
 localVariableDeclaration
     :   variableModifiers type variableDeclarators
     ;
-    
+
 variableModifiers
     :   variableModifier*
     ;
@@ -792,15 +804,15 @@ statement
     |   'throw' expression ';'
     |   'break' Identifier? ';'
     |   'continue' Identifier? ';'
-    |   ';' 
+    |   ';'
     |   statementExpression ';'
     |   Identifier ':' statement
     ;
-    
+
 catches
     :   catchClause (catchClause)*
     ;
-    
+
 catchClause
     :   'catch' '(' formalParameter ')' block
     ;
@@ -808,11 +820,11 @@ catchClause
 formalParameter
     :   variableModifiers type variableDeclaratorId
     ;
-        
+
 switchBlockStatementGroups
     :   (switchBlockStatementGroup)*
     ;
-    
+
 /* The change here (switchLabel -> switchLabel+) technically makes this grammar
    ambiguous; but with appropriately greedy parsing it yields the most
    appropriate AST, one in which each group, except possibly the last one, has
@@ -820,13 +832,13 @@ switchBlockStatementGroups
 switchBlockStatementGroup
     :   switchLabel+ blockStatement*
     ;
-    
+
 switchLabel
     :   'case' constantExpression ':'
     |   'case' enumConstantName ':'
     |   'default' ':'
     ;
-    
+
 forControl
 options {k=3;} // be efficient for common case: for (ID ID : ID) ...
     :   enhancedForControl
@@ -837,7 +849,7 @@ forInit
     :   localVariableDeclaration
     |   expressionList
     ;
-    
+
 enhancedForControl
     :   variableModifiers type Identifier ':' expression
     ;
@@ -851,7 +863,7 @@ forUpdate
 parExpression
     :   '(' expression ')'
     ;
-    
+
 expressionList
     :   expression (',' expression)*
     ;
@@ -859,15 +871,15 @@ expressionList
 statementExpression
     :   expression
     ;
-    
+
 constantExpression
     :   expression
     ;
-    
+
 expression
     :   conditionalExpression (assignmentOperator expression)?
     ;
-    
+
 assignmentOperator
     :   '='
     |   '+='
@@ -878,22 +890,22 @@ assignmentOperator
     |   '|='
     |   '^='
     |   '%='
-    |   ('<' '<' '=')=> t1='<' t2='<' t3='=' 
+    |   ('<' '<' '=')=> t1='<' t2='<' t3='='
         { $t1.getLine() == $t2.getLine() and
           $t1.getCharPositionInLine() + 1 == $t2.getCharPositionInLine() and
           $t2.getLine() == $t3.getLine() and
           $t2.getCharPositionInLine() + 1 == $t3.getCharPositionInLine() }?
     |   ('>' '>' '>' '=')=> t1='>' t2='>' t3='>' t4='='
-        { $t1.getLine() == $t2.getLine() and 
+        { $t1.getLine() == $t2.getLine() and
           $t1.getCharPositionInLine() + 1 == $t2.getCharPositionInLine() and
-          $t2.getLine() == $t3.getLine() and 
+          $t2.getLine() == $t3.getLine() and
           $t2.getCharPositionInLine() + 1 == $t3.getCharPositionInLine() and
-          $t3.getLine() == $t4.getLine() and 
+          $t3.getLine() == $t4.getLine() and
           $t3.getCharPositionInLine() + 1 == $t4.getCharPositionInLine() }?
     |   ('>' '>' '=')=> t1='>' t2='>' t3='='
-        { $t1.getLine() == $t2.getLine() and 
-          $t1.getCharPositionInLine() + 1 == $t2.getCharPositionInLine() and 
-          $t2.getLine() == $t3.getLine() and 
+        { $t1.getLine() == $t2.getLine() and
+          $t1.getCharPositionInLine() + 1 == $t2.getCharPositionInLine() and
+          $t2.getLine() == $t3.getLine() and
           $t2.getCharPositionInLine() + 1 == $t3.getCharPositionInLine() }?
     ;
 
@@ -932,16 +944,16 @@ instanceOfExpression
 relationalExpression
     :   shiftExpression ( relationalOp shiftExpression )*
     ;
-    
+
 relationalOp
-    :   ('<' '=')=> t1='<' t2='=' 
-        { $t1.getLine() == $t2.getLine() and 
+    :   ('<' '=')=> t1='<' t2='='
+        { $t1.getLine() == $t2.getLine() and
           $t1.getCharPositionInLine() + 1 == $t2.getCharPositionInLine() }?
-    |   ('>' '=')=> t1='>' t2='=' 
-        { $t1.getLine() == $t2.getLine() and 
+    |   ('>' '=')=> t1='>' t2='='
+        { $t1.getLine() == $t2.getLine() and
           $t1.getCharPositionInLine() + 1 == $t2.getCharPositionInLine() }?
-    |   '<' 
-    |   '>' 
+    |   '<'
+    |   '>'
     ;
 
 shiftExpression
@@ -949,16 +961,16 @@ shiftExpression
     ;
 
 shiftOp
-    :   ('<' '<')=> t1='<' t2='<' 
-        { $t1.getLine() == $t2.getLine() and 
+    :   ('<' '<')=> t1='<' t2='<'
+        { $t1.getLine() == $t2.getLine() and
           $t1.getCharPositionInLine() + 1 == $t2.getCharPositionInLine() }?
-    |   ('>' '>' '>')=> t1='>' t2='>' t3='>' 
-        { $t1.getLine() == $t2.getLine() and 
+    |   ('>' '>' '>')=> t1='>' t2='>' t3='>'
+        { $t1.getLine() == $t2.getLine() and
           $t1.getCharPositionInLine() + 1 == $t2.getCharPositionInLine() and
-          $t2.getLine() == $t3.getLine() and 
+          $t2.getLine() == $t3.getLine() and
           $t2.getCharPositionInLine() + 1 == $t3.getCharPositionInLine() }?
     |   ('>' '>')=> t1='>' t2='>'
-        { $t1.getLine() == $t2.getLine() and 
+        { $t1.getLine() == $t2.getLine() and
           $t1.getCharPositionInLine() + 1 == $t2.getCharPositionInLine() }?
     ;
 
@@ -970,7 +982,7 @@ additiveExpression
 multiplicativeExpression
     :   unaryExpression ( ( '*' | '/' | '%' ) unaryExpression )*
     ;
-    
+
 unaryExpression
     :   '+' unaryExpression
     |   '-' unaryExpression
@@ -1022,7 +1034,7 @@ createdName
     :   classOrInterfaceType
     |   primitiveType
     ;
-    
+
 innerCreator
     :   nonWildcardTypeArguments? Identifier classCreatorRest
     ;
@@ -1035,19 +1047,19 @@ arrayCreatorRest
     ;
 
 classCreatorRest
-    :   arguments 
-        (  {    self.scopes.append(('class','anon'))    } 
+    :   arguments
+        (  {    self.scopes.append(('class','anon'))    }
         classBody)?
     ;
-    
+
 explicitGenericInvocation
     :   nonWildcardTypeArguments Identifier arguments
     ;
-    
+
 nonWildcardTypeArguments
     :   '<' typeList '>'
     ;
-    
+
 selector
     :   '.' Identifier arguments?
     |   '.' 'this'
@@ -1055,7 +1067,7 @@ selector
     |   '.' n='new' innerCreator
     |   '[' expression ']'
     ;
-    
+
 superSuffix
     :   arguments
     |   '.' Identifier arguments?
@@ -1119,19 +1131,19 @@ UnicodeEscape
     :   '\\' 'u' HexDigit HexDigit HexDigit HexDigit
     ;
 
-ENUM:   'enum' 
+ENUM:   'enum'
             {if (not self.enumIsKeyword()):
                  $type=Identifier
             }
     ;
-    
-ASSERT:    'assert' 
+
+ASSERT:    'assert'
             {if (not self.assertIsKeyword()):
                  $type=Identifier
             }
     ;
-    
-Identifier 
+
+Identifier
     :   Letter (Letter|JavaIDDigit)*
     ;
 

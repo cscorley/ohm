@@ -109,11 +109,17 @@ class Diff:
             return results + (_file_len(filePath), )
 
     def digest(self, diff_file):
+        self.classes = []
+        self.methods = []
+        self.classSCP = []
+        self.methodSCP = []
+        self.file = None
+
+        self.diff_divisions = []
         self.old_source = None
         self.new_source = None
         self.old_source_text = None
         self.new_source_text = None
-        self.diff_divisions = []
         if len(diff_file) == 0:
             return None
 
@@ -207,11 +213,10 @@ class Diff:
             old_classes = res[0]
             log = res[1]
             old_file_len = res[2]
-            with open('/tmp/ohm/' + self.old_source, 'r') as f:
+            with open('/tmp/ohm/svn/' + self.old_source, 'r') as f:
                 self.old_source_text = f.readlines()
         
         self._printToLog(self.old_source, old_revision_number, log)
-
         if not isRemovedFile:
             res = self._getParserResults(self.new_source, new_revision_number)
             if res is None:
@@ -221,7 +226,7 @@ class Diff:
             log = res[1]
             new_file_len = res[2]
 
-            with open('/tmp/ohm/' + self.new_source, 'r') as f:
+            with open('/tmp/ohm/svn/' + self.new_source, 'r') as f:
                 self.new_source_text = f.readlines()
 
         self._printToLog(self.new_source, new_revision_number, log)
@@ -244,13 +249,13 @@ class Diff:
         self.classes += self.digestBlock(old_classes, new_classes)
         self.classSCP += self.digestSCP(old_classes, new_classes)
 
+        tmp_old_classes = []
         old_methods = []
         new_methods = []
         
         # first, for classes which have the same identifier, only compare
         # those methods from each
-        while len(old_classes) > 0:
-            old_class = old_classes.pop()
+        for old_class in old_classes:
             if old_class in new_classes:
                 new_class = new_classes.pop(new_classes.index(old_class))
                 old_methods = old_class.getMethods()
@@ -258,6 +263,11 @@ class Diff:
 
                 self.methods += self.digestBlock(old_methods, new_methods)
                 self.methodSCP += self.digestSCP(old_methods, new_methods)
+            else:
+                tmp_old_classes.append(old_class)
+
+        # copy the old_classes that did not have a match in newp
+        old_classes = tmp_old_classes
 
         # not sure how many class SCP it actually detects yet, considering
         # class renames also come with the problem of the file itself being
@@ -279,12 +289,13 @@ class Diff:
         old_methods = []
         new_methods = []
 
-        for c in old_classes:
-            old_methods += list(c.getMethods())
-        for c in new_classes:
-            new_methods += list(c.getMethods())
-        self.methods += self.digestBlock(old_methods, new_methods)
-        self.methodSCP += self.digestSCP(old_methods, new_methods)
+        if len(old_classes) > 0 or len(new_classes) > 0:
+            for c in old_classes:
+                old_methods += list(c.getMethods())
+            for c in new_classes:
+                new_methods += list(c.getMethods())
+            self.methods += self.digestBlock(old_methods, new_methods)
+            self.methodSCP += self.digestSCP(old_methods, new_methods)
 
         """
         while len(old_classes) > 0:
@@ -322,24 +333,24 @@ class Diff:
 
         # renames: yes, merges: no, splits: not handled, clones: yes
         possible_pairs = []
-        min_pair = None
+        max_pair = None
         for r_block in removed_set:
-            min_pair = None
+            max_pair = None
             for a_block in added_set:
                 relation_value = self._getRelationValue(r_block, a_block)
-                if min_pair is None:
-                    min_pair = (r_block, a_block, relation_value)
-                elif relation_value < min_pair[2]:
-                    min_pair = (r_block, a_block, relation_value)
-                elif relation_value == min_pair[2]:
+                if max_pair is None:
+                    max_pair = (r_block, a_block, relation_value)
+                elif relation_value > max_pair[2]:
+                    max_pair = (r_block, a_block, relation_value)
+                elif relation_value == max_pair[2]:
                     # tie breaker needed
                     print('tiebreaker needed: %s, %s, %s' % (r_block,
-                        a_block, min_pair[1]))
+                        a_block, max_pair[1]))
 
             # since r_block->a_block pair has been found, should we remove
             # a_block from the list of possiblities?
-            if min_pair is not None:
-                possible_pairs.append(min_pair)
+            if max_pair is not None:
+                possible_pairs.append(max_pair)
 
         return possible_pairs
 

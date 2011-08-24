@@ -203,6 +203,11 @@ def begin(db, name, url, starting_revision, ending_revision):
 
     project_repo = Repository(name, url, starting_revision, ending_revision)
     for revision_info in project_repo.getRevisions():
+        if os.path.exists('/tmp/ohm/svn/'):
+            try:
+                rmtree('/tmp/ohm/svn/', True)
+            except OSError:
+                pass
         if len(revision_info[0]) > 0:
             log = revision_info[0][0]
         else:
@@ -238,8 +243,7 @@ def begin(db, name, url, starting_revision, ending_revision):
         rev = log.revision.number
         with open('/tmp/ohm/scp.log', 'a') as f:
             for each in fileDict:
-                scplist = fileDict[each]['pairs']
-                for scp in scplist:
+                for scp in fileDict[each]['pairs']:
                     f.write('%s@%s: %s %s -> %s\n' % (each, rev, scp[2], scp[0],
                         scp[1]))
         # insert changes into tables

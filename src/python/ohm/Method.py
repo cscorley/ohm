@@ -83,6 +83,9 @@ class Method:
     def getSigLines(self):
         return [self.startln, self.bodystart]
 
+    def getBodyLines(self):
+        return [self.bodystart, self.endln]
+
     def getLineRange(self):
         return range(self.startln, self.endln + 1)
 
