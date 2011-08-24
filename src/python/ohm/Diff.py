@@ -241,7 +241,7 @@ class Diff:
 
         self.file.setChanges(fileAdditions, fileDeletions)
 
-        self.classes = self.digestBlock(old_classes, new_classes)
+        self.classes += self.digestBlock(old_classes, new_classes)
         self.classSCP += self.digestSCP(old_classes, new_classes)
 
         old_methods = []
@@ -283,7 +283,7 @@ class Diff:
             old_methods += list(c.getMethods())
         for c in new_classes:
             new_methods += list(c.getMethods())
-        self.methods = self.digestBlock(old_methods, new_methods)
+        self.methods += self.digestBlock(old_methods, new_methods)
         self.methodSCP += self.digestSCP(old_methods, new_methods)
 
         """
@@ -333,7 +333,7 @@ class Diff:
                     min_pair = (r_block, a_block, relation_value)
                 elif relation_value == min_pair[2]:
                     # tie breaker needed
-                    raw_input('tiebreaker needed: %s, %s, %s' % (r_block,
+                    print('tiebreaker needed: %s, %s, %s' % (r_block,
                         a_block, min_pair[1]))
 
             # since r_block->a_block pair has been found, should we remove
@@ -341,8 +341,6 @@ class Diff:
             if min_pair is not None:
                 possible_pairs.append(min_pair)
 
-        if len(possible_pairs) > 0:
-            print(possible_pairs)
         return possible_pairs
 
     def _getRelationValue(self, old_block, new_block):

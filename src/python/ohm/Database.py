@@ -14,26 +14,21 @@ from TableConfigParser import TableConfigParser
 
 
 class Database:
-    def __init__(self):
-        self.connection = self._connect()
+    def __init__(self, host, port, user, password, database, verbose):
+        self.connection = psycopg2.connect(
+            user=user,
+            password=password,
+            database=database,
+            host=host,
+            port=port,
+            sslmode='disable'
+            )
         self.cursor = self.connection.cursor()
-        self.verbose = False
+        self.verbose = verbose
 
     def __del__(self):
         self.cursor.close()
         self.connection.close()
-
-    def _connect(self):
-        return psycopg2.connect(
-            user='ohm',
-            password='r011T1d3',
-            database='ohmdb',
-#           host='yellowsubmarine.cs.ua.edu',
-            host='localhost',
-            port='5432',
-            sslmode='disable'
-            )
-#            , connect_timeout = '5'
 
     def fetchtables(self):
         tables = []

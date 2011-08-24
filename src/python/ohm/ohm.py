@@ -179,14 +179,7 @@ def getUID(db, table, id_key, propDict):
     return result
 
 
-def begin(name, url, drop_tables, verbose, starting_revision, ending_revision):
-    db = Database()
-    if verbose:
-        db.setverbose()
-
-    if drop_tables:
-        db._create_or_replace_tables()
-
+def begin(db, name, url, starting_revision, ending_revision):
     # this dictionary is to hold the current collection of id's needed by
     # various select queries. It should never be completely reassigned
     id = {
@@ -242,8 +235,15 @@ def begin(name, url, drop_tables, verbose, starting_revision, ending_revision):
         patch.digest()
         fileDict = patch.getDigestion()
 
+        rev = log.revision.number
+        with open('/tmp/ohm/scp.log', 'a') as f:
+            for each in fileDict:
+                scplist = fileDict[each]['pairs']
+                for scp in scplist:
+                    f.write('%s@%s: %s %s -> %s\n' % (each, rev, scp[2], scp[0],
+                        scp[1]))
         # insert changes into tables
-        insertChanges(db, fileDict, log, id)
+        #insertChanges(db, fileDict, log, id)
 
 
 def main(argv):
@@ -254,9 +254,14 @@ def main(argv):
     optparser.set_defaults(output_dir='/tmp/ohm')
     optparser.set_defaults(project_revision='1')
     optparser.set_defaults(project_revision_end='-1')
+    optparser.set_defaults(database_host='localhost')
+    optparser.set_defaults(database_port='5432')
+    optparser.set_defaults(database_user='ohm')
+    optparser.set_defaults(database_password='r011T1d3')
+    optparser.set_defaults(database_db='ohmdb')
     optparser.add_option('-o', '--output-dir', dest='output_dir',
             help='Output directory')
-    optparser.add_option('-p', '--project_name', dest='project_name',
+    optparser.add_option('-n', '--project_name', dest='project_name',
             help='Project name')
     optparser.add_option('-r', '--revision', dest='project_revision',
             help='Project revision to begin upon')
@@ -268,12 +273,20 @@ def main(argv):
             help='Drop all tables before beginning', action='store_true')
     optparser.add_option('-v', '--verbose', dest='verbose',
             help='Be verbose in output', action='store_true')
+    optparser.add_option('-a', '--host', dest='database_host',
+            help='Use a custom database host address')
+    optparser.add_option('-p', '--port', dest='database_port',
+            help='Use a custom database host port')
+    optparser.add_option('-u', '--username', dest='database_user',
+            help='Use a custom database username')
+    optparser.add_option('-P', '--password', dest='database_password',
+            help='Use a custom database host port')
+    optparser.add_option('-d', '--database', dest='database_db',
+            help='Use a custom database')
 
     # Invoke option parser
     (options, args) = optparser.parse_args(argv)
 
-    force_drop = options.force_drop
-    verbose = options.verbose
     starting_revision = int(options.project_revision)
     ending_revision = int(options.project_revision_end)
 
@@ -298,8 +311,23 @@ def main(argv):
     if False == os.path.exists(tmp_dir):
         _make_dir(tmp_dir)
 
-    begin(project_name, project_url, force_drop, verbose,
-            starting_revision, ending_revision)
+    with open('/tmp/ohm/scp.log', 'w'):
+        pass
+
+    # open database connection
+    db = Database(
+            host=options.database_host,
+            port=options.database_port,
+            user=options.database_user,
+            password=options.database_password,
+            database=options.database_db,
+            verbose=options.verbose
+            )
+    if options.force_drop:
+        db._create_or_replace_tables()
+
+
+    begin(db, project_name, project_url, starting_revision, ending_revision)
 
     sys.exit(0)
 

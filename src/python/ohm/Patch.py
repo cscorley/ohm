@@ -68,8 +68,6 @@ class Patch:
         d = Diff(self.project_repo)
         for diff in diffs:
             res = d.digest(diff)
-            if res is None:
-                continue
             file = d.getFile()
             classes, classSCP = d.getClasses()
             methods, methodSCP = d.getMethods()
@@ -80,9 +78,9 @@ class Patch:
                 continue
 
             if file in self.fileDict:
-                self.fileDict[file]['classes'] += classes
-                self.fileDict[file]['methods'] += methods
+#                self.fileDict[file]['classes'] += classes
+#                self.fileDict[file]['methods'] += methods
                 self.fileDict[file]['pairs'] += pairs
             else:
-                self.fileDict[file] = {'classes': classes, 'methods': methods,
+                self.fileDict[file] = { #'classes': classes, 'methods': methods,
                         'pairs': pairs}
