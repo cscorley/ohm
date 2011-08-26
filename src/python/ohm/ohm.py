@@ -244,7 +244,7 @@ def begin(db, name, url, starting_revision, ending_revision):
         with open('/tmp/ohm/scp.log', 'a') as f:
             for each in fileDict:
                 for scp in fileDict[each]['pairs']:
-                    f.write('%s@%s: %s %s -> %s\n' % (each, rev, scp[2], scp[0],
+                    f.write('%s: %s@%s %s -> %s\n' % (scp[2], each, rev, scp[0],
                         scp[1]))
         # insert changes into tables
         #insertChanges(db, fileDict, log, id)
@@ -315,6 +315,8 @@ def main(argv):
     if False == os.path.exists(tmp_dir):
         _make_dir(tmp_dir)
 
+    # clear out the temp log
+    # TODO remove this 
     with open('/tmp/ohm/scp.log', 'w'):
         pass
 

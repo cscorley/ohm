@@ -11,22 +11,22 @@ __version__ = '$Id$'
 
 
 class Class:
-    def __init__(self, name, methods, startln, endln, parents, bodystart,
-    file=None):
-        self.name = name
+    def __init__(self, name, methods, startln, endln, parents, bodystart):
+        self.name = str(name)
+        self.fqn = None
         self.methods = []
         for m in methods:
-            m.setClass(self)
+            m.setFQN(self.name)
             self.methods.append(m)
+
         self.startln = startln
         self.endln = endln
         self.parents = tuple(parents)
         self.bodystart = bodystart
-        self.file = file
 
-#        self.added_lines = endln - startln + 1
         self.added_lines = 0
         self.removed_lines = 0
+        self.text = None
 
     def __repr__(self):
         return str(self)
@@ -54,9 +54,6 @@ class Class:
     def __contains__(self, item):
         return item in self.methods
 
-    def setFile(self, file):
-        self.file = file
-
     def setChanges(self, added, removed):
         if added is not None:
             self.added_lines = added
@@ -72,9 +69,6 @@ class Class:
     def getChanges(self):
         return (self.added_lines, self.removed_lines)
 
-    def getFile(self):
-        return self.file
-
     def getMethods(self):
         return self.methods
 
@@ -85,10 +79,25 @@ class Class:
         return [self.startln, self.bodystart]
 
     def getLineRange(self):
-        return range(self.startln, self.endln)
+        return range(self.startln, self.endln + 1)
 
     def getLineXRange(self):
-        return xrange(self.startln, self.endln)
+        return xrange(self.startln, self.endln + 1)
 
     def getName(self):
         return self.name
+
+    def setFQN(self, fqn):
+        self.fqn = '.'.join([str(fqn),self.name])
+        for m in self.methods:
+            m.setFQN(self.fqn)
+
+    def getFQN(self):
+        # perhaps raise an error if None?
+        return self.fqn
+
+    def setText(self, text):
+        self.text = text 
+
+    def getText(self):
+        return self.text

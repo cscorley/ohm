@@ -266,7 +266,7 @@ class Diff:
             else:
                 tmp_old_classes.append(old_class)
 
-        # copy the old_classes that did not have a match in newp
+        # copy the old_classes that did not have a match in new_classes
         old_classes = tmp_old_classes
 
         # not sure how many class SCP it actually detects yet, considering
@@ -297,19 +297,6 @@ class Diff:
             self.methods += self.digestBlock(old_methods, new_methods)
             self.methodSCP += self.digestSCP(old_methods, new_methods)
 
-        """
-        while len(old_classes) > 0:
-            old_class = old_classes.pop()
-            old_methods = old_class.getMethods()
-
-            self.methods, self.methodSCP += self.digestBlock(old_methods, [])
-        while len(new_classes) > 0:
-            new_class = new_classes.pop()
-            new_methods = new_class.getMethods()
-
-            self.methods, self.methodSCP += self.digestBlock([], new_methods)
-        """
-
     def digestBlock(self, old_blocks, new_blocks):
         blocks = []
         sigChangePairs = []
@@ -335,17 +322,38 @@ class Diff:
         possible_pairs = []
         max_pair = None
         for r_block in removed_set:
-            max_pair = None
+            if max_pair is not None:
+                added_set.remove(max_pair[1]) # do not attempt to repair
+                max_pair = None
             for a_block in added_set:
-                relation_value = self._getRelationValue(r_block, a_block)
+                r_block_lines = r_block.getLines()
+                a_block_lines = a_block.getLines()
+                r_block_text = self.old_source_text[r_block_lines[0]-1:r_block_lines[1]]
+                a_block_text = self.new_source_text[a_block_lines[0]-1:a_block_lines[1]]
+                
+                s = SequenceMatcher(None, r_block_text, a_block_text)
+                relation_value = s.ratio()
+                if relation_value == 0.0:
+                    continue
+
                 if max_pair is None:
                     max_pair = (r_block, a_block, relation_value)
                 elif relation_value > max_pair[2]:
                     max_pair = (r_block, a_block, relation_value)
                 elif relation_value == max_pair[2]:
-                    # tie breaker needed
-                    print('tiebreaker needed: %s, %s, %s' % (r_block,
-                        a_block, max_pair[1]))
+                    # tie breaker needed, compare the names
+                    tb = self._tiebreaker(r_block.getName(), a_block.getName(),
+                            max_pair[1].getName())
+                    if tb == 0:
+                        tb = self._tiebreaker(str(r_block), str(a_block),
+                            str(max_pair[1]))
+
+                    if tb == 0:
+                        print('tiebreaker needed: %s, %s, %s' % (r_block,
+                            a_block, max_pair[1]))
+                    
+                    if tb == 1:
+                        max_pair = (r_block, a_block, relation_value)
 
             # since r_block->a_block pair has been found, should we remove
             # a_block from the list of possiblities?
@@ -354,15 +362,17 @@ class Diff:
 
         return possible_pairs
 
-    def _getRelationValue(self, old_block, new_block):
-        old_block_lines = old_block.getLines()
-        new_block_lines = new_block.getLines()
+    def _tiebreaker(self, old, new_a, new_b):
+        s = SequenceMatcher(None, new_a, old)
+        a_ratio = s.ratio()
+        s.set_seq1(new_b)
+        b_ratio = s.ratio()
+        if a_ratio > b_ratio:
+            return 1
+        elif a_ratio < b_ratio:
+            return 2
 
-        old_block_text = self.old_source_text[old_block_lines[0]-1:old_block_lines[1]]
-        new_block_text = self.new_source_text[new_block_lines[0]-1:new_block_lines[1]]
-        
-        s = SequenceMatcher(None, old_block_text, new_block_text)
-        return s.ratio()
+        return 0
 
     def _getFileChanges(self):
         deletions = 0

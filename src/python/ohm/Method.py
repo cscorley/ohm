@@ -11,19 +11,18 @@ __version__ = '$Id$'
 
 
 class Method:
-    def __init__(self, name, formals, startln, endln, parents, bodystart, file=None):
-        self.name = name
+    def __init__(self, name, formals, startln, endln, parents, bodystart):
+        self.name = str(name)
+        self.fqn = None
         self.formals = tuple(formals)
         self.startln = startln
         self.endln = endln
         self.parents = tuple(parents)
         self.bodystart = bodystart
-        self.file = file
-        self.aclass = None
 
-#       self.added_lines = endln - startln + 1
         self.added_lines = 0
         self.removed_lines = 0
+        self.text = None
 
     def __repr__(self):
         return str(self)
@@ -37,7 +36,7 @@ class Method:
     # comparison operations the parents list are converted to a tuple first,
     # as lists are muteable.
     def __hash__(self):
-        return hash((self.name, self.formals, self.parents))  # ,self.file))
+        return hash((self.name, self.formals, self.parents))
 
     def __cmp__(self, other):
         return cmp((self.name, self.formals, self.parents),
@@ -49,12 +48,6 @@ class Method:
 
     def __ne__(self, other):
         return not (self == other)
-
-    def setFile(self, file):
-        self.file = file
-
-    def setClass(self, aclass):
-        self.aclass = aclass
 
     def setChanges(self, added, removed):
         if added is not None:
@@ -70,12 +63,6 @@ class Method:
 
     def getChanges(self):
         return (self.added_lines, self.removed_lines)
-
-    def getFile(self):
-        return self.file
-
-    def getClass(self):
-        return self.aclass
 
     def getLines(self):
         return [self.startln, self.endln]
@@ -94,3 +81,16 @@ class Method:
 
     def getName(self):
         return self.name
+   
+    def setFQN(self, fqn):
+        self.fqn = '.'.join([str(fqn),self.name])
+
+    def getFQN(self):
+        # perhaps raise an error if None?
+        return self.fqn
+
+    def setText(self, text):
+        self.text = text 
+
+    def getText(self):
+        return self.text

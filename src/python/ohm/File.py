@@ -15,12 +15,12 @@ class File:
         self.name = str(name)
         self.classes = []
         for c in classes:
-            c.setFile(self)
             self.classes.append(c)
         self.length = length
 
         self.added_lines = 0
         self.removed_lines = 0
+        self.text = None
 
     def __repr__(self):
         return str(self)
@@ -44,7 +44,7 @@ class File:
         return self.length
 
     def __contains__(self, item):
-        return item in self.methods
+        return item in self.classes
 
     def setChanges(self, added, removed):
         if added is not None:
@@ -75,3 +75,9 @@ class File:
 
     def getName(self):
         return self.name
+
+    def setText(self, text):
+        self.text = text 
+
+    def getText(self):
+        return self.text
