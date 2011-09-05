@@ -23,7 +23,7 @@ class TableConfigParser:
             with open(file_name, 'r') as file:
                 table_re = re.compile(r'^\[(\w+)\]$')
                 column_re = re.compile(r'^(\w+)\s*=\s*(.*)$')
-                data_re = re.compile(r'^(\w+)\((\w+)\)$')
+                data_re = re.compile(r'^(\w+)\(([\s\w]+)\)$')
                 fkey_re = re.compile(r'^(\w+)(?:\((\w+)\))?$')
                 while True:
                     line = file.readline()

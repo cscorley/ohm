@@ -190,37 +190,65 @@ options {
 @header {
 from Method import Method
 from Class import Class
+from File import File
 }
 //NAK
 @init {
     self.scopes = []
-    self.methods = []
-    self.classes = []
+    self.object_scopes = [[]]
     self.formals = []
     self.modifier_line = 99999999
     self.log = []
+    self._file_name = None
+    self._file_len = 0
 }
 //NAK
 
 @members {
 
-def createName(self,scopes):
-    names = [n[1] for n in scopes]
-    return '.'.join(names)
-
-def createParentNames(self, scopetype):
-    return [self.createName(self.scopes[0:i+1]) for i in
-    range(0,len(self.scopes) - 1) if scopetype == self.scopes[i][0]]
-
 def addMethod(self, startln, endln, bodystart):
-    self.methods.append(Method(self.createName(self.scopes), self.formals, startln, endln,
-    self.createParentNames('method'), bodystart))
+    sub_blocks = self.object_scopes.pop()
+    name = self.scopes.pop()[1]
+    self.formals.reverse()
+    self.object_scopes[-1].append(
+        Method(name, self.formals, sub_blocks, startln, bodystart, endln)
+    )
     self.formals = []
+    self.modifier_line = 99999999
 
 def addClass(self, startln, endln, bodystart):
-    self.classes.append(Class(self.createName(self.scopes), self.methods, startln, endln,
-    self.createParentNames('class'), bodystart))
-    self.methods = []
+    sub_blocks = self.object_scopes.pop()
+    name = self.scopes.pop()[1]
+    self.object_scopes[-1].append(
+        Class(name, sub_blocks, startln, bodystart, endln)
+    )
+    self.modifier_line = 99999999
+
+@property
+def file_name(self):
+    return self._file_name
+
+@file_name.setter
+def file_name(self, value):
+    self._file_name = value
+
+@property
+def file_len(self):
+    return self._file_len
+
+@file_len.setter
+def file_len(self, value):
+    self._file_len = value
+
+def createFile(self):
+    classes = self.object_scopes.pop()
+    package_name = None
+    for s in self.scopes:
+        if s[0] == 'package':
+            package_name = s[1]
+            break
+            
+    return File(self.file_name, classes, self.file_len, package_name)
 
 def displayRecognitionError(self, tokenNames, e):
     hdr = self.getErrorHeader(e)
@@ -232,14 +260,18 @@ def displayRecognitionError(self, tokenNames, e):
 // starting point for parsing a java file
 /* The annotations are separated out to make parsing faster, but must be associated with
    a packageDeclaration or a typeDeclaration (and not an empty one). */
-compilationUnit returns [methlog]
+compilationUnit returns [file_and_log]
     :   annotations
         (   packageDeclaration importDeclaration* typeDeclaration*
         |   classOrInterfaceDeclaration typeDeclaration*
         ) EOF
-            { $methlog = (self.classes, self.log) }
+            {
+                $file_and_log = (self.createFile(), self.log) 
+            }
     |   packageDeclaration? importDeclaration* typeDeclaration* EOF
-            { $methlog = (self.classes, self.log) }
+            {
+                $file_and_log = (self.createFile(), self.log) 
+            }
     ;
 
 packageDeclaration
@@ -362,19 +394,25 @@ typeList
     ;
 
 classBody
-    :   l='{' classBodyDeclaration* r='}'
+    :   l='{' 
+            {
+                self.object_scopes.append([])
+            }
+    classBodyDeclaration* r='}'
             {
                 self.addClass(min(self.modifier_line, $l.getLine()), $r.getLine(), $l.getLine())
-                self.modifier_line = 99999999
-                self.scopes.pop() }
+                }
     ;
 
 interfaceBody
-    :   l='{' interfaceBodyDeclaration* r='}'
+    :   l='{'
+            {
+                self.object_scopes.append([])
+            }
+    interfaceBodyDeclaration* r='}'
             {
                 self.addClass(min(self.modifier_line, $l.getLine()), $r.getLine(), $l.getLine())
-                self.modifier_line = 99999999
-                self.scopes.pop() }
+                }
     ;
 
 classBodyDeclaration
@@ -582,10 +620,12 @@ typeName
     ;
 
 type returns [name]
-    :   t=classOrInterfaceType ('[' ']')*
-        { $name = $t.name }
-    |   t=primitiveType ('[' ']')*
-        { $name = $t.name }
+    :   t=classOrInterfaceType { $name = $t.name }
+        (l='[' { $name += '[' }
+        r=']' { $name += ']' } )*
+    |   t=primitiveType { $name = $t.name }
+        (l='[' { $name += '[' }
+        r=']' { $name += ']' } )*
     ;
 
 classOrInterfaceType returns [name]
@@ -646,20 +686,24 @@ formalParameterDeclsRest
     ;
 //NAK
 methodBody
-    :   l='{' blockStatement* r='}'
+    :   l='{' 
+            {
+                self.object_scopes.append([])
+            }
+    blockStatement* r='}'
             {
                 self.addMethod(min(self.modifier_line,$l.getLine()), $r.getLine(), $l.getLine())
-                self.modifier_line = 99999999
-                self.scopes.pop()
             }
     ;
 //NAK
 constructorBody
-    :   l='{' explicitConstructorInvocation? blockStatement* r='}'
+    :   l='{' 
+            {
+                self.object_scopes.append([])
+            }
+    explicitConstructorInvocation? blockStatement* r='}'
             {
                 self.addMethod(min(self.modifier_line,$l.getLine()), $r.getLine(), $l.getLine())
-                self.modifier_line = 99999999
-                self.scopes.pop()
             }
     ;
 

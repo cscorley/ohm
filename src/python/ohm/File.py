@@ -9,75 +9,41 @@
 __author__  = 'Christopher S. Corley <cscorley@crimson.ua.edu>'
 __version__ = '$Id$'
 
+from Block import Block
 
-class File:
-    def __init__(self, name, classes, length):
-        self.name = str(name)
-        self.classes = []
-        for c in classes:
-            self.classes.append(c)
-        self.length = length
 
-        self.added_lines = 0
-        self.removed_lines = 0
-        self.text = None
+class File(Block):
+    def __init__(self, path, sub_blocks, file_len, package_name=None, text=None):
+        super(File, self).__init__(
+                name=path, 
+                start_line=1, 
+                body_line=1,
+                end_line=file_len,
+                super_block_name=None,
+                sub_blocks=sub_blocks, 
+                text=text
+                )
 
-    def __repr__(self):
-        return str(self)
+        self.package_name = package_name
 
-    def __str__(self):
+    @property
+    def package_name(self):
+        """The name of the block which contains this block"""
+        return self._package_name
+
+    @package_name.setter
+    def package_name(self, value):
+        # change the full name as well
+        self._package_name = value
+        if value is not None:
+            # use the package name instead of the file name for all classes
+            for sb in self.sub_blocks:
+                sb.super_block_name = str(self.package_name)
+
+    @property
+    def classes(self):
+        return self.sub_blocks
+
+    @property
+    def path(self):
         return self.name
-
-    def __hash__(self):
-        return hash(self.name)
-
-    def __cmp__(self, other):
-        return cmp(self.name, other.name)
-
-    def __eq__(self, other):
-        return self.name == other.name
-
-    def __ne__(self, other):
-        return not (self == other)
-
-    def __len__(self):
-        return self.length
-
-    def __contains__(self, item):
-        return item in self.classes
-
-    def setChanges(self, added, removed):
-        if added is not None:
-            self.added_lines = added
-        if removed is not None:
-            self.removed_lines = removed
-
-    def addChanges(self, added, removed):
-        if added is not None:
-            self.added_lines += added
-        if removed is not None:
-            self.removed_lines += removed
-
-    def getChanges(self):
-        return (self.added_lines, self.removed_lines)
-
-    def getClasses(self):
-        return self.classes
-
-    def getLines(self):
-        return [0, self.length]
-
-    def getLineRange(self):
-        return range(0, self.length)
-
-    def getLineXRange(self):
-        return xrange(0, self.length)
-
-    def getName(self):
-        return self.name
-
-    def setText(self, text):
-        self.text = text 
-
-    def getText(self):
-        return self.text

@@ -61,7 +61,7 @@ class Database:
             command += 'id SERIAL NOT NULL PRIMARY KEY'.format(name=name)
 
         for d in data:
-            command += (', {name} {type}'.format(name=d[0], type=d[1]))
+            command += (', {name} {data_type}'.format(name=d[0], data_type=d[1]))
         for fk in fkeys:
             command += (', {name} INTEGER REFERENCES {table}(id)'.format(
                 name=fk[0], table=fk[1]))

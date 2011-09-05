@@ -9,7 +9,7 @@
 from __future__ import with_statement, print_function
 
 __author__  = 'Christopher S. Corley <cscorley@crimson.ua.edu>'
-__version__ = '$Id$'
+__version__ = '$uid: ohm.py 17854 2011-08-26 19:29:29Z cscorley $'
 
 import os
 import sys
@@ -17,6 +17,8 @@ from shutil import rmtree
 from optparse import OptionParser, SUPPRESS_HELP
 
 from Method import Method
+from Class import Class
+from File import File
 from Patch import Patch
 from Repository import Repository
 from Database import Database
@@ -32,16 +34,19 @@ carol_svn_url = 'http://steel.cs.ua.edu/repos/carol/trunk/'
 steel_svn_url = 'https://steel.cs.ua.edu/svn/projects/clones/src/ohm/trunk'
 
 
-def selinupChanges(db, id, added, deleted):
+def selinupChanges(db, uid, added, deleted):
     # these two strings will be used to build the WHERE section of our queries
     iscompare = '{key} is %s'
     eqcompare = '{key}=%s'
 
+    nuid = uid.copy()
+    del nuid['container_block']
+
     # build the list of WHERE comparison statements
     wherelist = []
-    for key in id:
+    for key in nuid:
         # postgresql will expect None/NULL comparisons in "x is NULL" format
-        if id[key] is None:
+        if nuid[key] is None:
             wherelist.append(iscompare.format(key=key))
         else:
             wherelist.append(eqcompare.format(key=key))
@@ -49,114 +54,111 @@ def selinupChanges(db, id, added, deleted):
     # join all of the WHERE comparisons and query for existing entries
     wstr = ' AND '.join(wherelist)
     result = db.execute('SELECT additions, deletions FROM change WHERE ' +
-                        wstr, tuple(id.values()))
+                        wstr, tuple(nuid.values()))
 
     # INSERT an entry or UPDATE the existing entry
     if len(result) == 0:
-        propstr = ','.join(['additions', 'deletions'] + id.keys())
-        valstr = '%s,' * (len(id) + 2)
+        propstr = ','.join(['additions', 'deletions'] + nuid.keys())
+        valstr = '%s,' * (len(nuid) + 2)
         valstr = valstr.rstrip(',')
 
         db.execute('INSERT INTO change ({props}) VALUES ({vals});\
                     '.format(props=propstr, vals=valstr),
-                    (added, deleted) + tuple(id.values()))
+                    (added, deleted) + tuple(nuid.values()))
     elif added != result[0][0] or deleted != result[0][1]:
         db.execute('UPDATE change SET additions=%s, deletions=%s WHERE ' +
-                    wstr, (added, deleted) + tuple(id.values()))
+                    wstr, (added, deleted) + tuple(nuid.values()))
 
     db.commit()
 
 
-def insertChanges(db, fileDict, log, id):
-    # should probably check that all the tables exist first
-    cursor = db.getcursor()
-    if cursor.closed:
-        # abort
-        return False
+def insert_changes(db, affected, uid):
+    for affected_block in affected:
+        cursor = db.getcursor()
+        if cursor.closed:
+            # abort
+            return
 
-    for file in fileDict:
-        # get the file ID
+        uid['block'] = getBlockUID(db, affected_block, uid)
+        added, deleted = affected_block.changes
+        selinupChanges(db, uid, added, deleted)
+
+        if affected_block.has_sub_blocks:
+            uid['container_block'] = uid['block']
+            if affected_block.has_scp:
+                insert_renames(db, affected_block, uid)
+            insert_changes(db, affected_block, uid)
+
+    db.commit()
+
+
+def insert_renames(db, affected, uid):
+    for pair in affected.scp:
+        original = pair[0]
+        target = pair[1]
+        ratio = pair[2]
+        original_id = getBlockUID(db, original, uid)
+        target_id = getBlockUID(db, target, uid)
+
+        values = (uid['project'],
+                uid['revision'],
+                uid['owner'],
+                ratio,
+                original_id,
+                target_id
+                )
+
+        prop_str = 'project,revision,owner,ratio,original,target'
+        val_str = '%s,' * (len(values))
+        val_str = val_str.rstrip(',')
+        db.execute('INSERT INTO rename ({props}) VALUES ({vals});\
+                '.format(props=prop_str, vals=val_str),
+                values)
+
+def getBlockUID(db, block, uid):
         propDict = {
-                'project': id['project'],
-                'path': file.getName(),
-                'hash': hash(file)
+                'project': uid['project'],
+                'name': block.name,
+                'full_name': block.full_name,
+                'hash': hash(block),
+                'type': block.__class__.__name__,
+                'block': uid['container_block'] 
                 }
+        return getUID(db, 'block', ('hash', 'block', 'project'), propDict)
 
-        # set the class/method entries to None to enter changes to files only
-        id['file'] = getUID(db, 'file', 'hash', propDict)
-        id['class'] = None
-        id['method'] = None
 
-        added, deleted = file.getChanges()
-        selinupChanges(db, id, added, deleted)
-
-        affected_classes = _uniq(fileDict[file]['classes'])
-        affected_methods = _uniq(fileDict[file]['methods'])
-
-        for aclass in affected_classes:
-            # get the class ID
-            propDict = {
-                    'project': id['project'],
-                    'signature': str(aclass),
-                    'hash': hash(aclass),
-                    'file': id['file']
-                    }
-            id['class'] = getUID(db, 'class', 'hash', propDict)
-            id['method'] = None
-
-            # see if change already exists, if so update it and if not add it
-            added, deleted = aclass.getChanges()
-            selinupChanges(db, id, added, deleted)
-
-            for method in aclass.getMethods():
-                if method in affected_methods:
-                    # get the method ID
-                    propDict = {
-                            'project': id['project'],
-                            'signature': str(method),
-                            'hash': hash(method),
-                            'class': id['class'],
-                            'file': id['file']
-                            }
-                    id['method'] = getUID(db, 'method', 'hash', propDict)
-                    added, deleted = method.getChanges()
-
-                    selinupChanges(db, id, added, deleted)
-                    affected_methods.remove(method)
-
-        # get the remaining methods, these should be all added/removed methods
-        for method in affected_methods:
-            aclass = method.getClass()
-            propDict = {
-                    'project': id['project'],
-                    'signature': str(aclass),
-                    'hash': hash(aclass),
-                    'file': id['file']
-                    }
-            id['class'] = getUID(db, 'class', 'hash', propDict)
-
-            propDict = {
-                    'project': id['project'],
-                    'signature': str(method),
-                    'hash': hash(method),
-                    'class': id['class'],
-                    'file': id['file']
-                    }
-            id['method'] = getUID(db, 'method', 'hash', propDict)
-            added, deleted = method.getChanges()
-
-            selinupChanges(db, id, added, deleted)
-    db.commit()
+def search_for_container(block, container):
+    if block in container:
+        return container
+    elif container.has_sub_blocks:
+        for sub_block in container:
+            result = search_for_container(block, sub_block)
+            if result is not None:
+                return result
+        return None
+    else:
+        return None
 
 
 def getUID(db, table, id_key, propDict):
-    if 'project' not in propDict:
-        result = db.execute('SELECT id FROM {table} where {property}=%s;'.format(
-            table=table, property=id_key), (propDict[id_key],))
-    else:
-        result = db.execute('SELECT id FROM {table} where {property}=%s and \
-                project=%s;'.format(table=table, property=id_key),
-                (propDict[id_key], propDict['project']))
+    iscompare = '{key} is %s'
+    eqcompare = '{key}=%s'
+
+    # build the list of WHERE comparison statements
+    wherelist = []
+    for key in id_key:
+        # postgresql will expect None/NULL comparisons in "x is NULL" format
+        if propDict[key] is None:
+            wherelist.append(iscompare.format(key=key))
+        else:
+            wherelist.append(eqcompare.format(key=key))
+
+    # join all of the WHERE comparisons and query for existing entries
+    wstr = ' AND '.join(wherelist)
+
+    result = db.execute('SELECT id FROM {table} where {id_prop};'.format(
+            table=table, id_prop=wstr),
+            tuple([propDict[id_key[i]] for i in range(0, len(id_key))]))
 
     if len(result) == 0:
         result = None
@@ -172,6 +174,7 @@ def getUID(db, table, id_key, propDict):
         db.execute('INSERT INTO {table} ({props}) VALUES ({vals});\
                 '.format(table=table, props=propstr, vals=valstr),
                 tuple(propDict.values()))
+        db.commit()
         result = getUID(db, table, id_key, propDict)
     else:
         result = result[0][0]
@@ -180,15 +183,14 @@ def getUID(db, table, id_key, propDict):
 
 
 def begin(db, name, url, starting_revision, ending_revision):
-    # this dictionary is to hold the current collection of id's needed by
+    # this dictionary is to hold the current collection of uid's needed by
     # various select queries. It should never be completely reassigned
-    id = {
+    uid = {
             'project': None,
             'revision': None,
             'owner': None,
-            'file': None,
-            'class': None,
-            'method': None
+            'block': None,
+            'container_block': None
             }
 
     # this dictionary is used throughout as a unique properties dictionary
@@ -198,8 +200,8 @@ def begin(db, name, url, starting_revision, ending_revision):
             'name': name,
             'url': url
             }
-    # get the project id
-    id['project'] = getUID(db, 'project', 'url', propDict)
+    # get the project uid
+    uid['project'] = getUID(db, 'project', ('url',), propDict)
 
     project_repo = Repository(name, url, starting_revision, ending_revision)
     for revision_info in project_repo.getRevisions():
@@ -216,38 +218,33 @@ def begin(db, name, url, starting_revision, ending_revision):
 
         print('Revision %d' % log.revision.number)
 
-        # there are two id's which we can extract from the log for this
+        # there are two uid's which we can extract from the log for this
         # revision
 
-        # get the owner/commiter id
+        # get the owner/commiter uid
         propDict = {
-                'project': id['project'],
+                'project': uid['project'],
                 'name': log.author
                 }
-        id['owner'] = getUID(db, 'owner', 'name', propDict)
+        uid['owner'] = getUID(db, 'owner', ('name', 'project'), propDict)
 
-        # get the revision id
+        # get the revision uid
         propDict = {
-                'project': id['project'],
+                'project': uid['project'],
                 'number': log.revision.number,
                 'message': log.message,
-                'owner': id['owner']
+                'owner': uid['owner']
                 }
-        id['revision'] = getUID(db, 'revision', 'number', propDict)
+        uid['revision'] = getUID(db, 'revision', ('number', 'project'), propDict)
 
         # parse for the changes
         patch = Patch(diff, project_repo)
-        patch.digest()
-        fileDict = patch.getDigestion()
 
-        rev = log.revision.number
-        with open('/tmp/ohm/scp.log', 'a') as f:
-            for each in fileDict:
-                for scp in fileDict[each]['pairs']:
-                    f.write('%s: %s@%s %s -> %s\n' % (scp[2], each, rev, scp[0],
-                        scp[1]))
+        for digestion in patch.digest():
+            uid['container_block'] = None
+            insert_changes(db, [digestion[0]], uid)
+
         # insert changes into tables
-        #insertChanges(db, fileDict, log, id)
 
 
 def main(argv):
@@ -331,6 +328,7 @@ def main(argv):
             )
     if options.force_drop:
         db._create_or_replace_tables()
+        db.commit()
 
 
     begin(db, project_name, project_url, starting_revision, ending_revision)

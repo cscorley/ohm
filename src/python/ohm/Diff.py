@@ -17,6 +17,7 @@ import os
 import codecs
 from difflib import SequenceMatcher
 from datetime import datetime
+from pprint import pprint
 
 from PatchLineDivision import PatchLineDivision
 from File import File
@@ -35,27 +36,18 @@ class Diff:
         self.revision = None
         self.project_repo = project_repo
 
-        self.classes = []
-        self.methods = []
-        self.classSCP = []
-        self.methodSCP = []
-        self.file = None
+        self.scp = []
 
-        self.diff_divisions = []
         self.old_source = None
         self.new_source = None
+        self.old_file = None
+        self.new_file = None
+        self.digestion = None
 
-    def getClasses(self):
-        return self.classes, self.classSCP
 
-    def getMethods(self):
-        return self.methods, self.methodSCP
-
-    def getFile(self):
-        return self.file
-
-    def getDigestion(self):
-        return self.file, self.classes, self.classSCP, self.methods, self.methodSCP
+        self.old_file_svn = re.compile('--- ([-/._\w ]+.java)\t\(revision (\d+)\)')
+        self.new_file_svn = re.compile('\+\+\+ ([-/._\w ]+.java)\t\(revision (\d+)\)')
+        self.chunk_startu = re.compile('@@ -(\d+)(?:,(\d+))? \+(\d+)(?:,(\d+))? @@')
 
     def _printToLog(self, source, revision_number, log):
         if len(log) > 0:
@@ -102,20 +94,14 @@ class Diff:
         except IOError:
             return None
         parser = JavaParser(CommonTokenStream(lexer))
-        results = parser.compilationUnit()
-        if results is None:
-            return None
-        else:
-            return results + (_file_len(filePath), )
+        parser.file_name = source
+        parser.file_len = _file_len(filePath)
+        return parser.compilationUnit()
 
     def digest(self, diff_file):
-        self.classes = []
-        self.methods = []
-        self.classSCP = []
-        self.methodSCP = []
-        self.file = None
+        self.scp = []
 
-        self.diff_divisions = []
+        diff_divisions = []
         self.old_source = None
         self.new_source = None
         self.old_source_text = None
@@ -123,27 +109,28 @@ class Diff:
         if len(diff_file) == 0:
             return None
 
-        # self.diff_divisions is a temporary list containing the diff text divided
-        # based on line numbers in source.
+        self.old_file = None
+        self.new_file = None
+        self.digestion = None
+        
+        log = []
+
         temp = []
-        old_file_svn = re.compile('--- ([-/._\w ]+.java)\t\(revision (\d+)\)')
-        new_file_svn = re.compile('\+\+\+ ([-/._\w ]+.java)\t\(revision (\d+)\)')
-        chunk_startu = re.compile('@@ -(\d+)(?:,(\d+))? \+(\d+)(?:,(\d+))? @@')
-        list_itr = None
         start = 0
         old_revision_number = 0
         new_revision_number = 0
+        list_itr = None
         
         isNewFile = False
         isRemovedFile = False
 
-        while start < len(diff_file) and not chunk_startu.match(diff_file[start]):
-            m = old_file_svn.match(diff_file[start])
+        while start < len(diff_file) and not self.chunk_startu.match(diff_file[start]):
+            m = self.old_file_svn.match(diff_file[start])
             if m:
                 self.old_source = m.group(1)
                 old_revision_number = int(m.group(2))
 
-                nm = new_file_svn.match(diff_file[start + 1])
+                nm = self.new_file_svn.match(diff_file[start + 1])
                 if nm:
                     self.new_source = nm.group(1)
                     new_revision_number = int(nm.group(2))
@@ -174,9 +161,9 @@ class Diff:
         # Divide the diff into separate chunks
         for i in range(start + 1, len(diff_file)):
             tmp = diff_file[i]
-            chunk_matcher = chunk_startu.match(tmp)
+            chunk_matcher = self.chunk_startu.match(tmp)
             if chunk_matcher:
-                if len(self.diff_divisions) == 0:
+                if len(diff_divisions) == 0:
                     if int(chunk_matcher.group(1)) == 0 and int(chunk_matcher.group(2)) == 0:
                         if not isNewFile:
                             print('Uhh.... captain? New file not new?')
@@ -186,171 +173,176 @@ class Diff:
                 for j in range(start, i - 1):
                     temp.append(diff_file[j])
                 if len(temp) > 0:
-                    self.diff_divisions.append(temp)
+                    diff_divisions.append(temp)
                 temp = []
                 start = i
 
         for j in range(start, len(diff_file)):
             temp.append(diff_file[j])
-        self.diff_divisions.append(temp)
+        diff_divisions.append(temp)
 
+        self.PLD = PatchLineDivision(diff_divisions)
+        
         if old_revision_number == 0:
             isNewFile = True
         if new_revision_number == 0:
             isRemovedFile = True
 
-        old_classes = []
-        new_classes = []
-        log = []
-
         # Begin prep to run ANTLR on the source files
+        
         # Check out from SVN the original file
         if not isNewFile:
             res = self._getParserResults(self.old_source, old_revision_number)
             if res is None:
                 # some error has occured.
                 return None
-            old_classes = res[0]
+            self.old_file = res[0]
             log = res[1]
-            old_file_len = res[2]
             with open('/tmp/ohm/svn/' + self.old_source, 'r') as f:
                 self.old_source_text = f.readlines()
+
+            self.old_file.text = self.old_source_text    
+            #self.old_file.recursive_print()
+
+            self._printToLog(self.old_source, old_revision_number, log)
+
+            self.PLD.digest_old(self.old_file)
         
-        self._printToLog(self.old_source, old_revision_number, log)
         if not isRemovedFile:
             res = self._getParserResults(self.new_source, new_revision_number)
             if res is None:
                 # some error has occured.
                 return None
-            new_classes = res[0]
+            self.new_file = res[0]
             log = res[1]
-            new_file_len = res[2]
 
             with open('/tmp/ohm/svn/' + self.new_source, 'r') as f:
                 self.new_source_text = f.readlines()
 
-        self._printToLog(self.new_source, new_revision_number, log)
+            self.new_file.text = self.new_source_text
+            #self.new_file.recursive_print()
 
-        if old_classes == None:
-            print('ANTLR error on old: %s' % self.new_source)
-            return None
-        elif new_classes == None:
-            print('ANTLR error on new: %s' % self.old_source)
-            return None
+            self._printToLog(self.new_source, new_revision_number, log)
 
-        fileAdditions, fileDeletions = self._getFileChanges()
+            self.PLD.digest_new(self.new_file)
+            
+
+        self.recursive_scp(self.old_file, self.new_file)
         if isNewFile:
-            self.file = File(self.new_source, new_classes, new_file_len)
+            self.digestion = self.new_file
         else:
-            self.file = File(self.old_source, old_classes, old_file_len)
+            self.digestion = self.old_file
 
-        self.file.setChanges(fileAdditions, fileDeletions)
+        if not isRemovedFile:
+            self.digestion.removed_count += self.new_file.removed_count
+            self.digestion.added_count += self.new_file.added_count
+            self.recursive_wtf(self.digestion, self.new_file)
 
-        self.classes += self.digestBlock(old_classes, new_classes)
-        self.classSCP += self.digestSCP(old_classes, new_classes)
+    def recursive_wtf(self, old, new):
+        if old is None or new is None:
+            return
 
-        tmp_old_classes = []
-        old_methods = []
-        new_methods = []
+        if old.has_sub_blocks and new.has_sub_blocks:
+            old_set = set(old.sub_blocks)
+            new_set = set(new.sub_blocks)
+        else:
+            return 
+
+        common_set = old_set & new_set
+        added_set = new_set - common_set
         
-        # first, for classes which have the same identifier, only compare
-        # those methods from each
-        for old_class in old_classes:
-            if old_class in new_classes:
-                new_class = new_classes.pop(new_classes.index(old_class))
-                old_methods = old_class.getMethods()
-                new_methods = new_class.getMethods()
+        for block in common_set:
+            o = old.sub_blocks[old.sub_blocks.index(block)]
+            n = new.sub_blocks[new.sub_blocks.index(block)]
+            o.removed_count += n.removed_count
+            o.added_count += n.added_count
 
-                self.methods += self.digestBlock(old_methods, new_methods)
-                self.methodSCP += self.digestSCP(old_methods, new_methods)
+            # prune the unchanged blocks
+            if o.removed_count == 0 and o.added_count == 0:
+                old.sub_blocks.remove(o)
             else:
-                tmp_old_classes.append(old_class)
+                self.recursive_wtf(o, n)
 
-        # copy the old_classes that did not have a match in new_classes
-        old_classes = tmp_old_classes
+        old.sub_blocks.extend(added_set)
 
-        # not sure how many class SCP it actually detects yet, considering
-        # class renames also come with the problem of the file itself being
-        # renamed (which may go untracked in subverison)
 
-        # second, try to pair up classes by the detected renamings
-        if len(old_classes) > 0 and len(new_classes) > 0:
-            for pair in self.classSCP:
-                if pair[0] in old_classes and pair[1] in new_classes:
-                    old_class = old_classes.pop(old_classes.index(pair[0]))
-                    new_class = new_classes.pop(new_classes.index(pair[1]))
-                    old_methods = old_class.getMethods()
-                    new_methods = new_class.getMethods()
+    def recursive_scp(self, old, new):
+        """ This method is intended to recursively process all sub_blocks in
+        the given block"""
+        if old is None or new is None:
+            return
 
-                    self.methods += self.digestBlock(old_methods, new_methods)
-                    self.methodSCP += self.digestSCP(old_methods, new_methods)
+        if old.has_sub_blocks and new.has_sub_blocks:
+            old_set = set(old.sub_blocks)
+            new_set = set(new.sub_blocks)
+        else:
+            return 
 
-        # as a last resort, do not care which class the methods originate from
-        old_methods = []
-        new_methods = []
+        common_set = old_set & new_set
+        added_set = new_set - common_set
+        removed_set = old_set - common_set
+        
+        for block in common_set:
+            o = old.sub_blocks[old.sub_blocks.index(block)]
+            n = new.sub_blocks[new.sub_blocks.index(block)]
+            self.recursive_scp(o, n)
 
-        if len(old_classes) > 0 or len(new_classes) > 0:
-            for c in old_classes:
-                old_methods += list(c.getMethods())
-            for c in new_classes:
-                new_methods += list(c.getMethods())
-            self.methods += self.digestBlock(old_methods, new_methods)
-            self.methodSCP += self.digestSCP(old_methods, new_methods)
+        # get scp
+        scp = self.digestSCP(added_set, removed_set)
+        old.scp = scp
 
-    def digestBlock(self, old_blocks, new_blocks):
-        blocks = []
-        sigChangePairs = []
+        for pair in scp:
+            if pair[0] in old and pair[1] in new:
+                o = old.sub_blocks[old.sub_blocks.index(pair[0])]
+                n = new.sub_blocks[new.sub_blocks.index(pair[1])]
+                self.recursive_scp(o, n)
 
-        # For changed blocks, we hand off work to PatchLineDivision to inspect
-        # the diff and add those blocks to our final list as well.
-        pld = PatchLineDivision(old_blocks, new_blocks)
-        for l in self.diff_divisions:
-            pld.digest(l)
+        self.scp += scp
 
-        blocks = pld.getDigestion()
-
-        return _uniq(blocks)
-
-    def digestSCP(self, old_blocks, new_blocks):
-        source_set = set(old_blocks)
-        patch_set = set(new_blocks)
-        modified_set = source_set & patch_set
-        added_set = patch_set - modified_set
-        removed_set = source_set - modified_set
-
+    def digestSCP(self, removed_set, added_set):
         # renames: yes, merges: no, splits: not handled, clones: yes
         possible_pairs = []
         max_pair = None
+        tiebreak_pairs = []
         for r_block in removed_set:
             if max_pair is not None:
-                added_set.remove(max_pair[1]) # do not attempt to repair
+                #added_set.remove(max_pair[1]) # do not attempt to re-pair
                 max_pair = None
+
+            tiebreak_pairs = []
             for a_block in added_set:
-                r_block_lines = r_block.getLines()
-                a_block_lines = a_block.getLines()
-                r_block_text = self.old_source_text[r_block_lines[0]-1:r_block_lines[1]]
-                a_block_text = self.new_source_text[a_block_lines[0]-1:a_block_lines[1]]
-                
-                s = SequenceMatcher(None, r_block_text, a_block_text)
+                # for pairing of blocks with a small number of sub_blocks (1-3), this
+                # will be fairly inaccurate
+                if r_block.has_sub_blocks and a_block.has_sub_blocks:
+                    r_block_seq = r_block.sub_blocks
+                    a_block_seq = a_block.sub_blocks
+                else:
+                    r_block_seq = r_block.text
+                    a_block_seq = a_block.text
+
+                s = SequenceMatcher(None, r_block_seq, a_block_seq)
                 relation_value = s.ratio()
                 if relation_value == 0.0:
                     continue
 
                 if max_pair is None:
                     max_pair = (r_block, a_block, relation_value)
+                    tiebreak_pairs = []
                 elif relation_value > max_pair[2]:
                     max_pair = (r_block, a_block, relation_value)
+                    tiebreak_pairs = []
                 elif relation_value == max_pair[2]:
                     # tie breaker needed, compare the names
-                    tb = self._tiebreaker(r_block.getName(), a_block.getName(),
-                            max_pair[1].getName())
+                    tb = self._tiebreaker(r_block.name, a_block.name,
+                            max_pair[1].name)
                     if tb == 0:
                         tb = self._tiebreaker(str(r_block), str(a_block),
                             str(max_pair[1]))
 
                     if tb == 0:
-                        print('tiebreaker needed: %s, %s, %s' % (r_block,
-                            a_block, max_pair[1]))
+                        tiebreak_pairs.append((r_block, a_block,
+                            relation_value))
+                        tiebreak_pairs.append(max_pair)
                     
                     if tb == 1:
                         max_pair = (r_block, a_block, relation_value)
@@ -358,9 +350,64 @@ class Diff:
             # since r_block->a_block pair has been found, should we remove
             # a_block from the list of possiblities?
             if max_pair is not None:
-                possible_pairs.append(max_pair)
+                if not max_pair in tiebreak_pairs:
+                    possible_pairs.append(max_pair)
+            if len(tiebreak_pairs) > 0:
+                #possible_pairs.extend(tiebreak_pairs)
+                print('------------')
+                for each in tiebreak_pairs:
+                    print('tiebreaker needed: %s, %s, %s' % each)
+                print('------------')
 
-        return possible_pairs
+        return self._prunePairs(_uniq(possible_pairs))
+
+    def _prunePairs(self, possible_pairs):
+        # find pairs which have duplicates, select only best
+        more_possible = []
+        tiebreak_pairs = []
+        
+        max_pair = None
+        for each in possible_pairs:
+            tiebreak_pairs = []
+            max_pair = each
+            for pair in possible_pairs:
+                if max_pair != pair and max_pair[0] == pair[0]:
+                    if max_pair[2] < pair[2]:
+                        max_pair = pair
+                        tiebreak_pairs = []
+                    elif max_pair[2] == pair[2]:
+                        tiebreak_pairs.append(pair)
+                        tiebreak_pairs.append(max_pair)
+
+            if not max_pair in tiebreak_pairs:
+                more_possible.append(max_pair)
+            if len(tiebreak_pairs) > 0:
+                #possible_pairs.extend(tiebreak_pairs)
+                pass
+
+        
+        tiebreak_pairs = []
+        most_possible = []
+        for each in more_possible:
+            tiebreak_pairs = []
+            max_pair = each
+            for pair in more_possible:
+                if max_pair != pair and max_pair[1] == pair[1]:
+                    if max_pair[2] < pair[2]:
+                        max_pair = pair
+                        tiebreak_pairs = []
+                    elif max_pair[2] == pair[2]:
+                        tiebreak_pairs.append(pair)
+                        tiebreak_pairs.append(max_pair)
+
+            if not max_pair in tiebreak_pairs:
+                most_possible.append(max_pair)
+            if len(tiebreak_pairs) > 0:
+                #possible_pairs.extend(tiebreak_pairs)
+                pass
+
+                        
+        return _uniq(most_possible)
 
     def _tiebreaker(self, old, new_a, new_b):
         s = SequenceMatcher(None, new_a, old)
@@ -373,15 +420,3 @@ class Diff:
             return 2
 
         return 0
-
-    def _getFileChanges(self):
-        deletions = 0
-        additions = 0
-        for division in self.diff_divisions:
-            for line in division:
-                if line.startswith('-'):
-                    deletions += 1
-                elif line.startswith('+'):
-                    additions += 1
-
-        return additions, deletions

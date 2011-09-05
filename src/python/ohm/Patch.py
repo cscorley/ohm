@@ -13,6 +13,7 @@ __version__ = '$Id$'
 
 import os
 import re
+from pprint import pprint
 
 from Diff import Diff
 from snippets import _uniq
@@ -25,12 +26,9 @@ class Patch:
         self.project_repo = project_repo
 
         #methods is the list of methods affected by the patch
-        self.fileDict = {}
+        self.digestion = []
         self.chunk_startu = re.compile('@@ -(\d+),(\d+) \+(\d+),(\d+) @@')
         self.chunk_startc = re.compile('\*\*\* (\d+),(\d+) \*\*\*')
-
-    def getDigestion(self):
-        return self.fileDict
 
     def digest(self):
         lines = self.patch_file
@@ -67,20 +65,7 @@ class Patch:
 
         d = Diff(self.project_repo)
         for diff in diffs:
-            res = d.digest(diff)
-            file = d.getFile()
-            classes, classSCP = d.getClasses()
-            methods, methodSCP = d.getMethods()
-            pairs = classSCP + methodSCP
-
-            # todo: to include classes and pairs
-            if len(methods) == 0:
+            d.digest(diff)
+            if d.digestion is None:
                 continue
-
-            if file in self.fileDict:
-#                self.fileDict[file]['classes'] += classes
-#                self.fileDict[file]['methods'] += methods
-                self.fileDict[file]['pairs'] += pairs
-            else:
-                self.fileDict[file] = { #'classes': classes, 'methods': methods,
-                        'pairs': pairs}
+            yield (d.digestion, d.scp)
