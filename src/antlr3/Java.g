@@ -498,9 +498,8 @@ methodDeclaratorRest
         (   methodBody
         |   r=';'
             {
-                self.modifier_line = 99999999
-                self.scopes.pop()
-                self.formals = []
+                self.object_scopes.append([])
+                self.addMethod(self.modifier_line, $r.getLine(), $r.getLine())
             }
         )
     ;
@@ -511,9 +510,8 @@ voidMethodDeclaratorRest
         (   methodBody
         |   r=';'
             {
-                self.modifier_line = 99999999
-                self.scopes.pop()
-                self.formals = []
+                self.object_scopes.append([])
+                self.addMethod(self.modifier_line, $r.getLine(), $r.getLine())
             }
         )
     ;
