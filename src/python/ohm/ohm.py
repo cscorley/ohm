@@ -22,6 +22,7 @@ from File import File
 from Patch import Patch
 from Repository import Repository
 from Database import Database
+import psycopg2
 from psycopg2 import IntegrityError
 import time
 
@@ -233,6 +234,7 @@ def begin(db, name, url, starting_revision, ending_revision):
                 'project': uid['project'],
                 'number': log.revision.number,
                 'message': log.message,
+                'datetime': psycopg2.TimestampFromTicks(log.date)
                 'owner': uid['owner']
                 }
         uid['revision'] = getUID(db, 'revision', ('number', 'project'), propDict)
@@ -329,7 +331,6 @@ def main(argv):
     if options.force_drop:
         db._create_or_replace_tables()
         db.commit()
-
 
     begin(db, project_name, project_url, starting_revision, ending_revision)
 
