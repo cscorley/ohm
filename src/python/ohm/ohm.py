@@ -234,7 +234,7 @@ def begin(db, name, url, starting_revision, ending_revision):
                 'project': uid['project'],
                 'number': log.revision.number,
                 'message': log.message,
-                'datetime': psycopg2.TimestampFromTicks(log.date)
+                'datetime': psycopg2.TimestampFromTicks(log.date),
                 'owner': uid['owner']
                 }
         uid['revision'] = getUID(db, 'revision', ('number', 'project'), propDict)
