@@ -24,7 +24,7 @@ from Repository import Repository
 from Database import Database
 import psycopg2
 from psycopg2 import IntegrityError
-import time
+from datetime import datetime
 
 from snippets import _uniq, _make_dir
 
@@ -229,12 +229,18 @@ def begin(db, name, url, starting_revision, ending_revision):
                 }
         uid['owner'] = getUID(db, 'owner', ('name', 'project'), propDict)
 
+        try:
+            dt = psycopg2.TimestampFromTicks(log.date)
+        except ValueError:
+            dt = psycopg2.TimestampFromTicks(log.date - 1.0)
+
+
         # get the revision uid
         propDict = {
                 'project': uid['project'],
                 'number': log.revision.number,
                 'message': log.message,
-                'datetime': psycopg2.TimestampFromTicks(log.date),
+                'datetime': dt,
                 'owner': uid['owner']
                 }
         uid['revision'] = getUID(db, 'revision', ('number', 'project'), propDict)
