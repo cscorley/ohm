@@ -9,7 +9,7 @@
 from __future__ import with_statement, print_function
 
 __author__  = 'Christopher S. Corley <cscorley@crimson.ua.edu>'
-__version__ = '$uid: ohm.py 17854 2011-08-26 19:29:29Z cscorley $'
+__version__ = '$Id$'
 
 import os
 import sys
@@ -33,6 +33,9 @@ argouml_svn_url = 'http://steel.cs.ua.edu/repos/argouml/trunk/'
 #carol_svn_url = 'svn://svn.forge.objectweb.org/svnroot/carol/trunk'
 carol_svn_url = 'http://steel.cs.ua.edu/repos/carol/trunk/'
 steel_svn_url = 'https://steel.cs.ua.edu/svn/projects/clones/src/ohm/trunk'
+tomcat_svn_url = 'http://svn.apache.org/repos/asf/tomcat/trunk/'
+ant_svn_url = 'http://svn.apache.org/repos/asf/ant/core/trunk/'
+derby_svn_url = 'http://svn.apache.org/repos/asf/db/derby/code/trunk/'
 
 
 def selinupChanges(db, uid, added, deleted):
@@ -310,6 +313,12 @@ def main(argv):
             project_url = argouml_svn_url
         elif project_name.upper() == 'CAROL':
             project_url = carol_svn_url
+        elif project_name.upper() == 'ANT':
+            project_url = ant_svn_url
+        elif project_name.upper() == 'TOMCAT':
+            project_url = tomcat_svn_url
+        elif project_name.upper() == 'DERBY':
+            project_url = derby_svn_url
         elif project_name.upper() == 'OHM':
             project_url = steel_svn_url
         else:
@@ -319,11 +328,6 @@ def main(argv):
     tmp_dir = '/'.join([options.output_dir.rstrip('/')])
     if False == os.path.exists(tmp_dir):
         _make_dir(tmp_dir)
-
-    # clear out the temp log
-    # TODO remove this 
-    with open('/tmp/ohm/scp.log', 'w'):
-        pass
 
     # open database connection
     db = Database(

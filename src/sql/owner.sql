@@ -1,47 +1,4 @@
-CREATE OR REPLACE VIEW change_data AS SELECT
-                project.id project_id,
-                project.name project_name,
-                revision.id revision_id,
-                revision.number revision_number,
-                owner.id owner_id,
-                owner.name owner_name,
-                file.id file_id,
-                file.path file_path,
-                class.id class_id,
-                class.signature class_name,
-                method.id method_id,
-                method.signature method_name,
-                change.additions,
-                change.deletions
-            FROM
-                change
-            INNER JOIN
-                method 
-            ON
-                method.id = change.method
-            INNER JOIN
-                class
-            ON
-                class.id = change.class 
-            INNER JOIN
-                file
-            ON
-                file.id = change.file
-            INNER JOIN
-                revision
-            ON 
-                revision.id = change.revision
-            INNER JOIN
-                owner
-            ON
-                owner.id = change.owner
-            INNER JOIN
-                project
-            ON
-                project.id = change.project
-            ORDER BY
-                project.id,
-                revision.number;
+    
 
 select project, name, count from owner, (SELECT owner_id, count(DISTINCT method_id) from change_data group by owner_id order by owner_id) AS ot where ot.owner_id = owner.id;
 
