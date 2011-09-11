@@ -208,6 +208,7 @@ def begin(db, name, url, starting_revision, ending_revision):
     uid['project'] = getUID(db, 'project', ('url',), propDict)
 
     project_repo = Repository(name, url, starting_revision, ending_revision)
+    print(project_repo)
     for revision_info in project_repo.getRevisions():
         if os.path.exists('/tmp/ohm/svn/'):
             try:

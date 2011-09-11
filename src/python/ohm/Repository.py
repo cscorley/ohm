@@ -47,12 +47,14 @@ class Repository:
 
             if len(revlog) > 0:
                 self.revEnd = revlog[0].revision
+            else:
+                self.revEnd = self.client.info2(self.url, recurse=False)[0][1].last_changed_rev
         else:
             self.revEnd = pysvn.Revision(pysvn.opt_revision_kind.number,
                     ending_revision)
 
     def __str__(self):
-        return '%s %d %d' % (self.url, self.revCurr.number,
+        return '%s %s %s' % (self.url, self.revCurr.number,
                 self.revEnd.number)
 
     def __repr__(self):
@@ -124,7 +126,8 @@ class Repository:
                 self._moveNextRevision()
             except pysvn.ClientError as e:
                 for message, code in e.args[1]:
-                    if code == 160013:
+                    if code == 160013 or code == 195012:
+                        print('Code:', code, 'Message:', message)
                         # does not exist in repository yet
                         self._moveNextRevision()
                     else:
