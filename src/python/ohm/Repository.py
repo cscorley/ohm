@@ -16,7 +16,7 @@ import pysvn
 
 
 class Repository:
-    def __init__(self, name, url, starting_revision=1, ending_revision=-1,
+    def __init__(self, name, url, starting_revision=-1, ending_revision=-1,
             username='guest', password=''):
         self.client = pysvn.Client()
         self.client.exception_style = 1  # allows retrieval of code/message
@@ -26,19 +26,21 @@ class Repository:
         self.url = url
         self.username = username
         self.password = password
+        
         if starting_revision < 1:
-            starting_revision = 1
+            self.revStart = pysvn.Revision(pysvn.opt_revision_kind.number,
+                    1)
+            self.revEnd = pysvn.Revision(pysvn.opt_revision_kind.head)
+            revlog = self.client.log(self.url, self.revStart, self.revEnd,
+                    limit=1)
+            print(self.revStart.number)
+            print(revlog)
 
-        self.revStart = pysvn.Revision(pysvn.opt_revision_kind.number,
-                starting_revision)
-
-        # after init, please use _moveNextRevision to change these
-        self.revCurr = pysvn.Revision(pysvn.opt_revision_kind.number,
-                starting_revision)
-        self.revPrev = pysvn.Revision(pysvn.opt_revision_kind.number,
-                starting_revision - 1)
-        self.revNext = pysvn.Revision(pysvn.opt_revision_kind.number,
-                starting_revision + 1)
+            if len(revlog) > 0:
+                self.revStart = revlog[0].revision
+        else:
+            self.revStart = pysvn.Revision(pysvn.opt_revision_kind.number,
+                    starting_revision)
 
         # get the head revision number
         if ending_revision < 0:
@@ -52,6 +54,15 @@ class Repository:
         else:
             self.revEnd = pysvn.Revision(pysvn.opt_revision_kind.number,
                     ending_revision)
+
+
+        # after init, please use _moveNextRevision to change these
+        self.revCurr = self.revStart
+        self.revPrev = pysvn.Revision(pysvn.opt_revision_kind.number,
+                self.revStart.number - 1)
+        self.revNext = pysvn.Revision(pysvn.opt_revision_kind.number,
+                self.revStart.number + 1)
+
 
     def __str__(self):
         return '%s %s %s' % (self.url, self.revCurr.number,

@@ -265,7 +265,7 @@ def main(argv):
     optparser.set_defaults(force_drop=False)
     optparser.set_defaults(verbose=False)
     optparser.set_defaults(output_dir='/tmp/ohm')
-    optparser.set_defaults(project_revision='1')
+    optparser.set_defaults(project_revision='-1')
     optparser.set_defaults(project_revision_end='-1')
     optparser.set_defaults(database_host='localhost')
     optparser.set_defaults(database_port='5432')
