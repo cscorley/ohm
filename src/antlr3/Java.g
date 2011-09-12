@@ -627,8 +627,11 @@ type returns [name]
     ;
 
 classOrInterfaceType returns [name]
-    :   i=Identifier typeArguments? ('.' Identifier typeArguments? )*
+    :   i=Identifier typeArguments? 
         { $name = $i.getText() }
+        ('.' j=Identifier typeArguments? 
+        { $name = ('.' + $j.getText()) }
+        )*
     ;
 
 primitiveType returns [name]
