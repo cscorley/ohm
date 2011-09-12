@@ -87,8 +87,9 @@ def insert_changes(db, affected, uid):
         added, deleted = affected_block.changes
         selinupChanges(db, uid, added, deleted)
 
+    for affected_block in affected:
         if affected_block.has_sub_blocks:
-            uid['container_block'] = uid['block']
+            uid['container_block'] = getBlockUID(db, affected_block, uid)
             if affected_block.has_scp:
                 insert_renames(db, affected_block, uid)
             insert_changes(db, affected_block, uid)
