@@ -43,14 +43,11 @@ def selinupChanges(db, uid, added, deleted):
     iscompare = '{key} is %s'
     eqcompare = '{key}=%s'
 
-    nuid = uid.copy()
-    del nuid['container_block']
-
     # build the list of WHERE comparison statements
     wherelist = []
-    for key in nuid:
+    for key in uid:
         # postgresql will expect None/NULL comparisons in "x is NULL" format
-        if nuid[key] is None:
+        if uid[key] is None:
             wherelist.append(iscompare.format(key=key))
         else:
             wherelist.append(eqcompare.format(key=key))
@@ -58,52 +55,52 @@ def selinupChanges(db, uid, added, deleted):
     # join all of the WHERE comparisons and query for existing entries
     wstr = ' AND '.join(wherelist)
     result = db.execute('SELECT additions, deletions FROM change WHERE ' +
-                        wstr, tuple(nuid.values()))
+                        wstr, tuple(uid.values()))
 
     # INSERT an entry or UPDATE the existing entry
     if len(result) == 0:
-        propstr = ','.join(['additions', 'deletions'] + nuid.keys())
-        valstr = '%s,' * (len(nuid) + 2)
+        propstr = ','.join(['additions', 'deletions'] + uid.keys())
+        valstr = '%s,' * (len(uid) + 2)
         valstr = valstr.rstrip(',')
 
         db.execute('INSERT INTO change ({props}) VALUES ({vals});\
                     '.format(props=propstr, vals=valstr),
-                    (added, deleted) + tuple(nuid.values()))
+                    (added, deleted) + tuple(uid.values()))
     elif added != result[0][0] or deleted != result[0][1]:
         db.execute('UPDATE change SET additions=%s, deletions=%s WHERE ' +
-                    wstr, (added, deleted) + tuple(nuid.values()))
+                    wstr, (added, deleted) + tuple(uid.values()))
 
     db.commit()
 
 
-def insert_changes(db, affected, uid):
+def insert_changes(db, affected, cid, uid):
     for affected_block in affected:
         cursor = db.getcursor()
         if cursor.closed:
             # abort
             return
 
-        uid['block'] = getBlockUID(db, affected_block, uid)
+        uid['block'] = getBlockUID(db, affected_block, cid, uid)
         added, deleted = affected_block.changes
         selinupChanges(db, uid, added, deleted)
 
     for affected_block in affected:
         if affected_block.has_sub_blocks:
-            uid['container_block'] = getBlockUID(db, affected_block, uid)
+            new_cid = getBlockUID(db, affected_block, cid, uid)
             if affected_block.has_scp:
-                insert_renames(db, affected_block, uid)
-            insert_changes(db, affected_block, uid)
+                insert_renames(db, affected_block, new_cid, uid)
+            insert_changes(db, affected_block, new_cid, uid)
 
     db.commit()
 
 
-def insert_renames(db, affected, uid):
+def insert_renames(db, affected, cid, uid):
     for pair in affected.scp:
         original = pair[0]
         target = pair[1]
         ratio = pair[2]
-        original_id = getBlockUID(db, original, uid)
-        target_id = getBlockUID(db, target, uid)
+        original_id = getBlockUID(db, original, cid, uid)
+        target_id = getBlockUID(db, target, cid, uid)
 
         values = (uid['project'],
                 uid['revision'],
@@ -120,14 +117,14 @@ def insert_renames(db, affected, uid):
                 '.format(props=prop_str, vals=val_str),
                 values)
 
-def getBlockUID(db, block, uid):
+def getBlockUID(db, block, cid, uid):
         propDict = {
                 'project': uid['project'],
                 'name': block.name,
                 'full_name': block.full_name,
                 'hash': hash(block),
                 'type': block.__class__.__name__,
-                'block': uid['container_block'] 
+                'block': cid
                 }
         return getUID(db, 'block', ('hash', 'block', 'project'), propDict)
 
@@ -195,7 +192,6 @@ def begin(db, name, url, starting_revision, ending_revision):
             'revision': None,
             'owner': None,
             'block': None,
-            'container_block': None
             }
 
     # this dictionary is used throughout as a unique properties dictionary
@@ -254,8 +250,7 @@ def begin(db, name, url, starting_revision, ending_revision):
         patch = Patch(diff, project_repo)
 
         for digestion in patch.digest():
-            uid['container_block'] = None
-            insert_changes(db, [digestion[0]], uid)
+            insert_changes(db, [digestion[0]], None, uid)
 
         # insert changes into tables
 

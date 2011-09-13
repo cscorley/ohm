@@ -1,4 +1,6 @@
-    
+-- if any duplicate full_names exist
+ select b.full_name, count(b.full_name) from block b group by full_name having (count(b.full_name) > 1) order by count;
+
 
 select project, name, count from owner, (SELECT owner_id, count(DISTINCT method_id) from change_data group by owner_id order by owner_id) AS ot where ot.owner_id = owner.id;
 
