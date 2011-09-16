@@ -288,7 +288,7 @@ class Diff:
             self.recursive_scp(o, n)
 
         # get scp
-        scp = self.digestSCP(added_set, removed_set)
+        scp = self.digestSCP(removed_set, added_set)
         old.scp = scp
 
         for pair in scp:
