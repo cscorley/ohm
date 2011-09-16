@@ -36,6 +36,7 @@ steel_svn_url = 'https://steel.cs.ua.edu/svn/projects/clones/src/ohm/trunk'
 tomcat_svn_url = 'http://svn.apache.org/repos/asf/tomcat/trunk/'
 ant_svn_url = 'http://svn.apache.org/repos/asf/ant/core/trunk/'
 derby_svn_url = 'http://svn.apache.org/repos/asf/db/derby/code/trunk/'
+jedit_svn_url = 'http://steel.cs.ua.edu/repos/jedit/jEdit/trunk'
 
 
 def selinupChanges(db, uid, added, deleted):
@@ -316,10 +317,12 @@ def main(argv):
             project_url = tomcat_svn_url
         elif project_name.upper() == 'DERBY':
             project_url = derby_svn_url
+        elif project_name.upper() == 'JEDIT':
+            project_url = jedit_svn_url
         elif project_name.upper() == 'OHM':
             project_url = steel_svn_url
         else:
-            project_url = argouml_svn_url
+            project_url = carol_svn_url
 
     # create output directory
     tmp_dir = '/'.join([options.output_dir.rstrip('/')])
