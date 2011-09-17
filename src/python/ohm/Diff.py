@@ -75,9 +75,11 @@ class Diff:
                 return Java4Lexer
             else:
                 return JavaLexer
-
-        if name.upper() == 'CAROL':
+        elif name.upper() == 'CAROL':
             if revision > 1290:
+                return Java5Lexer
+        elif name.upper() == 'JEDIT':
+            if revision > 17890:
                 return Java5Lexer
 
         return JavaLexer
