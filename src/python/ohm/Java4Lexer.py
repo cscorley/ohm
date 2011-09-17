@@ -20,4 +20,4 @@ class Java4Lexer(JavaLexer):
         return False
 
     def assertIsKeyword(self):
-        return False
+        return True
