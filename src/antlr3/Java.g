@@ -371,7 +371,9 @@ enumConstants
     ;
 
 enumConstant
-    :   annotations? Identifier arguments? classBody?
+    :   annotations? i=Identifier 
+            {   self.scopes.append(('enum', $i.getText())) }
+    arguments? classBody?
     ;
 
 enumBodyDeclarations
