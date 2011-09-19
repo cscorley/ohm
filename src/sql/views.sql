@@ -54,3 +54,8 @@ CREATE OR REPLACE VIEW change_data_file AS SELECT
             WHERE
                 block_type = 'File';
     
+CREATE OR REPLACE VIEW change_data_sums AS
+SELECT block_id, owner_id, sum(additions + deletions) AS sum
+    FROM change_data_all
+    GROUP BY block_id, owner_id
+    ORDER BY block_id, owner_id;

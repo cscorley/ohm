@@ -76,7 +76,7 @@ def selinupChanges(db, uid, added, deleted):
 
 def insert_changes(db, affected, cid, uid):
     for affected_block in affected:
-        cursor = db.getcursor()
+        cursor = db.cursor
         if cursor.closed:
             # abort
             return
@@ -128,19 +128,6 @@ def getBlockUID(db, block, cid, uid):
                 'block': cid
                 }
         return getUID(db, 'block', ('hash', 'block', 'project'), propDict)
-
-
-def search_for_container(block, container):
-    if block in container:
-        return container
-    elif container.has_sub_blocks:
-        for sub_block in container:
-            result = search_for_container(block, sub_block)
-            if result is not None:
-                return result
-        return None
-    else:
-        return None
 
 
 def getUID(db, table, id_key, propDict):

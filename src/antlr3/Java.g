@@ -201,6 +201,7 @@ from File import File
     self.log = []
     self._file_name = None
     self._file_len = 0
+    self.pkg_name = None
 }
 //NAK
 
@@ -242,13 +243,8 @@ def file_len(self, value):
 
 def createFile(self):
     classes = self.object_scopes.pop()
-    package_name = None
-    for s in self.scopes:
-        if s[0] == 'package':
-            package_name = s[1]
-            break
             
-    return File(self.file_name, classes, self.file_len, package_name)
+    return File(self.file_name, classes, self.file_len, self.pkg_name)
 
 def displayRecognitionError(self, tokenNames, e):
     hdr = self.getErrorHeader(e)
@@ -279,15 +275,15 @@ packageDeclaration
 //    ;
     :   'package' pkg_top=Identifier
         {
-            pkg_name = pkg_top.text
+            self.pkg_name = pkg_top.text
         }
         ('.' pkg_sub=Identifier
         {
-            pkg_name += ('.' + pkg_sub.text)
+            self.pkg_name += ('.' + pkg_sub.text)
         }
         )*
         {
-            self.scopes.append(('package', pkg_name))
+            self.scopes.append(('package', self.pkg_name))
         }
         ';'
     ;
