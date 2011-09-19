@@ -15,7 +15,7 @@ from TableConfigParser import TableConfigParser
 
 class Database:
     def __init__(self, host, port, user, password, database, verbose):
-        self.connection = psycopg2.connect(
+        self._connection = psycopg2.connect(
             user=user,
             password=password,
             database=database,
@@ -23,17 +23,17 @@ class Database:
             port=port,
             sslmode='disable'
             )
-        self.cursor = self.connection.cursor()
+        self._cursor = self._connection.cursor()
         self.verbose = verbose
 
     def __del__(self):
-        self.cursor.close()
-        self.connection.close()
+        self._cursor.close()
+        self._connection.close()
 
     def fetchtables(self):
         tables = []
-        self.cursor.execute('SELECT * FROM pg_tables;')
-        for table in self.cursor:
+        self._cursor.execute('SELECT * FROM pg_tables;')
+        for table in self._cursor:
             t_name = table[1]
             if not t_name.startswith('pg_') and not t_name.startswith('sql_'):
                 tables.append(table)
@@ -72,25 +72,27 @@ class Database:
             command += ',' + command_pkeys + ');'
         if self.verbose:
             print(command)
-        self.cursor.execute(command)
+        self._cursor.execute(command)
 
     def setverbose(self, v=True):
         self.verbose = v
 
-    def getcursor(self):
-        return self.cursor
+    @property
+    def cursor(self):
+        return self._cursor
 
-    def getconnection(self):
-        return self.connection
+    @property
+    def connection(self):
+        return self._connection
 
     def commit(self):
-        self.connection.commit()
+        self._connection.commit()
 
     def execute(self, commandstr, args):
         if self.verbose:
-            print(self.cursor.mogrify(commandstr, args))
-        self.cursor.execute(commandstr, args)
+            print(self._cursor.mogrify(commandstr, args))
+        self._cursor.execute(commandstr, args)
         try:
-            return self.cursor.fetchall()
+            return self._cursor.fetchall()
         except psycopg2.ProgrammingError:
             return None

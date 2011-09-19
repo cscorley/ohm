@@ -185,7 +185,7 @@ def getUID(db, table, id_key, propDict):
     return result
 
 
-def begin(db, name, url, starting_revision, ending_revision):
+def build_db(db, name, url, starting_revision, ending_revision):
     # this dictionary is to hold the current collection of uid's needed by
     # various select queries. It should never be completely reassigned
     uid = {
@@ -255,12 +255,74 @@ def begin(db, name, url, starting_revision, ending_revision):
 
         # insert changes into tables
 
+def generate(db, name, url, starting_revision, ending_revision):
+    # this dictionary is to hold the current collection of uid's needed by
+    # various select queries. It should never be completely reassigned
+    uid = {
+            'project': None,
+            'revision': None,
+            'owner': None,
+            'block': None,
+            }
+
+    # this dictionary is used throughout as a unique properties dictionary
+    # used to get the UID of the entries in the table its used for. It should
+    # always be reassigned when used.
+    propDict = {
+            'name': name,
+            'url': url
+            }
+    # get the project uid
+    uid['project'] = getUID(db, 'project', ('url',), propDict)
+
+    output_dir = '/tmp/ohm/'
+    owners = db.execute('SELECT * from owner where project=%s',
+            (uid['project'], ))
+
+    if owners is None or len(owners) == 0:
+        print('Error: project has not been built yet, use -b')
+        return
+
+    with open(output_dir + '%s-ownership.key' % name, 'w') as f:
+        for each in owners:
+            f.write('%d,%s\n' % (each[0], each[1]))
+
+    c = db.cursor
+    c.execute('SELECT block.id, block.full_name, change_data_sums.sum, owner_id \
+            from change_data_sums join block on \
+            change_data_sums.block_id = block.id \
+            where block.project=%s and block.type=%s',
+            (uid['project'], 'Class' ))
+
+    curr_id = -1
+    ownership_profile = {}
+    for o in owners:
+        ownership_profile[o[0]] = 0
+    with open(output_dir + '%s-ownership.gen' % name, 'w') as f:
+        for each in c:
+            if curr_id != each[0]:
+                valstr = '%s,' * len(ownership_profile)
+                valstr = valstr.rstrip(',') + '\n'
+                o_tuple = tuple(ownership_profile.values())
+                f.write(each[1] + ' ')
+                f.write(valstr % o_tuple)
+                curr_id = each[0]
+                ownership_profile = {}
+                for o in owners:
+                    ownership_profile[o[0]] = 0
+            
+            ownership_profile[each[3]] = each[2]
+
+
+
 
 def main(argv):
     # Configure option parser
     optparser = OptionParser(usage='%prog [options]', version='0.1')
     optparser.set_defaults(force_drop=False)
     optparser.set_defaults(verbose=False)
+    optparser.set_defaults(generate=False)
+    optparser.set_defaults(build_db=False)
     optparser.set_defaults(output_dir='/tmp/ohm')
     optparser.set_defaults(project_revision='-1')
     optparser.set_defaults(project_revision_end='-1')
@@ -283,6 +345,10 @@ def main(argv):
             help='Drop all tables before beginning', action='store_true')
     optparser.add_option('-v', '--verbose', dest='verbose',
             help='Be verbose in output', action='store_true')
+    optparser.add_option('-g', '--generate', dest='generate',
+            help='Generate vectors', action='store_true')
+    optparser.add_option('-b', '--build', dest='build_db',
+            help='Run analysis and build database', action='store_true')
     optparser.add_option('-a', '--host', dest='database_host',
             help='Use a custom database host address')
     optparser.add_option('-p', '--port', dest='database_port',
@@ -307,22 +373,25 @@ def main(argv):
         optparser.error('You must supply a project name (ArgoUML or Carol)!')
     else:
         project_name = options.project_name
-        if project_name.upper() == 'ARGOUML':
-            project_url = argouml_svn_url
-        elif project_name.upper() == 'CAROL':
-            project_url = carol_svn_url
-        elif project_name.upper() == 'ANT':
-            project_url = ant_svn_url
-        elif project_name.upper() == 'TOMCAT':
-            project_url = tomcat_svn_url
-        elif project_name.upper() == 'DERBY':
-            project_url = derby_svn_url
-        elif project_name.upper() == 'JEDIT':
-            project_url = jedit_svn_url
-        elif project_name.upper() == 'OHM':
-            project_url = steel_svn_url
-        else:
-            project_url = carol_svn_url
+
+        if options.custom_url is None:
+            if project_name.upper() == 'ARGOUML':
+                project_url = argouml_svn_url
+            elif project_name.upper() == 'CAROL':
+                project_url = carol_svn_url
+            elif project_name.upper() == 'ANT':
+                project_url = ant_svn_url
+            elif project_name.upper() == 'TOMCAT':
+                project_url = tomcat_svn_url
+            elif project_name.upper() == 'DERBY':
+                project_url = derby_svn_url
+            elif project_name.upper() == 'JEDIT':
+                project_url = jedit_svn_url
+            elif project_name.upper() == 'OHM':
+                project_url = steel_svn_url
+            else:
+                optparser.error('No known project given, or custom project url\
+                        (-c) unset!')
 
     # create output directory
     tmp_dir = '/'.join([options.output_dir.rstrip('/')])
@@ -342,7 +411,17 @@ def main(argv):
         db._create_or_replace_tables()
         db.commit()
 
-    begin(db, project_name, project_url, starting_revision, ending_revision)
+    if options.build_db:
+        build_db(db, project_name, project_url, starting_revision, ending_revision)
+        
+    if options.generate:
+       generate(db, project_name, project_url, starting_revision, ending_revision)
+
+
+    if not (options.force_drop or options.build_db or options.generate):
+        optparser.error('Did not have any action to perform. Must either drop\
+                tables (-f), build tables (-b), or generate vectors from tables\
+                (-g)')
 
     sys.exit(0)
 
