@@ -301,6 +301,62 @@ def generate(db, name, url, starting_revision, ending_revision):
             ownership_profile[each[3]] = each[2]
 
 
+def tester(db, name, url, starting_revision, ending_revision):
+    # this dictionary is to hold the current collection of uid's needed by
+    # various select queries. It should never be completely reassigned
+    uid = {
+            'project': None,
+            'revision': None,
+            'owner': None,
+            'block': None,
+            }
+
+    # this dictionary is used throughout as a unique properties dictionary
+    # used to get the UID of the entries in the table its used for. It should
+    # always be reassigned when used.
+    propDict = {
+            'name': name,
+            'url': url
+            }
+    # get the project uid
+    uid['project'] = getUID(db, 'project', ('url',), propDict)
+
+    classes = db.execute('\
+            select block_id, owner_id from change_data_sums_owner\
+            join block on block_id=block.id\
+            where block.project=%s and block.type=%s \
+            order by block.id; \
+            ',
+            (uid['project'], 'Class' ))
+
+    if classes is None or len(classes) == 0:
+        print('Error: project has not been built yet, use -b')
+        return
+
+    for c in classes:
+        cid = c[0]
+        coid = c[1]
+        subcount = 0
+        subblocks = db.execute('\
+                select block_id, owner_id from change_data_sums_owner\
+                join block on block_id=block.id\
+                where block.project=%s and block.block=%s \
+                order by block.id; \
+                ',
+                (uid['project'], cid))
+        
+        if not (subblocks is None or len(subblocks) == 0):
+            total = len(subblocks)
+            for sb in subblocks:
+                sbid = sb[0]
+                sboid = sb[1]
+                if sboid == coid:
+                    subcount += 1
+
+            print('%s %f' % (c, (float(subcount)/float(total))))
+
+
+
 
 
 def main(argv):
@@ -310,6 +366,7 @@ def main(argv):
     optparser.set_defaults(verbose=False)
     optparser.set_defaults(generate=False)
     optparser.set_defaults(build_db=False)
+    optparser.set_defaults(tester=False)
     optparser.set_defaults(output_dir='/tmp/ohm')
     optparser.set_defaults(project_revision='-1')
     optparser.set_defaults(project_revision_end='-1')
@@ -334,6 +391,8 @@ def main(argv):
             help='Be verbose in output', action='store_true')
     optparser.add_option('-g', '--generate', dest='generate',
             help='Generate vectors', action='store_true')
+    optparser.add_option('-t', '--tester', dest='tester',
+            help='Run tester function', action='store_true')
     optparser.add_option('-b', '--build', dest='build_db',
             help='Run analysis and build database', action='store_true')
     optparser.add_option('-a', '--host', dest='database_host',
@@ -394,6 +453,11 @@ def main(argv):
             database=options.database_db,
             verbose=options.verbose
             )
+    if options.tester:
+        tester(db, project_name, project_url, starting_revision, ending_revision)
+        sys.exit(0)
+
+
     if options.force_drop:
         db._create_or_replace_tables()
         db.commit()
