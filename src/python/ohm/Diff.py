@@ -227,6 +227,7 @@ class Diff:
             self._printToLog(self.new_source, new_revision_number, log)
 
             self.PLD.digest_new(self.new_file)
+        
             
 
         self.recursive_scp(self.old_file, self.new_file)
