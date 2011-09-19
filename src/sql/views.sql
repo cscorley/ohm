@@ -59,3 +59,10 @@ SELECT block_id, owner_id, sum(additions + deletions) AS sum
     FROM change_data_all
     GROUP BY block_id, owner_id
     ORDER BY block_id, owner_id;
+
+ create or replace view change_data_sums_owner as (select t1.block_id, t1.owner_id, t1.sum 
+from change_data_sums as t1 
+left outer join change_data_sums as t2
+on (t1.block_id = t2.block_id and t1.sum < t2.sum)
+where t2.block_id is null 
+order by block_id);

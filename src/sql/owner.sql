@@ -46,12 +46,6 @@ where t2.block_id is null
 order by block_id;
 
 -- view of above
- create or replace view change_data_sums_owner as (select t1.block_id, t1.owner_id, t1.sum 
-from change_data_sums as t1 
-left outer join change_data_sums as t2
-on (t1.block_id = t2.block_id and t1.sum < t2.sum)
-where t2.block_id is null 
-order by block_id);
 
 -- above, but methods which have more than 1, ie, have ties
 select count(block_id), block_id from (select t1.block_id, t1.owner_id, t1.sum from change_data_sums as t1 left outer join change_data_sums as t2 on (t1.block_id = t2.block_id and t1.sum < t2.sum) where t2.block_id is null order by block_id) as sumz where count(block_id) > 1 group by block_id;
