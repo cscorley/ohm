@@ -334,7 +334,7 @@ def tester(db, name, url, starting_revision, ending_revision):
         return
 
     class_total = len(classes)
-    classcount = 0
+    classcount = [0,0,0,0,0,0,0,0,0,0]
     for c in classes:
         cid = c[0]
         coid = c[1]
@@ -357,11 +357,14 @@ def tester(db, name, url, starting_revision, ending_revision):
 
             result = float(subcount)/float(total)
             print('%s %f' % (c, result))
-            if result >= 0.5:
-                classcount += 1
+            for i in range(1,10):
+                if result >= float(i)/float(10):
+                    classcount[i] += 1
 
-    print('%d / %d = %f' % (classcount, class_total, 
-        (float(classcount)/float(class_total))))
+    for i in range(1,10):
+        cc = classcount[i]
+        print('>%d0: %d / %d = %f' % (i, cc, class_total, 
+            (float(cc)/float(class_total))))
 
 
 
