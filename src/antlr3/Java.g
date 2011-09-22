@@ -196,7 +196,7 @@ from File import File
 @init {
     self.scopes = []
     self.object_scopes = [[]]
-    self.formals = [[]]
+    self.formals = []
     self.modifier_line = 99999999
     self.log = []
     self._file_name = None
@@ -210,7 +210,8 @@ from File import File
 def addMethod(self, startln, endln, bodystart):
     sub_blocks = self.object_scopes.pop()
     name = self.scopes.pop()[1]
-    formals = self.formals.pop().reverse()
+    formals = self.formals.pop() 
+    formals.reverse()
     self.object_scopes[-1].append(
         Method(name, formals, sub_blocks, startln, bodystart, endln)
     )
@@ -488,7 +489,6 @@ interfaceMethodOrFieldRest
     |   interfaceMethodDeclaratorRest
     ;
 
-//                self.methods.append(self.addMethod(self.formals,self.modifier_line,$r.getLine()))
 methodDeclaratorRest
     :   formalParameters ('[' ']')*
         ('throws' qualifiedNameList)?
@@ -501,7 +501,6 @@ methodDeclaratorRest
         )
     ;
 
-//                self.methods.append(self.addMethod(self.formals,self.modifier_line,$r.getLine()))
 voidMethodDeclaratorRest
     :   formalParameters ('throws' qualifiedNameList)?
         (   methodBody
@@ -519,7 +518,8 @@ voidMethodDeclaratorRest
 interfaceMethodDeclaratorRest
     :   formalParameters ('[' ']')* ('throws' qualifiedNameList)? ';'
         {
-            self.formals.pop()
+        #    self.formals.pop()
+            pass
         }
     ;
 
@@ -531,14 +531,16 @@ interfaceGenericMethodDecl
 voidInterfaceMethodDeclaratorRest
     :   formalParameters ('throws' qualifiedNameList)? ';'
         {
-            self.formals.pop()
+        #    self.formals.pop()
+            pass
         }
     ;
 
 constructorDeclaratorRest
     :   formalParameters ('throws' qualifiedNameList)? constructorBody
         {
-            self.formals.pop()
+        #    self.formals.pop()
+            pass
         }
     ;
 
@@ -669,8 +671,8 @@ qualifiedNameList
     ;
 
 formalParameters
-    :   '(' { self.formals.append([]) }
-    formalParameterDecls? ')'
+    : { self.formals.append([]) }
+    '(' formalParameterDecls? ')'
     ;
 
 formalParameterDecls

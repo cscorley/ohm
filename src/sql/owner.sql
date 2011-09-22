@@ -1,3 +1,9 @@
+-- how many classes have two owners
+ select * from (select block_id, owner_id, count(DISTINCT owner_id) from change_data_sums_owner
+            join block on block_id=block.id
+            where block.project=1 and block.type='Class'
+            group by block_id) t where count > 1;
+
 -- if any duplicate full_names exist
  select b.full_name, count(b.full_name) from block b group by full_name having (count(b.full_name) > 1) order by count;
 
