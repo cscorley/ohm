@@ -103,7 +103,7 @@ class Block(object):
             self._sub_blocks = list(values)
             if self.sub_blocks is not None:
                 for sb in self.sub_blocks:
-                    sb.super_block_name = self.name
+                    sb.super_block_name = self.full_name
 
     @property
     def scp(self):

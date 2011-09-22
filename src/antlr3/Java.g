@@ -196,7 +196,7 @@ from File import File
 @init {
     self.scopes = []
     self.object_scopes = [[]]
-    self.formals = []
+    self.formals = [[]]
     self.modifier_line = 99999999
     self.log = []
     self._file_name = None
@@ -210,11 +210,10 @@ from File import File
 def addMethod(self, startln, endln, bodystart):
     sub_blocks = self.object_scopes.pop()
     name = self.scopes.pop()[1]
-    self.formals.reverse()
+    formals = self.formals.pop().reverse()
     self.object_scopes[-1].append(
-        Method(name, self.formals, sub_blocks, startln, bodystart, endln)
+        Method(name, formals, sub_blocks, startln, bodystart, endln)
     )
-    self.formals = []
     self.modifier_line = 99999999
 
 def addClass(self, startln, endln, bodystart):
@@ -520,7 +519,7 @@ voidMethodDeclaratorRest
 interfaceMethodDeclaratorRest
     :   formalParameters ('[' ']')* ('throws' qualifiedNameList)? ';'
         {
-            self.formals = []
+            self.formals.pop()
         }
     ;
 
@@ -532,14 +531,14 @@ interfaceGenericMethodDecl
 voidInterfaceMethodDeclaratorRest
     :   formalParameters ('throws' qualifiedNameList)? ';'
         {
-            self.formals = []
+            self.formals.pop()
         }
     ;
 
 constructorDeclaratorRest
     :   formalParameters ('throws' qualifiedNameList)? constructorBody
         {
-            self.formals = []
+            self.formals.pop()
         }
     ;
 
@@ -670,12 +669,13 @@ qualifiedNameList
     ;
 
 formalParameters
-    :   '(' formalParameterDecls? ')'
+    :   '(' { self.formals.append([]) }
+    formalParameterDecls? ')'
     ;
 
 formalParameterDecls
     :   variableModifiers t=type formalParameterDeclsRest
-        { self.formals.append($t.name) }
+        { self.formals[-1].append($t.name) }
     ;
 
 formalParameterDeclsRest
