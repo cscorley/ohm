@@ -130,9 +130,17 @@ class Repository:
             try:
                 log = self.client.log(self.url, revision_start=self.revCurr,
                         revision_end=self.revCurr, limit=1)
+                try:
+                    log[0].author
+                except AttributeError:
+                    print('skipping %d' % self.revCurr.number)
+                    self._moveNextRevision()
+                    continue
+
                 diff = self.client.diff('./', self.url, revision1=self.revPrev,
                         revision2=self.revCurr)
                 diffArr = diff.split('\n')
+
                 yield log, diffArr
                 self._moveNextRevision()
             except pysvn.ClientError as e:

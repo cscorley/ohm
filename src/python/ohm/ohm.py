@@ -32,11 +32,13 @@ from snippets import _uniq, _make_dir
 argouml_svn_url = 'http://steel.cs.ua.edu/repos/argouml/trunk/'
 #carol_svn_url = 'svn://svn.forge.objectweb.org/svnroot/carol/trunk'
 carol_svn_url = 'http://steel.cs.ua.edu/repos/carol/trunk/'
-steel_svn_url = 'https://steel.cs.ua.edu/svn/projects/clones/src/ohm/trunk'
+steel_svn_url = 'https://steel.cs.ua.edu/svn/projects/clones/src/ohm/trunk/'
 tomcat_svn_url = 'http://svn.apache.org/repos/asf/tomcat/trunk/'
 ant_svn_url = 'http://svn.apache.org/repos/asf/ant/core/trunk/'
 derby_svn_url = 'http://svn.apache.org/repos/asf/db/derby/code/trunk/'
-jedit_svn_url = 'http://steel.cs.ua.edu/repos/jedit/jEdit/trunk'
+jedit_svn_url = 'http://steel.cs.ua.edu/repos/jedit/jEdit/trunk/'
+vuze_svn_url = 'http://steel.cs.ua.edu/repos/vuze/client/trunk/'
+gwt_svn_url = 'http://steel.cs.ua.edu/repos/google-web-toolkit/trunk/'
 
 
 def selinupChanges(db, uid, added, deleted):
@@ -333,8 +335,10 @@ def tester(db, name, url, starting_revision, ending_revision):
         print('Error: project has not been built yet, use -b')
         return
 
+    classes_no_owner = []
+
     class_total = len(classes)
-    classcount = [0,0,0,0,0,0,0,0,0,0]
+    classcount = [[], [], [], [], [], [], [] ,[] , [], [], []]
     for c in classes:
         cid = c[0]
         coid = c[1]
@@ -357,15 +361,21 @@ def tester(db, name, url, starting_revision, ending_revision):
 
             result = float(subcount)/float(total)
             print('%s %f' % (c, result))
-            for i in range(1,10):
-                if result >= float(i)/float(10):
-                    classcount[i] += 1
+            for i in range(0,len(classcount)):
+                if result >= float(i)/float(10) and result < float(i+1)/float(10):
+                    classcount[i].append(c)
 
-    for i in range(1,10):
-        cc = classcount[i]
+            if result < 0.5:
+                classes_no_owner.append(c)
+
+
+    for each in classcount:
+        cc = len(each)
         print('>%d0: %d / %d = %f' % (i, cc, class_total, 
             (float(cc)/float(class_total))))
 
+    for c in classes_no_owner:
+        print(c)
 
 
 
@@ -445,6 +455,10 @@ def main(argv):
                 project_url = derby_svn_url
             elif project_name.upper() == 'JEDIT':
                 project_url = jedit_svn_url
+            elif project_name.upper() == 'VUZE':
+                project_url = vuze_svn_url
+            elif project_name.upper() == 'GWT':
+                project_url = gwt_svn_url
             elif project_name.upper() == 'OHM':
                 project_url = steel_svn_url
             else:
