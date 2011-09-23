@@ -629,7 +629,7 @@ classOrInterfaceType returns [name]
     :   i=Identifier typeArguments? 
         { $name = $i.getText() }
         ('.' j=Identifier typeArguments? 
-        { $name = ('.' + $j.getText()) }
+        { $name += ('.' + $j.getText()) }
         )*
     ;
 
