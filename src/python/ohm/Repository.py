@@ -132,7 +132,7 @@ class Repository:
                         revision_end=self.revCurr, limit=1)
                 try:
                     log[0].author
-                except AttributeError:
+                except (AttributeError, IndexError):
                     print('skipping %d' % self.revCurr.number)
                     self._moveNextRevision()
                     continue

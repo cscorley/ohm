@@ -274,7 +274,7 @@ def generate(db, name, url, starting_revision, ending_revision):
 
     with open(output_dir + '%s-ownership.key' % name, 'w') as f:
         for each in owners:
-            f.write('%d,%s\n' % (each[0], each[1]))
+            f.write('%s\n' % each[1])
 
     c = db.cursor
     c.execute('SELECT block.id, block.full_name, change_data_sums.sum, owner_id \
