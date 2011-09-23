@@ -284,18 +284,21 @@ def generate(db, name, url, starting_revision, ending_revision):
             (uid['project'], 'Class' ))
 
     curr_id = -1
+    curr_full_name = ''
     ownership_profile = {}
     for o in owners:
         ownership_profile[o[0]] = 0
     with open(output_dir + '%s-ownership.gen' % name, 'w') as f:
         for each in c:
             if curr_id != each[0]:
-                valstr = '%s,' * len(ownership_profile)
-                valstr = valstr.rstrip(',') + '\n'
-                o_tuple = tuple(ownership_profile.values())
-                f.write(each[1] + ' ')
-                f.write(valstr % o_tuple)
+                if curr_id != -1:
+                    valstr = '%s,' * len(ownership_profile)
+                    valstr = valstr.rstrip(',') + '\n'
+                    o_tuple = tuple(ownership_profile.values())
+                    f.write(curr_full_name + ' ')
+                    f.write(valstr % o_tuple)
                 curr_id = each[0]
+                curr_full_name = each[1]
                 ownership_profile = {}
                 for o in owners:
                     ownership_profile[o[0]] = 0
