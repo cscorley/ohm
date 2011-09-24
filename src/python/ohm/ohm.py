@@ -90,9 +90,9 @@ def insert_changes(db, affected, cid, uid):
     for affected_block in affected:
         if affected_block.has_sub_blocks:
             new_cid = getBlockUID(db, affected_block, cid, uid)
+            insert_changes(db, affected_block, new_cid, uid)
             if affected_block.has_scp:
                 insert_renames(db, affected_block, new_cid, uid)
-            insert_changes(db, affected_block, new_cid, uid)
 
     db.commit()
 
@@ -132,7 +132,8 @@ def getBlockUID(db, block, cid, uid):
         block_uid = getUID(db, 'block', ('hash', 'block', 'project'), propDict)
         result = db.execute('SELECT full_name FROM block where id=%s;',
                 (block_uid,))
-        if result != block.full_name:
+        if result[0][0] != block.full_name:
+            print('updated %s %s' % (str(block_uid), str(block.full_name)))
             db.execute('UPDATE block SET full_name=%s WHERE id=%s;',
                     (block.full_name, block_uid))
 

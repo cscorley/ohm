@@ -86,6 +86,11 @@ class Diff:
                 return Java5Lexer
             elif revision > 5635:
                 return Java4Lexer
+        elif name.upper() == 'GWT':
+            if revision > 1340:
+                return Java5Lexer
+            elif revision > 0:
+                return Java4Lexer
 
         return JavaLexer
 
@@ -321,10 +326,15 @@ class Diff:
             for a_block in added_set:
                 # for pairing of blocks with a small number of sub_blocks (1-3), this
                 # will be fairly inaccurate
+                r_block_seq = None
+                a_block_seq = None
+
                 if r_block.has_sub_blocks and a_block.has_sub_blocks:
-                    r_block_seq = r_block.sub_blocks
-                    a_block_seq = a_block.sub_blocks
-                else:
+                    if len(r_block.sub_blocks) > 2 and len(a_block.sub_blocks) > 2:
+                        r_block_seq = r_block.sub_blocks
+                        a_block_seq = a_block.sub_blocks
+
+                if r_block_seq is None or a_block_seq is None:
                     r_block_seq = r_block.text
                     a_block_seq = a_block.text
 
