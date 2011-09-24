@@ -49,7 +49,7 @@ class Block(object):
         return self.full_name
 
     def __hash__(self):
-        return hash((self.__class__.__name__, self.full_name))
+        return hash((self.__class__.__name__, self.name))
 
     def __cmp__(self, other):
         if isinstance(other, type(self)):

@@ -129,8 +129,14 @@ def getBlockUID(db, block, cid, uid):
                 'type': block.__class__.__name__,
                 'block': cid
                 }
-        return getUID(db, 'block', ('hash', 'block', 'project'), propDict)
+        block_uid = getUID(db, 'block', ('hash', 'block', 'project'), propDict)
+        result = db.execute('SELECT full_name FROM block where id=%s;',
+                (block_uid,))
+        if result != block.full_name:
+            db.execute('UPDATE block SET full_name=%s WHERE id=%s;',
+                    (block.full_name, block_uid))
 
+        return block_uid
 
 def getUID(db, table, id_key, propDict):
     iscompare = '{key} is %s'
