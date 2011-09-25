@@ -251,7 +251,8 @@ def build_db(db, name, url, starting_revision, ending_revision):
 
         # insert changes into tables
 
-def generate(db, name, url, starting_revision, ending_revision):
+def generate(db, name, url, starting_revision, ending_revision, use_renames,
+        use_sums):
     # this dictionary is to hold the current collection of uid's needed by
     # various select queries. It should never be completely reassigned
     uid = {
@@ -285,17 +286,31 @@ def generate(db, name, url, starting_revision, ending_revision):
 
     # before we start generating class vectors, lets build a list of duplicates
     # to save off for merging later
-    duplicated = db.execute('select full_name from block where type=%s \
-            group by full_name having (count(full_name) > 1);', ('Class',))
-    for d in duplicated:
-        print(d)
-        #TODO
+    dup_results = db.execute('select full_name from block where \
+            project=%s and type=%s \
+            group by full_name having (count(full_name) > 1);',
+            (uid['project'], 'Class'))
+    duplicated = []
+
+    # copy just the strings
+    for d in dup_results:
+        duplicated.append(d[0])
+
+
+    data_table = 'change_data'
+    if use_renames:
+        data_table = 'r_' + data_table
+       
+    if use_sums:
+        data_table = data_table + '_sums'
+    else:
+        data_table = data_table + '_count'
 
     c = db.cursor
-    c.execute('SELECT block.id, block.full_name, change_data_sums.sum, owner_id \
-            from change_data_sums join block on \
-            change_data_sums.block_id = block.id \
-            where block.project=%s and block.type=%s',
+    c.execute('SELECT block.id, block.full_name, {table}.sum, owner_id \
+            from {table} join block on \
+            {table}.block_id = block.id \
+            where block.project=%s and block.type=%s'.format(table=data_table),
             (uid['project'], 'Class' ))
 
     curr_id = -1
@@ -303,15 +318,23 @@ def generate(db, name, url, starting_revision, ending_revision):
     ownership_profile = {}
     for o in owners:
         ownership_profile[o[0]] = 0
+    duplicated_profiles = {}
+    for d in duplicated:
+        duplicated_profiles[d] = []
+
     with open(output_dir + '%s-ownership.gen' % name, 'w') as f:
         for each in c:
             if curr_id != each[0]:
                 if curr_id != -1:
-                    valstr = '%s,' * len(ownership_profile)
-                    valstr = valstr.rstrip(',') + '\n'
-                    o_tuple = tuple(ownership_profile.values())
-                    f.write(curr_full_name + ' ')
-                    f.write(valstr % o_tuple)
+                    if curr_full_name in duplicated_profiles:
+                        # using a dict of strings to hold lists of dicts
+                        duplicated_profiles[curr_full_name].append(ownership_profile)
+                    else:
+                        valstr = '%s,' * len(ownership_profile)
+                        valstr = valstr.rstrip(',') + '\n'
+                        o_tuple = tuple(ownership_profile.values())
+                        f.write(curr_full_name + ' ')
+                        f.write(valstr % o_tuple)
                 curr_id = each[0]
                 curr_full_name = each[1]
                 ownership_profile = {}
@@ -319,6 +342,23 @@ def generate(db, name, url, starting_revision, ending_revision):
                     ownership_profile[o[0]] = 0
             
             ownership_profile[each[3]] = each[2]
+
+        for d in duplicated_profiles:
+            tmp_p = None
+            for p in duplicated_profiles[d]:
+                if tmp_p is None:
+                    tmp_p = dict(p)
+                else:
+                    for elem in p:
+                        tmp_p[elem] = tmp_p.get(elem, 0) + p[elem]
+
+            if tmp_p is not None:
+                valstr = '%s,' * len(tmp_p)
+                valstr = valstr.rstrip(',') + '\n'
+                o_tuple = tuple(tmp_p.values())
+                f.write(d + ' ')
+                f.write(valstr % o_tuple)
+
 
 
 def tester(db, name, url, starting_revision, ending_revision):
@@ -510,7 +550,8 @@ def main(argv):
         build_db(db, project_name, project_url, starting_revision, ending_revision)
         
     if options.generate:
-       generate(db, project_name, project_url, starting_revision, ending_revision)
+       generate(db, project_name, project_url, starting_revision,
+               ending_revision, True, False)
 
 
     if not (options.force_drop or options.build_db or options.generate):
