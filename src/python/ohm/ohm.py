@@ -283,6 +283,14 @@ def generate(db, name, url, starting_revision, ending_revision):
         for each in owners:
             f.write('%s\n' % each[1])
 
+    # before we start generating class vectors, lets build a list of duplicates
+    # to save off for merging later
+    duplicated = db.execute('select full_name from block where type=%s \
+            group by full_name having (count(full_name) > 1);', ('Class',))
+    for d in duplicated:
+        print(d)
+        #TODO
+
     c = db.cursor
     c.execute('SELECT block.id, block.full_name, change_data_sums.sum, owner_id \
             from change_data_sums join block on \
