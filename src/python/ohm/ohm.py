@@ -544,6 +544,8 @@ def main(argv):
 
     if options.force_drop:
         db._create_or_replace_tables()
+        db._create_or_replace_views()
+        db._create_or_replace_triggers()
         db.commit()
 
     if options.build_db:

@@ -39,6 +39,12 @@ class Database:
                 tables.append(table)
         return tables
 
+
+    def _create_or_replace_views(self):
+        pass
+    def _create_or_replace_triggerss(self):
+        pass
+
     def _create_or_replace_tables(self):
         tables = TableConfigParser.parse()
         for (name, (data, fkeys, pkeys)) in tables.items():
