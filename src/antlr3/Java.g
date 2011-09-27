@@ -209,7 +209,7 @@ from File import File
 
 def addMethod(self, startln, endln, bodystart):
     sub_blocks = self.object_scopes.pop()
-    name = self.scopes.pop()[1]
+    name = self.skipBadScopes('method')[1]
     formals = self.formals.pop() 
     formals.reverse()
     self.object_scopes[-1].append(
@@ -219,11 +219,25 @@ def addMethod(self, startln, endln, bodystart):
 
 def addClass(self, startln, endln, bodystart):
     sub_blocks = self.object_scopes.pop()
-    name = self.scopes.pop()[1]
+    name = self.skipBadScopes('class')[1]
     self.object_scopes[-1].append(
         Class(name, sub_blocks, startln, bodystart, endln)
     )
     self.modifier_line = 99999999
+
+def addEnum(self, startln, endln, bodystart):
+    sub_blocks = self.object_scopes.pop()
+    name = self.skipBadScopes('enum')[1]
+    self.object_scopes[-1].append(
+        Enum(name, sub_blocks, startln, bodystart, endln)
+    )
+    self.modifier_line = 99999999
+
+def skipBadScopes(self, type):
+    scope = self.scopes.pop()
+    while scope[0] != type:
+        scope = self.scopes.pop()
+    return scope
 
 @property
 def file_name(self):
