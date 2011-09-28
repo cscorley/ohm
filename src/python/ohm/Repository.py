@@ -33,8 +33,6 @@ class Repository:
             self.revEnd = pysvn.Revision(pysvn.opt_revision_kind.head)
             revlog = self.client.log(self.url, self.revStart, self.revEnd,
                     limit=1)
-            print(self.revStart.number)
-            print(revlog)
 
             if len(revlog) > 0:
                 self.revStart = revlog[0].revision
