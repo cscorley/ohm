@@ -16,9 +16,6 @@ import sys
 from shutil import rmtree
 from optparse import OptionParser, SUPPRESS_HELP
 
-from Method import Method
-from Class import Class
-from File import File
 from Patch import Patch
 from Repository import Repository
 from Database import Database
@@ -126,7 +123,7 @@ def getBlockUID(db, block, cid, uid):
                 'name': block.name,
                 'full_name': block.full_name,
                 'hash': hash(block),
-                'type': block.__class__.__name__,
+                'type': block.block_type,
                 'block': cid
                 }
         block_uid = getUID(db, 'block', ('hash', 'block', 'project'), propDict)

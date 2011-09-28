@@ -15,6 +15,7 @@ from Block import Block
 class File(Block):
     def __init__(self, path, sub_blocks, file_len, package_name=None, text=None):
         super(File, self).__init__(
+                block_type='file',
                 name=path, 
                 start_line=1, 
                 body_line=1,

@@ -15,9 +15,10 @@ from pprint import pprint
 
 
 class Block(object):
-    def __init__(self, name, start_line, body_line, end_line,
+    def __init__(self, block_type, name, start_line, body_line, end_line,
             super_block_name=None, sub_blocks=None, text=None):
         # full_name will be reassigned once a super_block_name is given
+        self.block_type = str(block_type)
         self.name = str(name)
         self.full_name = str(name)
         

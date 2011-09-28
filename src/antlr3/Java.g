@@ -188,8 +188,7 @@ options {
 
 //NAK
 @header {
-from Method import Method
-from Class import Class
+from Block import Block
 from File import File
 }
 //NAK
@@ -207,37 +206,25 @@ from File import File
 
 @members {
 
-def addMethod(self, startln, endln, bodystart):
-    sub_blocks = self.object_scopes.pop()
-    name = self.skipBadScopes('method')[1]
-    formals = self.formals.pop() 
-    formals.reverse()
-    self.object_scopes[-1].append(
-        Method(name, formals, sub_blocks, startln, bodystart, endln)
-    )
-    self.modifier_line = 99999999
-
-def addClass(self, startln, endln, bodystart):
-    sub_blocks = self.object_scopes.pop()
-    name = self.skipBadScopes('class')[1]
-    self.object_scopes[-1].append(
-        Class(name, sub_blocks, startln, bodystart, endln)
-    )
-    self.modifier_line = 99999999
-
-def addEnum(self, startln, endln, bodystart):
-    sub_blocks = self.object_scopes.pop()
-    name = self.skipBadScopes('enum')[1]
-    self.object_scopes[-1].append(
-        Enum(name, sub_blocks, startln, bodystart, endln)
-    )
-    self.modifier_line = 99999999
-
-def skipBadScopes(self, type):
+def addBlock(self, startln, endln, bodystart):
+    scope_sub_blocks = self.object_scopes.pop()
     scope = self.scopes.pop()
-    while scope[0] != type:
-        scope = self.scopes.pop()
-    return scope
+    scope_type = scope[0]
+    name = scope[1]
+    if scope_type =='method':
+        formals = self.formals.pop() 
+        formals.reverse()
+        method_name = name + '(' + ','.join(formals) + ')'
+        self.object_scopes[-1].append(
+            Block(scope_type, method_name, startln, bodystart, endln,
+            sub_blocks=scope_sub_blocks)
+        )
+    else:
+        self.object_scopes[-1].append(
+            Block(scope_type, name, startln, bodystart, endln,
+            sub_blocks=scope_sub_blocks)
+        )
+    self.modifier_line = 99999999
 
 @property
 def file_name(self):
@@ -296,9 +283,9 @@ packageDeclaration
             self.pkg_name += ('.' + pkg_sub.text)
         }
         )*
-        {
-            self.scopes.append(('package', self.pkg_name))
-        }
+     //   {
+      //      self.scopes.append(('package', self.pkg_name))
+       // }
         ';'
     ;
 
@@ -370,10 +357,14 @@ enumDeclaration
     ;
 
 enumBody
-    :   '{' enumConstants? ','? enumBodyDeclarations? '}'
+    :   l='{' 
             {
-                self.scopes.pop() }
-
+                self.object_scopes.append([])
+            }
+     enumConstants? ','? enumBodyDeclarations? r='}'
+            {
+                self.addBlock(min(self.modifier_line, $l.getLine()), $r.getLine(), $l.getLine())
+                }
     ;
 
 enumConstants
@@ -382,8 +373,16 @@ enumConstants
 
 enumConstant
     :   annotations? i=Identifier 
-            {   self.scopes.append(('enum', $i.getText())) }
+            {   
+                self.scopes.append(('enum', $i.getText())) 
+                self.prev_scopes_len = len(self.scopes)
+            }
     arguments? classBody?
+            {
+                # scope needs to be pop if classBody didnt get called
+                if self.prev_scopes_len ==len(self.scopes):
+                    self.scopes.pop()
+            }
     ;
 
 enumBodyDeclarations
@@ -412,7 +411,7 @@ classBody
             }
     classBodyDeclaration* r='}'
             {
-                self.addClass(min(self.modifier_line, $l.getLine()), $r.getLine(), $l.getLine())
+                self.addBlock(min(self.modifier_line, $l.getLine()), $r.getLine(), $l.getLine())
                 }
     ;
 
@@ -423,7 +422,7 @@ interfaceBody
             }
     interfaceBodyDeclaration* r='}'
             {
-                self.addClass(min(self.modifier_line, $l.getLine()), $r.getLine(), $l.getLine())
+                self.addBlock(min(self.modifier_line, $l.getLine()), $r.getLine(), $l.getLine())
                 }
     ;
 
@@ -510,7 +509,7 @@ methodDeclaratorRest
         |   r=';'
             {
                 self.object_scopes.append([])
-                self.addMethod(self.modifier_line, $r.getLine(), $r.getLine())
+                self.addBlock(self.modifier_line, $r.getLine(), $r.getLine())
             }
         )
     ;
@@ -521,7 +520,7 @@ voidMethodDeclaratorRest
         |   r=';'
             {
                 self.object_scopes.append([])
-                self.addMethod(self.modifier_line, $r.getLine(), $r.getLine())
+                self.addBlock(self.modifier_line, $r.getLine(), $r.getLine())
             }
         )
     ;
@@ -707,7 +706,7 @@ methodBody
             }
     blockStatement* r='}'
             {
-                self.addMethod(min(self.modifier_line,$l.getLine()), $r.getLine(), $l.getLine())
+                self.addBlock(min(self.modifier_line,$l.getLine()), $r.getLine(), $l.getLine())
             }
     ;
 //NAK
@@ -718,7 +717,7 @@ constructorBody
             }
     explicitConstructorInvocation? blockStatement* r='}'
             {
-                self.addMethod(min(self.modifier_line,$l.getLine()), $r.getLine(), $l.getLine())
+                self.addBlock(min(self.modifier_line,$l.getLine()), $r.getLine(), $l.getLine())
             }
     ;
 
