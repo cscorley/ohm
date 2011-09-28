@@ -193,6 +193,7 @@ from File import File
 }
 //NAK
 @init {
+    self._anon_stack = []
     self.scopes = []
     self.object_scopes = [[]]
     self.formals = []
@@ -405,12 +406,16 @@ typeList
     ;
 
 classBody
-    :   l='{' 
+    :       {
+                self._anon_stack.append(1)
+            }
+        l='{' 
             {
                 self.object_scopes.append([])
             }
     classBodyDeclaration* r='}'
             {
+                self._anon_stack.pop()
                 self.addBlock(min(self.modifier_line, $l.getLine()), $r.getLine(), $l.getLine())
                 }
     ;
@@ -1105,8 +1110,12 @@ arrayCreatorRest
     ;
 
 classCreatorRest
-    :   arguments
-        (  {    self.scopes.append(('class','anon'))    }
+    :   arguments (  
+           {    
+               anon_name = '$' + str(self._anon_stack[-1])
+               self.scopes.append(('class',anon_name))
+               self._anon_stack[-1] += 1
+           }
         classBody)?
     ;
 
