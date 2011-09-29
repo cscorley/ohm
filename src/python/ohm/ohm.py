@@ -220,9 +220,11 @@ def build_db(db, name, url, starting_revision, ending_revision):
         # revision
 
         # get the owner/commiter uid
+        author = str(log.author)
+        author.lower()
         propDict = {
                 'project': uid['project'],
-                'name': str(log.author).lower()
+                'name': author
                 }
         uid['owner'] = getUID(db, 'owner', ('name', 'project'), propDict)
 
