@@ -220,7 +220,7 @@ def build_db(db, name, url, starting_revision, ending_revision):
         # get the owner/commiter uid
         propDict = {
                 'project': uid['project'],
-                'name': log.author
+                'name': str(log.author).lower()
                 }
         uid['owner'] = getUID(db, 'owner', ('name', 'project'), propDict)
 
@@ -432,6 +432,46 @@ def tester(db, name, url, starting_revision, ending_revision):
     for c in classes_no_owner:
         print(c)
 
+def ownership_map(db, name, url):
+    # this dictionary is to hold the current collection of uid's needed by
+    # various select queries. It should never be completely reassigned
+    uid = {
+            'project': None,
+            'revision': None,
+            'owner': None,
+            'block': None,
+            }
+
+    # this dictionary is used throughout as a unique properties dictionary
+    # used to get the UID of the entries in the table its used for. It should
+    # always be reassigned when used.
+    propDict = {
+            'name': name,
+            'url': url
+            }
+    # get the project uid
+    uid['project'] = getUID(db, 'project', ('url',), propDict)
+
+    output_dir = '/tmp/ohm/'
+    owners = db.execute('SELECT * from owner where project=%s',
+            (uid['project'], ))
+
+    if owners is None or len(owners) == 0:
+        print('Error: project has not been built yet, use -b')
+        return
+    
+    with open('data/%s-ownership.map' % name, 'r') as f:
+        maps = f.readlines()
+    
+    for m in maps:
+        mapping = m.remove('\n')
+        mapping = mapping.split(',')
+
+    
+
+    with open(output_dir + '%s-ownership.key' % name, 'w') as f:
+        for each in owners:
+            f.write('%s\n' % each[1])
 
 
 
