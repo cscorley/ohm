@@ -53,14 +53,17 @@ class Repository:
             self.revEnd = pysvn.Revision(pysvn.opt_revision_kind.number,
                     ending_revision)
 
+        revlog = self.client.log(self.url, self.revStart, self.revEnd)
+        self.revList = []
+        for log_entry in revlog:
+            self.revList.append(log_entry.revision)
+
+        # going to use the list like a stack, so reverse it so the first
+        # revision is the lowest
+        self.revList.reverse()
 
         # after init, please use _moveNextRevision to change these
-        self.revCurr = self.revStart
-        self.revPrev = pysvn.Revision(pysvn.opt_revision_kind.number,
-                self.revStart.number - 1)
-        self.revNext = pysvn.Revision(pysvn.opt_revision_kind.number,
-                self.revStart.number + 1)
-
+        self.revCurr = self.revList.pop()
 
     def __str__(self):
         return '%s %s %s' % (self.url, self.revCurr.number,
@@ -77,14 +80,9 @@ class Repository:
 
     # this function is to be use to cycle the revision objects
     def _moveNextRevision(self):
-        if self._hasNext():
+        if len(self.revList) > 0:
             self.revPrev = self.revCurr
-            self.revCurr = self.revNext
-            self.revNext = pysvn.Revision(pysvn.opt_revision_kind.number,
-                    self.revCurr.number + 1)
-
-    def _hasNext(self):
-        return self.revCurr.number <= self.revEnd.number
+            self.revCurr = self.revList.pop()
 
     # warning
     def checkout(self, fileName, revision_number, try_count=0):
@@ -120,11 +118,8 @@ class Repository:
 
         return output
 
-    def getCurrentRevision(self):
-        return self.revCurr
-
     def getRevisions(self):
-        while self._hasNext():
+        while len(self.revList) > 0:
             try:
                 log = self.client.log(self.url, revision_start=self.revCurr,
                         revision_end=self.revCurr, limit=1)
