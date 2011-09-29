@@ -64,6 +64,8 @@ class Repository:
 
         # after init, please use _moveNextRevision to change these
         self.revCurr = self.revList.pop()
+        self.revPrev = pysvn.Revision(pysvn.opt_revision_kind.number, 
+                self.revCurr.number - 1)
 
     def __str__(self):
         return '%s %s %s %s' % (self.url, self.revCurr.number,
