@@ -66,8 +66,8 @@ class Repository:
         self.revCurr = self.revList.pop()
 
     def __str__(self):
-        return '%s %s %s' % (self.url, self.revCurr.number,
-                self.revEnd.number)
+        return '%s %s %s %s' % (self.url, self.revCurr.number,
+                self.revEnd.number, len(self.revList))
 
     def __repr__(self):
         return str(self)

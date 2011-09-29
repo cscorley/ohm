@@ -199,6 +199,7 @@ def build_db(db, name, url, starting_revision, ending_revision):
     uid['project'] = getUID(db, 'project', ('url',), propDict)
 
     project_repo = Repository(name, url, starting_revision, ending_revision)
+    total_revs = len(project_repo.revList)
     print(project_repo)
     for revision_info in project_repo.getRevisions():
         if os.path.exists('/tmp/ohm/svn/'):
@@ -212,7 +213,8 @@ def build_db(db, name, url, starting_revision, ending_revision):
             continue
         diff = revision_info[1]
 
-        print('Revision %d' % log.revision.number)
+        curr = log.revision.number
+        print('Revision %d -- %d\% complete' % (curr, curr/total_revs)
 
         # there are two uid's which we can extract from the log for this
         # revision
