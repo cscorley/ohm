@@ -42,7 +42,7 @@ class Database:
 
     def _create_or_replace_views(self):
         pass
-    def _create_or_replace_triggerss(self):
+    def _create_or_replace_triggers(self):
         pass
 
     def _create_or_replace_tables(self):

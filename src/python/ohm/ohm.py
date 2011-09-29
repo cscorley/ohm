@@ -214,17 +214,15 @@ def build_db(db, name, url, starting_revision, ending_revision):
         diff = revision_info[1]
 
         curr = log.revision.number
-        print('Revision %d -- %d\% complete' % (curr, curr/total_revs)
+        print('Revision %d -- %d complete' % (curr, curr/total_revs))
 
         # there are two uid's which we can extract from the log for this
         # revision
 
         # get the owner/commiter uid
-        author = str(log.author)
-        author.lower()
         propDict = {
                 'project': uid['project'],
-                'name': author
+                'name': str(log.author).lower()
                 }
         uid['owner'] = getUID(db, 'owner', ('name', 'project'), propDict)
 
