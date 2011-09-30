@@ -51,7 +51,7 @@ class Diff:
 
     def _printToLog(self, source, revision_number, log):
         if len(log) > 0:
-            revCurr = self.project_repo.getCurrentRevision()
+            revCurr = self.project_repo.revCurr
             _make_dir('/tmp/ohm/')
             with open('/tmp/ohm/errors.log', 'a') as f:
                 f.write("\n\n***********************************\n\n")
