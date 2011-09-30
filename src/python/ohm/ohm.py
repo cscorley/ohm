@@ -216,7 +216,7 @@ def build_db(db, name, url, starting_revision, ending_revision):
 
         curr = log.revision.number
         count += 1
-        print('Revision %d -- %d complete' % (curr, count/total_revs))
+        print('Revision %d -- %d complete' % (curr, (count/total_revs)*100))
 
         # there are two uid's which we can extract from the log for this
         # revision

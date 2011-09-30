@@ -92,7 +92,10 @@ class Diff:
             elif revision > 0:
                 return Java4Lexer
         elif name.upper() == 'ANT':
-            pass
+            if revision > 277860:
+                return Java5Lexer
+            elif revision > 275290:
+                return Java4Lexer
 
         return JavaLexer
 
