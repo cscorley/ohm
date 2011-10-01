@@ -216,7 +216,8 @@ def build_db(db, name, url, starting_revision, ending_revision):
 
         curr = log.revision.number
         count += 1
-        print('Revision %d -- %d complete' % (curr, (count/total_revs)*100))
+        print('Revision %d -- %f complete' % (curr,
+            (float(count)/float(total_revs))*100))
 
         # there are two uid's which we can extract from the log for this
         # revision
@@ -252,8 +253,7 @@ def build_db(db, name, url, starting_revision, ending_revision):
 
         # insert changes into tables
 
-def generate(db, name, url, starting_revision, ending_revision, use_renames,
-        use_sums):
+def generate(db, name, url, starting_revision, ending_revision, use_renames, use_sums):
     # this dictionary is to hold the current collection of uid's needed by
     # various select queries. It should never be completely reassigned
     uid = {
@@ -272,8 +272,16 @@ def generate(db, name, url, starting_revision, ending_revision, use_renames,
             }
     # get the project uid
     uid['project'] = getUID(db, 'project', ('url',), propDict)
+    
+    revisions = db.execute('SELECT number from revision where project=%s \
+            order by number desc',
+            (uid['project'], ))
 
-    output_dir = '/tmp/ohm/'
+    output_dir = '/tmp/ohm/{name}-r{revision}/'.format(name=name,
+            revision=revisions[0][0])
+    if False == os.path.exists(output_dir):
+        _make_dir(output_dir)
+
     owners = db.execute('SELECT * from owner where project=%s',
             (uid['project'], ))
 
@@ -281,7 +289,7 @@ def generate(db, name, url, starting_revision, ending_revision, use_renames,
         print('Error: project has not been built yet, use -b')
         return
 
-    with open(output_dir + '%s-ownership.key' % name, 'w') as f:
+    with open(output_dir + 'key.txt', 'w') as f:
         for each in owners:
             f.write('%s\n' % each[1])
 
@@ -290,7 +298,7 @@ def generate(db, name, url, starting_revision, ending_revision, use_renames,
     dup_results = db.execute('select full_name from block where \
             project=%s and type=%s \
             group by full_name having (count(full_name) > 1);',
-            (uid['project'], 'Class'))
+            (uid['project'], 'class'))
     duplicated = []
 
     # copy just the strings
@@ -312,7 +320,7 @@ def generate(db, name, url, starting_revision, ending_revision, use_renames,
             from {table} join block on \
             {table}.block_id = block.id \
             where block.project=%s and block.type=%s'.format(table=data_table),
-            (uid['project'], 'Class' ))
+            (uid['project'], 'class' ))
 
     curr_id = -1
     curr_full_name = ''
@@ -323,7 +331,7 @@ def generate(db, name, url, starting_revision, ending_revision, use_renames,
     for d in duplicated:
         duplicated_profiles[d] = []
 
-    with open(output_dir + '%s-ownership.gen' % name, 'w') as f:
+    with open(output_dir + 'profiles.txt', 'w') as f:
         for each in c:
             if curr_id != each[0]:
                 if curr_id != -1:
@@ -388,7 +396,7 @@ def tester(db, name, url, starting_revision, ending_revision):
             where block.project=%s and block.type=%s \
             order by block.id; \
             ',
-            (uid['project'], 'Class' ))
+            (uid['project'], 'class' ))
 
     if classes is None or len(classes) == 0:
         print('Error: project has not been built yet, use -b')
