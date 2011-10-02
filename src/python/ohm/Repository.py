@@ -63,12 +63,10 @@ class Repository:
         self.revList.reverse()
 
         # after init, please use _moveNextRevision to change these
-        self.revCurr = self.revList.pop()
-        self.revPrev = pysvn.Revision(pysvn.opt_revision_kind.number, 
-                self.revCurr.number - 1)
+        self.revCurr = None
 
     def __str__(self):
-        return '%s %s %s %s' % (self.url, self.revCurr.number,
+        return '%s %s %s %s' % (self.url, self.revStart.number,
                 self.revEnd.number, len(self.revList))
 
     def __repr__(self):
@@ -85,6 +83,9 @@ class Repository:
         if len(self.revList) > 0:
             self.revPrev = self.revCurr
             self.revCurr = self.revList.pop()
+            if self.revPrev is None:
+                self.revPrev = pysvn.Revision(pysvn.opt_revision_kind.number, 
+                        self.revCurr.number - 1)
 
     # warning
     def checkout(self, fileName, revision_number, try_count=0):
@@ -122,6 +123,7 @@ class Repository:
 
     def getRevisions(self):
         while len(self.revList) > 0:
+            self._moveNextRevision()
             try:
                 log = self.client.log(self.url, revision_start=self.revCurr,
                         revision_end=self.revCurr, limit=1)
@@ -137,7 +139,6 @@ class Repository:
                 diffArr = diff.split('\n')
 
                 yield log, diffArr
-                self._moveNextRevision()
             except pysvn.ClientError as e:
                 for message, code in e.args[1]:
                     if code == 160013 or code == 195012:

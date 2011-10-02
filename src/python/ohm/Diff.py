@@ -219,11 +219,9 @@ class Diff:
                 self.old_source_text = f.readlines()
 
             self.old_file.text = self.old_source_text    
-            #self.old_file.recursive_print()
-
             self._printToLog(self.old_source, old_revision_number, log)
-
             self.PLD.digest_old(self.old_file)
+            #self.old_file.recursive_print()
         
         if not isRemovedFile:
             res = self._getParserResults(self.new_source, new_revision_number)
@@ -237,11 +235,9 @@ class Diff:
                 self.new_source_text = f.readlines()
 
             self.new_file.text = self.new_source_text
-            #self.new_file.recursive_print()
-
             self._printToLog(self.new_source, new_revision_number, log)
-
             self.PLD.digest_new(self.new_file)
+            #self.new_file.recursive_print()
         
             
 
@@ -260,9 +256,15 @@ class Diff:
         if old is None or new is None:
             return
 
-        if old.has_sub_blocks and new.has_sub_blocks:
-            old_set = set(old.sub_blocks)
-            new_set = set(new.sub_blocks)
+        if old.has_sub_blocks or new.has_sub_blocks:
+            if old.has_sub_blocks:
+                old_set = set(old.sub_blocks)
+            else:
+                old_set = set()
+            if new.has_sub_blocks:
+                new_set = set(new.sub_blocks)
+            else:
+                new_set = set()
         else:
             return 
 

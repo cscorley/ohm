@@ -251,8 +251,6 @@ def build_db(db, name, url, starting_revision, ending_revision):
         for digestion in patch.digest():
             insert_changes(db, [digestion[0]], None, uid)
 
-        # insert changes into tables
-
 def generate(db, name, url, starting_revision, ending_revision, use_renames, use_sums):
     # this dictionary is to hold the current collection of uid's needed by
     # various select queries. It should never be completely reassigned
