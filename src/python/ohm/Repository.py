@@ -56,7 +56,11 @@ class Repository:
         revlog = self.client.log(self.url, self.revStart, self.revEnd)
         self.revList = []
         for log_entry in revlog:
-            self.revList.append(log_entry.revision)
+            try:
+                log_entry.author
+                self.revList.append(log_entry.revision)
+            except AttributeError:
+                pass
 
         # going to use the list like a stack, so reverse it so the first
         # revision is the lowest
@@ -131,7 +135,6 @@ class Repository:
                     log[0].author
                 except (AttributeError, IndexError):
                     print('skipping %d' % self.revCurr.number)
-                    self._moveNextRevision()
                     continue
 
                 diff = self.client.diff('./', self.url, revision1=self.revPrev,
@@ -144,7 +147,6 @@ class Repository:
                     if code == 160013 or code == 195012:
                         print('Code:', code, 'Message:', message)
                         # does not exist in repository yet
-                        self._moveNextRevision()
                     else:
                         print('Code:', code, 'Message:', message)
 
