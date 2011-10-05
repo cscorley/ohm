@@ -276,19 +276,18 @@ def generate(db, name, url, starting_revision, ending_revision, use_renames, use
             order by number desc',
             (uid['project'], ))
 
+    if revisions is None or len(revisions) == 0:
+        print('Error: project has not been built yet, use -b')
+        return
+
     output_dir = '/tmp/ohm/{name}-r{revision}/'.format(name=name,
             revision=revisions[0][0])
     if False == os.path.exists(output_dir):
         _make_dir(output_dir)
 
+    owner_remap(db, name, uid['project'])
     owners = db.execute('SELECT * from owner where project=%s',
             (uid['project'], ))
-
-    if owners is None or len(owners) == 0:
-        print('Error: project has not been built yet, use -b')
-        return
-
-    owner_remap(db, name, uid['project']):
 
     with open(output_dir + 'key.txt', 'w') as f:
         for each in owners:
@@ -406,11 +405,12 @@ def owner_remap(db, name, pid):
         oid1 = result[0][0]  
 
         db.execute('UPDATE change SET owner=%s WHERE owner=%s',
-                (oid0, oid1))
+                (oid1, oid0))
         db.execute('UPDATE r_change SET owner=%s WHERE owner=%s',
-                (oid0, oid1))
+                (oid1, oid0))
         db.execute('UPDATE revision SET owner=%s WHERE owner=%s',
-                (oid0, oid1))
+                (oid1, oid0))
+        db.execute('DELETE from owner where id=%s', (oid0,))
 
 
 def tester(db, name, url, starting_revision, ending_revision):
