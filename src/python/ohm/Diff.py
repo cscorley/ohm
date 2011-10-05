@@ -252,6 +252,7 @@ class Diff:
             self.digestion.added_count += self.new_file.added_count
             self.recursive_wtf(self.digestion, self.new_file)
 
+
     def recursive_wtf(self, old, new):
         if old is None or new is None:
             return
@@ -278,10 +279,10 @@ class Diff:
             o.added_count += n.added_count
 
             # prune the unchanged blocks
-            if o.removed_count == 0 and o.added_count == 0:
-                old.sub_blocks.remove(o)
-            else:
-                self.recursive_wtf(o, n)
+        #    if o.removed_count == 0 and o.added_count == 0:
+        #        old.sub_blocks.remove(o)
+        #    else:
+            self.recursive_wtf(o, n)
 
         old.sub_blocks.extend(added_set)
 

@@ -82,7 +82,8 @@ def insert_changes(db, affected, cid, uid):
 
         uid['block'] = getBlockUID(db, affected_block, cid, uid)
         added, deleted = affected_block.changes
-        selinupChanges(db, uid, added, deleted)
+        if added > 0 or deleted > 0:
+            selinupChanges(db, uid, added, deleted)
 
     for affected_block in affected:
         if affected_block.has_sub_blocks:
@@ -287,6 +288,8 @@ def generate(db, name, url, starting_revision, ending_revision, use_renames, use
         print('Error: project has not been built yet, use -b')
         return
 
+    owner_remap(db, name, uid['project']):
+
     with open(output_dir + 'key.txt', 'w') as f:
         for each in owners:
             f.write('%s\n' % each[1])
@@ -294,9 +297,9 @@ def generate(db, name, url, starting_revision, ending_revision, use_renames, use
     # before we start generating class vectors, lets build a list of duplicates
     # to save off for merging later
     dup_results = db.execute('select full_name from block where \
-            project=%s and type=%s \
+            project=%s and (block.type=%s or block.type=%s or block.type=%s)\
             group by full_name having (count(full_name) > 1);',
-            (uid['project'], 'class'))
+            (uid['project'], 'class', 'enum', 'interface' ))
     duplicated = []
 
     # copy just the strings
@@ -317,8 +320,9 @@ def generate(db, name, url, starting_revision, ending_revision, use_renames, use
     c.execute('SELECT block.id, block.full_name, {table}.sum, owner_id \
             from {table} join block on \
             {table}.block_id = block.id \
-            where block.project=%s and block.type=%s'.format(table=data_table),
-            (uid['project'], 'class' ))
+            where block.project=%s and \
+            (block.type=%s or block.type=%s or block.type=%s)'.format(table=data_table),
+            (uid['project'], 'class', 'enum', 'interface' ))
 
     curr_id = -1
     curr_full_name = ''
@@ -350,6 +354,18 @@ def generate(db, name, url, starting_revision, ending_revision, use_renames, use
             
             ownership_profile[each[3]] = each[2]
 
+            if c.rownumber == c.rowcount:
+                if curr_full_name in duplicated_profiles:
+                    # using a dict of strings to hold lists of dicts
+                    duplicated_profiles[curr_full_name].append(ownership_profile)
+                else:
+                    valstr = '%s,' * len(ownership_profile)
+                    valstr = valstr.rstrip(',') + '\n'
+                    o_tuple = tuple(ownership_profile.values())
+                    f.write(curr_full_name + ' ')
+                    f.write(valstr % o_tuple)
+
+
         for d in duplicated_profiles:
             tmp_p = None
             for p in duplicated_profiles[d]:
@@ -366,6 +382,35 @@ def generate(db, name, url, starting_revision, ending_revision, use_renames, use
                 f.write(d + ' ')
                 f.write(valstr % o_tuple)
 
+
+def owner_remap(db, name, pid):
+    filename = '%s.map' % name
+    if False == os.path.exists(filename):
+        return
+
+    with open(filename, 'r') as f:
+        maps = f.readlines()
+    
+    for m in maps:
+        mapping = m.remove('\n')
+        mapping = mapping.split(',')
+
+        result = db.execute('SELECT id from owner where project=%s and name=%s',
+            (pid, mapping[0] ))
+
+        oid0 = result[0][0]  
+
+        result = db.execute('SELECT id from owner where project=%s and name=%s',
+            (pid, mapping[1] ))
+
+        oid1 = result[0][0]  
+
+        db.execute('UPDATE change SET owner=%s WHERE owner=%s',
+                (oid0, oid1))
+        db.execute('UPDATE r_change SET owner=%s WHERE owner=%s',
+                (oid0, oid1))
+        db.execute('UPDATE revision SET owner=%s WHERE owner=%s',
+                (oid0, oid1))
 
 
 def tester(db, name, url, starting_revision, ending_revision):
@@ -442,46 +487,6 @@ def tester(db, name, url, starting_revision, ending_revision):
     for c in classes_no_owner:
         print(c)
 
-def ownership_map(db, name, url):
-    # this dictionary is to hold the current collection of uid's needed by
-    # various select queries. It should never be completely reassigned
-    uid = {
-            'project': None,
-            'revision': None,
-            'owner': None,
-            'block': None,
-            }
-
-    # this dictionary is used throughout as a unique properties dictionary
-    # used to get the UID of the entries in the table its used for. It should
-    # always be reassigned when used.
-    propDict = {
-            'name': name,
-            'url': url
-            }
-    # get the project uid
-    uid['project'] = getUID(db, 'project', ('url',), propDict)
-
-    output_dir = '/tmp/ohm/'
-    owners = db.execute('SELECT * from owner where project=%s',
-            (uid['project'], ))
-
-    if owners is None or len(owners) == 0:
-        print('Error: project has not been built yet, use -b')
-        return
-    
-    with open('data/%s-ownership.map' % name, 'r') as f:
-        maps = f.readlines()
-    
-    for m in maps:
-        mapping = m.remove('\n')
-        mapping = mapping.split(',')
-
-    
-
-    with open(output_dir + '%s-ownership.key' % name, 'w') as f:
-        for each in owners:
-            f.write('%s\n' % each[1])
 
 
 

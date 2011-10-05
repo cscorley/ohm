@@ -11,6 +11,7 @@ from Java5Lexer import Java5Lexer
 from JavaParser import JavaParser
 
 tests = ['Test.java', 'Test2.java', 'Test3.java', 'Test4.java']
+tests = []
 for test_java_file in tests:
     lexer = Java5Lexer(ANTLRFileStream(test_java_file, 'utf-8'))
     parser = JavaParser(CommonTokenStream(lexer))
@@ -36,19 +37,14 @@ url = 'http://steel.cs.ua.edu/repos/jedit/jEdit/trunk/'
 # this dictionary is used throughout as a unique properties dictionary
 # used to get the UID of the entries in the table its used for. It should
 
-starting_revision=11805
-ending_revision=11805
+starting_revision=17702
+ending_revision=17702
 project_repo = Repository(name, url, starting_revision, ending_revision)
 total_revs = len(project_repo.revList)
 pprint(project_repo.revList)
 count = 0
 print(project_repo)
 for revision_info in project_repo.getRevisions():
-    if os.path.exists('/tmp/ohm/svn/'):
-        try:
-            rmtree('/tmp/ohm/svn/', True)
-        except OSError:
-            pass
     if len(revision_info[0]) > 0:
         log = revision_info[0][0]
     else:
