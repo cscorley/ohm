@@ -421,12 +421,16 @@ classBody
     ;
 
 interfaceBody
-    :   l='{'
+    :       {
+                self._anon_stack.append(1)
+            }
+       l='{'
             {
                 self.object_scopes.append([])
             }
     interfaceBodyDeclaration* r='}'
             {
+                self._anon_stack.pop()
                 self.addBlock(min(self.modifier_line, $l.getLine()), $r.getLine(), $l.getLine())
                 }
     ;
