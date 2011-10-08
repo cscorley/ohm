@@ -391,7 +391,7 @@ def owner_remap(db, name, pid):
         maps = f.readlines()
     
     for m in maps:
-        mapping = m.remove('\n')
+        mapping = m.replace('\n', '')
         mapping = mapping.split(',')
 
         result = db.execute('SELECT id from owner where project=%s and name=%s',
@@ -404,13 +404,15 @@ def owner_remap(db, name, pid):
 
         oid1 = result[0][0]  
 
+        db.execute('UPDATE revision SET owner=%s WHERE owner=%s',
+                (oid1, oid0))
         db.execute('UPDATE change SET owner=%s WHERE owner=%s',
                 (oid1, oid0))
         db.execute('UPDATE r_change SET owner=%s WHERE owner=%s',
                 (oid1, oid0))
-        db.execute('UPDATE revision SET owner=%s WHERE owner=%s',
-                (oid1, oid0))
         db.execute('DELETE from owner where id=%s', (oid0,))
+
+    db.commit()
 
 
 def tester(db, name, url, starting_revision, ending_revision):
