@@ -397,11 +397,24 @@ def owner_remap(db, name, pid):
         result = db.execute('SELECT id from owner where project=%s and name=%s',
             (pid, mapping[0] ))
 
+        if result is None:
+            continue
+        if len(result) == 0:
+            continue
+        elif len(result[0]) == 0:
+            continue
+
         oid0 = result[0][0]  
 
         result = db.execute('SELECT id from owner where project=%s and name=%s',
             (pid, mapping[1] ))
 
+        if result is None:
+            continue
+        if len(result) == 0:
+            continue
+        elif len(result[0]) == 0:
+            continue
         oid1 = result[0][0]  
 
         db.execute('UPDATE revision SET owner=%s WHERE owner=%s',
