@@ -459,8 +459,8 @@ memberDecl
                 self.modifier_lines[-1] = min($i.line,self.modifier_lines[-1])
             }
         constructorDeclaratorRest
-    |   interfaceDeclaration
-    |   classDeclaration
+    |   { self.modifier_lines.append(sys.maxint) } interfaceDeclaration
+    |   { self.modifier_lines.append(sys.maxint) } classDeclaration
     ;
 
 memberDeclaration
