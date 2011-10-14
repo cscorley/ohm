@@ -195,7 +195,7 @@ from File import File
     self.scopes = []
     self.object_scopes = [[]]
     self.formals = []
-    self.modifier_line = 99999999
+    self.modifier_lines = []
     self.log = []
     self._file_name = None
     self._file_len = 0
@@ -217,12 +217,13 @@ def addBlock(self, startln, endln, bodystart):
             Block(scope_type, method_name, startln, bodystart, endln,
             sub_blocks=scope_sub_blocks)
         )
+        print('{0}:{1}-{2}-{3}'.format(method_name,startln,bodystart,endln))
     else:
         self.object_scopes[-1].append(
             Block(scope_type, name, startln, bodystart, endln,
             sub_blocks=scope_sub_blocks)
         )
-    self.modifier_line = 99999999
+        print('{0}:{1}-{2}-{3}'.format(name,startln,bodystart,endln))
 
 @property
 def file_name(self):
@@ -289,7 +290,9 @@ typeDeclaration
     ;
 
 classOrInterfaceDeclaration
-    :       { self.modifier_line = 99999999 }
+    :       {
+                self.modifier_lines.append(sys.maxint)
+            }
         classOrInterfaceModifiers (classDeclaration | interfaceDeclaration)
     ;
 
@@ -298,14 +301,18 @@ classOrInterfaceModifiers
     ;
 
 classOrInterfaceModifier
+@after {
+    if m:
+        self.modifier_lines[-1] = min($m.line,self.modifier_lines[-1])
+}
     :   annotation   // class or interface
-    |   'public'     // class or interface
-    |   'protected'  // class or interface
-    |   'private'    // class or interface
-    |   'abstract'   // class or interface
-    |   'static'     // class or interface
-    |   'final'      // class only -- does not apply to interfaces
-    |   'strictfp'    // class or interface
+    |   m='public'     // class or interface
+    |   m='protected'  // class or interface
+    |   m='private'    // class or interface
+    |   m='abstract'   // class or interface
+    |   m='static'     // class or interface
+    |   m='final'      // class only -- does not apply to interfaces
+    |   m='strictfp'    // class or interface
     ;
 
 modifiers
@@ -318,9 +325,10 @@ classDeclaration
     ;
 
 normalClassDeclaration
-    :   'class' i=Identifier
+    :   c='class' i=Identifier
             {
-                self.scopes.append(('class', $i.getText()))
+                self.modifier_lines[-1] = min($c.line,self.modifier_lines[-1])
+                self.scopes.append(('class', $i.text))
             }
         typeParameters?
         ('extends' type)?
@@ -343,7 +351,7 @@ typeBound
 enumDeclaration
     :   ENUM i=Identifier
             {
-                self.scopes.append(('enum', $i.getText()))
+                self.scopes.append(('enum', $i.text))
             }
         ('implements' typeList)? enumBody
     ;
@@ -355,7 +363,7 @@ enumBody
             }
      enumConstants? ','? enumBodyDeclarations? r='}'
             {
-                self.addBlock(min(self.modifier_line, $l.getLine()), $r.getLine(), $l.getLine())
+                self.addBlock(min(self.modifier_lines[-1], $l.line), $r.line, $l.line)
             }
     ;
 
@@ -366,7 +374,7 @@ enumConstants
 enumConstant
     :   annotations? i=Identifier 
             {   
-                self.scopes.append(('enum', $i.getText())) 
+                self.scopes.append(('enum', $i.text)) 
                 self.prev_scopes_len = len(self.scopes)
             }
     arguments? classBody?
@@ -389,7 +397,7 @@ interfaceDeclaration
 normalInterfaceDeclaration
     :   'interface' i=Identifier
             {
-                self.scopes.append(('interface', $i.getText()))
+                self.scopes.append(('interface', $i.text))
             }
         typeParameters? ('extends' typeList)? interfaceBody
     ;
@@ -409,7 +417,8 @@ classBody
     classBodyDeclaration* r='}'
             {
                 self._anon_stack.pop()
-                self.addBlock(min(self.modifier_line, $l.getLine()), $r.getLine(), $l.getLine())
+                self.addBlock(min(self.modifier_lines[-1], $l.line), $r.line, $l.line)
+                self.modifier_lines.pop()
             }
     ;
 
@@ -424,32 +433,30 @@ interfaceBody
     interfaceBodyDeclaration* r='}'
             {
                 self._anon_stack.pop()
-                self.addBlock(min(self.modifier_line, $l.getLine()), $r.getLine(), $l.getLine())
+                self.addBlock(min(self.modifier_lines[-1], $l.line), $r.line, $l.line)
+                self.modifier_lines.pop()
             }
     ;
 
 classBodyDeclaration
     :   ';'
     |   'static'? block
-    |       {
-                self.modifier_line = 1e300000
-            }
-        modifiers memberDecl
+    |   { self.modifier_lines.append(sys.maxint) } modifiers memberDecl
     ;
 
 memberDecl
     :   genericMethodOrConstructorDecl
     |   memberDeclaration
-    |   'void' i=Identifier
+    |   v='void' i=Identifier
             {
-                self.scopes.append(('method', $i.getText()))
-                self.modifier_line = min($i.getLine(),self.modifier_line)
+                self.scopes.append(('method', $i.text))
+                self.modifier_lines[-1] = min($v.line,self.modifier_lines[-1])
             }
         voidMethodDeclaratorRest
     |   i=Identifier
             {
-                self.scopes.append(('method', $i.getText()))
-                self.modifier_line = min($i.getLine(),self.modifier_line)
+                self.scopes.append(('method', $i.text))
+                self.modifier_lines[-1] = min($i.line,self.modifier_lines[-1])
             }
         constructorDeclaratorRest
     |   interfaceDeclaration
@@ -465,16 +472,16 @@ genericMethodOrConstructorDecl
     ;
 
 genericMethodOrConstructorRest
-    :   (type | 'void') i=Identifier
+    :   (type | v='void') i=Identifier
             {
-                self.scopes.append(('method', $i.getText()))
-                self.modifier_line = min($i.getLine(),self.modifier_line)
+                self.scopes.append(('method', $i.text))
+                self.modifier_lines[-1] = min($v.line,self.modifier_lines[-1])
             }
         methodDeclaratorRest
     |   i=Identifier
             {
-                self.scopes.append(('method', $i.getText()))
-                self.modifier_line = min($i.getLine(),self.modifier_line)
+                self.scopes.append(('method', $i.text))
+                self.modifier_lines[-1] = min($i.line,self.modifier_lines[-1])
             }
         constructorDeclaratorRest
     ;
@@ -482,17 +489,17 @@ genericMethodOrConstructorRest
 methodDeclaration
     :   i=Identifier
             {
-                self.scopes.append(('method', $i.getText()))
-                self.modifier_line = min($i.getLine(),self.modifier_line)
+                self.scopes.append(('method', $i.text))
+                self.modifier_lines[-1] = min($i.line,self.modifier_lines[-1])
             }
         methodDeclaratorRest
     ;
 
 fieldDeclaration
+@after {
+    self.modifier_lines.pop()
+}
     :   variableDeclarators ';'
-            {
-                self.modifier_line = 1e300000
-            }
     ;
 
 interfaceBodyDeclaration
@@ -503,7 +510,8 @@ interfaceBodyDeclaration
 interfaceMemberDecl
     :   interfaceMethodOrFieldDecl
     |   interfaceGenericMethodDecl
-    |   'void' Identifier voidInterfaceMethodDeclaratorRest
+    |   v='void' Identifier voidInterfaceMethodDeclaratorRest
+            { self.modifier_lines[-1] = min(v.line,self.modifier_lines[-1]) }
     |   interfaceDeclaration
     |   classDeclaration
     ;
@@ -524,7 +532,8 @@ methodDeclaratorRest
         |   r=';'
             {
                 self.object_scopes.append([])
-                self.addBlock(self.modifier_line, $r.getLine(), $r.getLine())
+                self.addBlock(self.modifier_lines[-1], $r.line, $r.line)
+                self.modifier_lines.pop()
             }
         )
     ;
@@ -535,7 +544,8 @@ voidMethodDeclaratorRest
         |   r=';'
             {
                 self.object_scopes.append([])
-                self.addBlock(self.modifier_line, $r.getLine(), $r.getLine())
+                self.addBlock(self.modifier_lines[-1], $r.line, $r.line)
+                self.modifier_lines.pop()
             }
         )
     ;
@@ -591,51 +601,22 @@ arrayInitializer
     ;
 
 modifier
+@after {
+    if m:
+        self.modifier_lines[-1] = $m.line
+}
     :   annotation
-    |   m2='public'
-            {
-                self.modifier_line = min($m2.getLine(),self.modifier_line)
-            }
-    |   m3='protected'
-            {
-                self.modifier_line = min($m3.getLine(),self.modifier_line)
-            }
-    |   m4='private'
-            {
-                self.modifier_line = min($m4.getLine(),self.modifier_line)
-            }
-    |   m5='static'
-            {
-                self.modifier_line = min($m5.getLine(),self.modifier_line)
-            }
-    |   m6='abstract'
-            {
-                self.modifier_line = min($m6.getLine(),self.modifier_line)
-            }
-    |   m7='final'
-            {
-                self.modifier_line = min($m7.getLine(),self.modifier_line)
-            }
-    |   m8='native'
-            {
-                self.modifier_line = min($m8.getLine(),self.modifier_line)
-            }
-    |   m9='synchronized'
-            {
-                self.modifier_line = min($m9.getLine(),self.modifier_line)
-            }
-    |   m10='transient'
-            {
-                self.modifier_line = min($m10.getLine(),self.modifier_line)
-            }
-    |   m11='volatile'
-            {
-                self.modifier_line = min($m11.getLine(),self.modifier_line)
-            }
-    |   m12='strictfp'
-            {
-                self.modifier_line = min($m12.getLine(),self.modifier_line)
-            }
+    |   m='public'
+    |   m='protected'
+    |   m='private'
+    |   m='static'
+    |   m='abstract'
+    |   m='final'
+    |   m='native'
+    |   m='synchronized'
+    |   m='transient'
+    |   m='volatile'
+    |   m='strictfp'
     ;
 
 packageOrTypeName
@@ -669,28 +650,34 @@ type returns [name]
 
 classOrInterfaceType returns [name]
     :   i=Identifier typeArguments? 
-            { $name = $i.getText() }
+            {
+                self.modifier_lines[-1] = min($i.line,self.modifier_lines[-1])
+                $name = $i.text
+            }
         ('.' j=Identifier typeArguments? 
-            { $name += ('.' + $j.getText()) }
+            { $name += ('.' + $j.text) }
         )*
     ;
 
 primitiveType returns [name]
-    :   'boolean'
+@after {
+    self.modifier_lines[-1] = min($t.line,self.modifier_lines[-1])
+}
+    :   t='boolean'
             { $name = 'boolean' }
-    |   'char'
+    |   t='char'
             { $name = 'char' }
-    |   'byte'
+    |   t='byte'
             { $name = 'byte' }
-    |   'short'
+    |   t='short'
             { $name = 'short' }
-    |   'int'
+    |   t='int'
             { $name = 'int' }
-    |   'long'
+    |   t='long'
             { $name = 'long' }
-    |   'float'
+    |   t='float'
             { $name = 'float' }
-    |   'double'
+    |   t='double'
             { $name = 'double' }
     ;
 
@@ -738,7 +725,8 @@ methodBody
             }
     blockStatement* r='}'
             {
-                self.addBlock(min(self.modifier_line,$l.getLine()), $r.getLine(), $l.getLine())
+                self.addBlock(min(self.modifier_lines[-1],$l.line), $r.line, $l.line)
+                self.modifier_lines.pop()
             }
     ;
 
@@ -749,7 +737,8 @@ constructorBody
             }
     explicitConstructorInvocation? blockStatement* r='}'
             {
-                self.addBlock(min(self.modifier_line,$l.getLine()), $r.getLine(), $l.getLine())
+                self.addBlock(min(self.modifier_lines[-1],$l.line), $r.line, $l.line)
+                self.modifier_lines.pop()
             }
     ;
 
@@ -791,9 +780,6 @@ annotations
 
 annotation
     :   n='@' annotationName ( '(' ( elementValuePairs | elementValue )? ')' )?
-            {
-                self.modifier_line = min($n.getLine(),self.modifier_line)
-            }
     ;
 
 annotationName
