@@ -217,13 +217,13 @@ def addBlock(self, startln, endln, bodystart):
             Block(scope_type, method_name, startln, bodystart, endln,
             sub_blocks=scope_sub_blocks)
         )
-        print('{0}:{1}-{2}-{3}'.format(method_name,startln,bodystart,endln))
+        #print('{0}:{1}-{2}-{3}'.format(method_name,startln,bodystart,endln))
     else:
         self.object_scopes[-1].append(
             Block(scope_type, name, startln, bodystart, endln,
             sub_blocks=scope_sub_blocks)
         )
-        print('{0}:{1}-{2}-{3}'.format(name,startln,bodystart,endln))
+        #print('{0}:{1}-{2}-{3}'.format(name,startln,bodystart,endln))
     self.modifier_line = 99999999
 
 @property
