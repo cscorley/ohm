@@ -41,28 +41,3 @@ $$;
 
 CREATE TRIGGER propagate_rename AFTER INSERT ON rename FOR EACH ROW
     EXECUTE PROCEDURE propagate_rename_trg();
-
-
-
---
-
-CREATE OR REPLACE FUNCTION propagate_data(change) RETURNS void
-LANGUAGE SQL
-AS $$
-        INSERT INTO r_change VALUES ($1.additions, $1.deletions, 
-        $1.project, $1.revision, $1.owner, $1.block);
-$$;
-
-CREATE TRIGGER propagate_data_trg AFTER INSERT ON change FOR EACH ROW
-    EXECUTE PROCEDURE propagate_data(ROW);
-
-
-CREATE OR REPLACE FUNCTION propagate_rename(rename) RETURNS void
-LANGUAGE SQL
-AS $$
-        UPDATE r_change SET block = $1.target WHERE
-        block = $1.original AND $1.ratio >= 0.6; 
-$$;
-
-CREATE TRIGGER propagate_rename_trg AFTER INSERT ON rename FOR EACH ROW
-    EXECUTE PROCEDURE propagate_rename(ROW);
