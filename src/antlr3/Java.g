@@ -195,7 +195,7 @@ from File import File
     self.scopes = []
     self.object_scopes = [[]]
     self.formals = []
-    self.modifier_line = 99999999
+    self.modifier_line = sys.maxint
     self.log = []
     self._file_name = None
     self._file_len = 0
@@ -224,7 +224,7 @@ def addBlock(self, startln, endln, bodystart):
             sub_blocks=scope_sub_blocks)
         )
         #print('{0}:{1}-{2}-{3}'.format(name,startln,bodystart,endln))
-    self.modifier_line = 99999999
+    self.modifier_line = sys.maxint
 
 @property
 def file_name(self):
@@ -291,7 +291,7 @@ typeDeclaration
     ;
 
 classOrInterfaceDeclaration
-    :       { self.modifier_line = 99999999 }
+    :       { self.modifier_line = sys.maxint }
         classOrInterfaceModifiers (classDeclaration | interfaceDeclaration)
     ;
 
@@ -434,7 +434,7 @@ classBodyDeclaration
     :   ';'
     |   'static'? block
     |       {
-                self.modifier_line = 1e300000
+                self.modifier_line = sys.maxint
             }
         modifiers memberDecl
     ;
@@ -493,7 +493,7 @@ methodDeclaration
 fieldDeclaration
     :   variableDeclarators ';'
             {
-                self.modifier_line = 1e300000
+                self.modifier_line = sys.maxint
             }
     ;
 

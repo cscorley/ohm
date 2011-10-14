@@ -27,7 +27,7 @@ except RecognitionException as e:
         return False
 }
 
-compilation_unit
+compilationUnit
     : namespace_body[True]
     ;
 
