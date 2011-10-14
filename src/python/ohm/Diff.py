@@ -46,7 +46,7 @@ class Diff:
 
 
         self.old_file_svn = re.compile('--- ([-/._\w ]+.java)\t\(revision (\d+)\)')
-        self.new_file_svn = re.compile('\+\+\+ ([-/._\w ]+.java)\t\(revision (\d+)\)')
+        self.new_file_svn = re.compile('\+\+\+ ([-/._\w ]+.java)\t(?:\([\s\S]*\)\t)?\(revision (\d+)\)')
         self.chunk_startu = re.compile('@@ -(\d+)(?:,(\d+))? \+(\d+)(?:,(\d+))? @@')
 
     def _printToLog(self, source, revision_number, log):
@@ -152,7 +152,6 @@ class Diff:
                     self.new_source = nm.group(1)
                     new_revision_number = int(nm.group(2))
 
-
                 # allows for spaces in the filename
                 if '.java' in self.old_source and not self.old_source.endswith('.java'):
                     self.old_source = self.old_source.split('.java')[0] + '.java'
@@ -209,6 +208,7 @@ class Diff:
         
         # Check out from SVN the original file
         if not isNewFile:
+            print(self.old_source)
             res = self._getParserResults(self.old_source, old_revision_number)
             if res is None:
                 # some error has occured.
@@ -224,6 +224,7 @@ class Diff:
             #self.old_file.recursive_print()
         
         if not isRemovedFile:
+            print(self.new_source)
             res = self._getParserResults(self.new_source, new_revision_number)
             if res is None:
                 # some error has occured.

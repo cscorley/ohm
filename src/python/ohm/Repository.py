@@ -26,10 +26,11 @@ class Repository:
         self.url = url
         self.username = username
         self.password = password
+        self.count = 0
         
-        if starting_revision < 1:
+        if starting_revision < 0:
             self.revStart = pysvn.Revision(pysvn.opt_revision_kind.number,
-                    1)
+                    0)
             self.revEnd = pysvn.Revision(pysvn.opt_revision_kind.head)
             revlog = self.client.log(self.url, self.revStart, self.revEnd,
                     limit=1)
@@ -55,13 +56,13 @@ class Repository:
 
         revlog = self.client.log(self.url, self.revStart, self.revEnd)
         self.revList = []
+
         for log_entry in revlog:
             try:
                 log_entry.author
                 self.revList.append(log_entry.revision)
             except AttributeError:
                 pass
-
         # going to use the list like a stack, so reverse it so the first
         # revision is the lowest
         self.revList.reverse()
@@ -85,6 +86,7 @@ class Repository:
     # this function is to be use to cycle the revision objects
     def _moveNextRevision(self):
         if len(self.revList) > 0:
+            self.count += 1
             self.revPrev = self.revCurr
             self.revCurr = self.revList.pop()
             if self.revPrev is None:
@@ -137,8 +139,17 @@ class Repository:
                     print('skipping %d' % self.revCurr.number)
                     continue
 
-                diff = self.client.diff('./', self.url, revision1=self.revPrev,
-                        revision2=self.revCurr)
+
+                if self.count == 1: 
+                    # first time trunk appears here...
+                    diff = self.client.diff('./',
+                            url_or_path=self.url.split('trunk/')[0], 
+                            revision1=self.revPrev,
+                            url_or_path2=self.url,
+                            revision2=self.revCurr)
+                else:
+                    diff = self.client.diff('./', self.url, revision1=self.revPrev,
+                            revision2=self.revCurr)
                 diffArr = diff.split('\n')
 
                 yield log, diffArr
@@ -146,9 +157,11 @@ class Repository:
                 for message, code in e.args[1]:
                     if code == 160013 or code == 195012:
                         print('Code:', code, 'Message:', message)
+                        print(self.revPrev.number, self.revCurr.number)
                         # does not exist in repository yet
                     else:
                         print('Code:', code, 'Message:', message)
+                        print(self.revPrev.number, self.revCurr.number)
 
     def getName(self):
         return self.name

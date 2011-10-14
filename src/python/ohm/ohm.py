@@ -80,9 +80,9 @@ def insert_changes(db, affected, cid, uid):
             # abort
             return
 
-        uid['block'] = getBlockUID(db, affected_block, cid, uid)
         added, deleted = affected_block.changes
         if added > 0 or deleted > 0:
+            uid['block'] = getBlockUID(db, affected_block, cid, uid)
             selinupChanges(db, uid, added, deleted)
 
     for affected_block in affected:
