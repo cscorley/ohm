@@ -475,7 +475,7 @@ genericMethodOrConstructorRest
     :   (type | v='void') i=Identifier
             {
                 self.scopes.append(('method', $i.text))
-                self.modifier_lines[-1] = min($v.line,self.modifier_lines[-1])
+                self.modifier_lines[-1] = min($i.line,self.modifier_lines[-1])
             }
         methodDeclaratorRest
     |   i=Identifier
