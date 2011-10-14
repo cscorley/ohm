@@ -10,7 +10,6 @@ See LICENSE for details.
 
    <property name="src"       location="src" />
    <property name="lib"       location="lib" />
-   <property name="grammar"   location="grammar" />
 
    <!--  - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -->
    <!--  Paths             -->
@@ -70,6 +69,11 @@ See LICENSE for details.
          grammar.location  = "${dir.src.antlr3}"
          parser.location   = "${dir.src.python}/${project.package}"
          />
+      <antlr3
+         grammar.name      = "${grammar.csharp.name}"
+         grammar.location  = "${dir.src.antlr3}"
+         parser.location   = "${dir.src.python}/${project.package}"
+         />
    </target>
 
    <!--  - - - - - - - - - - - - - - -  -->
@@ -96,6 +100,15 @@ See LICENSE for details.
          />
       <delete
          file  = "${dir.src.python}/${project.package}/${grammar.java.name}Parser.py"
+         />
+      <delete
+         file  = "${dir.src.python}/${project.package}/${grammar.csharp.name}.tokens"
+         />
+      <delete
+         file  = "${dir.src.python}/${project.package}/${grammar.csharp.name}Lexer.py"
+         />
+      <delete
+         file  = "${dir.src.python}/${project.package}/${grammar.csharp.name}Parser.py"
          />
    </target>
 
