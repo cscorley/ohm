@@ -19,20 +19,78 @@ except RecognitionException as e:
     raise e
 }
 
+@init {
+    # Code in this section is added to the CSharpParser constructor.
+    # Useful for adding instance fields.
+
+    self.class_names = [] # for creating unique class names
+    self.scopes = []
+    self.object_scopes = [[]]
+    self.log = []
+    self._file_name = None
+    self._file_len = 0
+    self.pkg_name = None
+}
+
 @members {
     # Methods in this section are added to CSharpParser.
     # Variable declarations in this section are added as static fields to CSharpParser.
 
-    def is_class_modifier():
-        return False
+    def addBlock(self, startln, endln, bodystart):
+        scope_sub_blocks = self.object_scopes.pop()
+        scope = self.scopes.pop()
+        scope_type = scope[0]
+        name = scope[1]
+        self.object_scopes[-1].append(
+            Block(scope_type, name, startln, bodystart, endln,
+            sub_blocks=scope_sub_blocks)
+        )
+        #print('{0}:{1}-{2}-{3}'.format(name,startln,bodystart,endln))
+
+    @property
+    def file_name(self):
+        return self._file_name
+
+    @file_name.setter
+    def file_name(self, value):
+        self._file_name = value
+
+    @property
+    def file_len(self):
+        return self._file_len
+
+    @file_len.setter
+    def file_len(self, value):
+        self._file_len = value
+
+    def createFile(self):
+        classes = self.object_scopes.pop()
+            
+        return File(self.file_name, classes, self.file_len, self.pkg_name)
+
+    def displayRecognitionError(self, tokenNames, e):
+        hdr = self.getErrorHeader(e)
+        msg = self.getErrorMessage(e, tokenNames)
+        self.log.append((hdr, msg, e))
+        self.emitErrorMessage(hdr+" "+msg)
 }
 
-compilationUnit
+compilationUnit returns [file_and_log]
     : namespace_body[True]
+        {
+            $file_and_log = (self.createFile(), self.log) 
+        }
     ;
 
 namespace_declaration
-    : 'namespace' qualified_identifier namespace_block ';'? 
+    : 'namespace' i=qualified_identifier
+        {
+            self.pkg_name = i
+        }
+      namespace_block ';'? 
+        {
+            self.pkg_name = None
+        }
     ;
 
 namespace_block
@@ -87,8 +145,16 @@ type_declaration
 
 // Identifiers
 
-qualified_identifier
-    : identifier ('.' identifier)*
+qualified_identifier returns [name]
+    : i=identifier 
+        {
+            name = i
+        }
+      ('.' j=identifier
+        {
+            name += ('.' + j)
+        }
+      )*
     ;
 
 namespace_name
@@ -176,13 +242,22 @@ primary_expression_part
     | '--'
     ;
 
-access_identifier
-    : access_operator type_or_generic
+access_identifier returns [name]
+    : a=access_operator t=type_or_generic
+        {
+            name = (a + t)
+        }
     ;
 
-access_operator
+access_operator returns [name]
     : '.'
+        {
+            name = '.'
+        }
     |  '->'
+        {
+            name = '->'
+        }
     ;
 
 brackets_or_arguments
@@ -416,47 +491,154 @@ commas
 //  Type Section
 ///////////////////////////////////////////////////////
 
-type_name
-    : namespace_or_type_name
+type_name returns [name]
+    : n=namespace_or_type_name
+        {
+            name = n
+        }
     ;
 
-namespace_or_type_name
-    : type_or_generic ('::' type_or_generic)? ('.' type_or_generic)*
+namespace_or_type_name returns [name]
+    : t1=type_or_generic 
+        {
+            name = t1
+        }
+      ('::' t2=type_or_generic
+        {
+            name += ('::' + t2)
+        }
+      )? ('.' t3=type_or_generic
+        {
+            name += ('.' + t3)
+        }
+      )*
     ;
 
-type_or_generic
-    : (identifier generic_argument_list) => identifier generic_argument_list
-    | identifier
+type_or_generic returns [name]
+    : (identifier generic_argument_list) => i=identifier g=generic_argument_list
+        {
+            name = (i + g)
+        }
+    | i=identifier
+        {
+            name = i
+        }
     ;
 
-qid
-    : qid_start qid_part*
+qid returns [name]
+    : s=qid_start 
+        {
+            name = s
+        }
+      (p=qid_part
+        {
+            name += p   
+        }
+      )*
     ;
 
-qid_start
-    : predefined_type
-    | (identifier generic_argument_list) => identifier generic_argument_list
-    | identifier ('::' identifier)?
-    | literal
+qid_start returns [name]
+    : p=predefined_type
+        {
+            name = p
+        }
+    | (identifier generic_argument_list) => i=identifier g=generic_argument_list
+        {
+            name = (i + g)
+        }
+    | i=identifier
+        {
+            name = i
+        }
+      ('::' j=identifier
+        {
+            name += ('::' + j)
+        }
+      )?
+    | l=literal
+        {
+            name = l
+        }
     ;
 
-qid_part
-    : access_identifier
+qid_part returns [name]
+    : a=access_identifier
+        {
+            name = a
+        }
     ;
 
-generic_argument_list
-    : '<' type_arguments '>'
+generic_argument_list returns [name]
+    : '<' t=type_arguments '>'
+        {
+            name = ('<' + t + '>')
+        }
     ;
 
-type_arguments
-    : type (',' type)*
+type_arguments returns [name]
+    : t1=type 
+        {
+            name = t1
+        }
+      (',' t2=type
+        {
+            name += (',' + t2)
+        }
+      )*
     ;
 
-type
-    : ((predefined_type | type_name) rank_specifiers) => (predefined_type | type_name) rank_specifiers '*'*
-    | ((predefined_type | type_name) ('*'+ | '?')) => (predefined_type | type_name) ('*'+ | '?')
-    | (predefined_type | type_name)
-    | 'void' '*'+
+type returns [name]
+    : ((predefined_type | type_name) rank_specifiers) =>
+      (p=predefined_type
+        {
+            name = p
+        }
+      | t=type_name
+        {
+            name = t
+        }
+      ) rank_specifiers ('*'
+        {
+            name += '*'
+        }
+      )*
+
+    | ((predefined_type | type_name) (('*')+ | '?')) =>
+      (p=predefined_type
+        {
+            name = p
+        }
+      | t=type_name
+        {
+            name = t
+        }
+      ) (('*'
+        {
+            name += '*'
+        }
+      )+ | '?'
+        {
+            name += '?'
+        }
+      )
+    | (p=predefined_type
+        {
+            name = p
+        }
+      | t=type_name
+        {
+            name = t
+        }
+      )
+    | 'void'
+        {
+            name = 'void'
+        }
+      ('*'
+        {
+            name += '*'
+        }
+      )+
     ;
 
 non_nullable_type
@@ -804,7 +986,21 @@ attribute_argument_expression
 ///////////////////////////////////////////////////////
 
 class_declaration
-    : 'class'  type_or_generic   class_base?   type_parameter_constraints_clauses?   class_body   ';'?
+    : 'class'  name=type_or_generic
+        {
+            fqn = self.file_name
+            if self.pkg_name:
+                fqn += ('::' + self.pkg_name)
+            for cn in self.class_names:
+                fqn += ('::' + cn)
+            fqn += ('::' + name)
+            #print('BEGIN class {0}'.format(fqn))
+            self.class_names.append(name)
+
+            self.scopes.append(('class', name))
+
+        }
+      class_base?   type_parameter_constraints_clauses?   class_body   ';'?
     ;
 
 class_base
@@ -816,7 +1012,17 @@ interface_type_list
     ;
 
 class_body
-    : '{'   class_member_declarations?   '}'
+    : l='{'
+        {
+            self.object_scopes.append([])
+        }
+      class_member_declarations? r='}'
+        {
+            self.class_names.pop()
+            #print('END class')
+
+            self.addBlock($l.line, $r.line, $l.line)
+        }
     ;
 
 class_member_declarations
@@ -852,19 +1058,40 @@ variable_declarator
     ;
 
 method_declaration
-    : method_header   method_body
+    : m=method_header
+        {
+            #print('BEGIN method {0}'.format(m))
+            pass
+        }
+      method_body
     ;
 
-method_header
-    : member_name  '('   formal_parameter_list?   ')'   type_parameter_constraints_clauses?
+method_header returns [name]
+    : mn=member_name '('
+        {
+            name = mn + '('
+        }
+      (fpl=formal_parameter_list
+        {
+            name += fpl
+        }
+      )?
+      ')'
+        {
+            name += ')'
+        }
+      type_parameter_constraints_clauses?
     ;
 
 method_body
     : block
     ;
 
-member_name
-    : qid
+member_name returns [name]
+    : i=qid
+        {
+            name = i
+        }
     ;
 
 property_declaration
@@ -1010,23 +1237,53 @@ return_type
     | 'void'
     ;
 
-formal_parameter_list
-    : formal_parameter (',' formal_parameter)*
+formal_parameter_list returns [name]
+    : p1=formal_parameter
+        {
+            name = p1
+        }
+      (',' p2=formal_parameter
+        {
+            name += (',' + p2)
+        }
+      )*
     ;
 
-formal_parameter
-    : attributes?   (fixed_parameter | parameter_array) 
+formal_parameter returns [name]
+    : attributes? (fp=fixed_parameter
+        {
+            name = fp
+        }
+      | p=parameter_array
+        {
+            name = p
+        }
+      )
     | '__arglist'
+        {
+            name = '__arglist'
+        }
     ;
 
-fixed_parameters
-    : fixed_parameter   (','   fixed_parameter)*
+fixed_parameters returns [name]
+    : fp1=fixed_parameter
+        {
+            name = fp1
+        }
+      (',' fp2=fixed_parameter
+        {
+            name += (',' + fp2)
+        }
+      )*
     ;
 
 // 4.0
 
-fixed_parameter
-    : parameter_modifier?   type   identifier   default_argument?
+fixed_parameter returns [name]
+    : parameter_modifier?   t=type   identifier   default_argument?
+        {
+            name = t
+        }
     ;
 
 // 4.0
@@ -1039,12 +1296,28 @@ parameter_modifier
     : 'ref' | 'out' | 'this'
     ;
 
-parameter_array
-    : 'params'   type   identifier
+parameter_array returns [name]
+    : 'params'   t=type   identifier
+        {
+            name = t
+        }
     ;
 
 interface_declaration
-    : 'interface'   identifier   variant_generic_parameter_list?  interface_base?   type_parameter_constraints_clauses?   interface_body   ';'?
+    : 'interface' name=identifier
+        {
+            fqn = self.file_name
+            if self.pkg_name:
+                fqn += ('::' + self.pkg_name)
+            for cn in self.class_names:
+                fqn += ('::' + cn)
+            fqn += ('::' + name)
+            #print('BEGIN interface {0}'.format(fqn))
+            self.class_names.append(name)
+
+            self.scopes.append(('interface', name))
+        }
+      variant_generic_parameter_list?  interface_base?   type_parameter_constraints_clauses?   interface_body   ';'?
     ;
 
 interface_modifiers
@@ -1056,7 +1329,17 @@ interface_base
     ;
 
 interface_body
-    : '{'   interface_member_declarations?   '}'
+    : '{'
+        {
+            self.object_scopes.append([])
+        }
+      interface_member_declarations?   '}'
+        {
+            self.class_names.pop()
+            #print('END interface')
+
+            self.addBlock($l.line, $r.line, $l.line)
+        }
     ;
 
 interface_member_declarations
@@ -1111,7 +1394,20 @@ method_modifiers
     ;
     
 struct_declaration
-    : 'struct'   type_or_generic   struct_interfaces?   type_parameter_constraints_clauses?   struct_body   ';'?
+    : 'struct' name=type_or_generic
+        {
+            fqn = self.file_name
+            if self.pkg_name:
+                fqn += ('::' + self.pkg_name)
+            for cn in self.class_names:
+                fqn += ('::' + cn)
+            fqn += ('::' + name)
+            #print('BEGIN struct {0}'.format(name))
+            self.class_names.append(name)
+
+            self.scopes.append(('struct', name))
+        }
+      struct_interfaces?   type_parameter_constraints_clauses?   struct_body   ';'?
     ;
 
 struct_modifiers
@@ -1127,7 +1423,17 @@ struct_interfaces
     ;
 
 struct_body
-    : '{'   struct_member_declarations?   '}'
+    : l='{'
+        {
+            self.object_scopes.append([])
+        }
+      struct_member_declarations? r='}'
+        {
+            self.class_names.pop()
+            #print('END struct')
+
+            self.addBlock($l.line, $r.line, $l.line)
+        }
     ;
 
 struct_member_declarations
@@ -1505,36 +1811,52 @@ yield_statement
 //  Lexer Section
 ///////////////////////////////////////////////////////
 
-predefined_type
-    : 'bool' | 'byte'   | 'char'   | 'decimal' | 'double' | 'float'  | 'int'    | 'long'   | 'object' | 'sbyte'  
-    | 'short'  | 'string' | 'uint'   | 'ulong'  | 'ushort'
+predefined_type returns [name]
+@after {
+    name = t.text
+}
+    : t='bool' | t='byte'   | t='char'   | t='decimal' | t='double' | t='float'  | t='int'    | t='long'   | t='object' | t='sbyte'  
+    | t='short'  | t='string' | t='uint'   | t='ulong'  | t='ushort'
     ;
 
-identifier
-    : IDENTIFIER | also_keyword
+identifier returns [name]
+    : i=IDENTIFIER 
+        {
+            name = $i.text
+        }
+    | k=also_keyword
+        {
+            name = k
+        }
     ;
 
 keyword
     : 'abstract' | 'as' | 'base' | 'bool' | 'break' | 'byte' | 'case' |  'catch' | 'char' | 'checked' | 'class' | 'const' | 'continue' | 'decimal' | 'default' | 'delegate' | 'do' |  'double' | 'else' |  'enum'  | 'event' | 'explicit' | 'extern' | 'false' | 'finally' | 'fixed' | 'float' | 'for' | 'foreach' | 'goto' | 'if' | 'implicit' | 'in' | 'int' | 'interface' | 'internal' | 'is' | 'lock' | 'long' | 'namespace' | 'new' | 'null' | 'object' | 'operator' | 'out' | 'override' | 'params' | 'private' | 'protected' | 'public' | 'readonly' | 'ref' | 'return' | 'sbyte' | 'sealed' | 'short' | 'sizeof' | 'stackalloc' | 'static' | 'string' | 'struct' | 'switch' | 'this' | 'throw' | 'true' | 'try' | 'typeof' | 'uint' | 'ulong' | 'unchecked' | 'unsafe' | 'ushort' | 'using' |  'virtual' | 'void' | 'volatile'
     ;
 
-also_keyword
-    : 'add' | 'alias' | 'assembly' | 'module' | 'field' | 'method' | 'param' | 'property' | 'type' 
-    | 'yield' | 'from' | 'into' | 'join' | 'on' | 'where' | 'orderby' | 'group' | 'by' | 'ascending' | 'descending' 
-    | 'equals' | 'select' | 'pragma' | 'let' | 'remove' | 'get' | 'set' | 'var' | '__arglist' | 'dynamic'
-    | 'elif' | 'endif' | 'define' | 'undef'
+also_keyword returns [name]
+@after {
+    name = k.text
+}
+    : k='add' | k='alias' | k='assembly' | k='module' | k='field' | k='method' | k='param' | k='property' | k='type' 
+    | k='yield' | k='from' | k='into' | k='join' | k='on' | k='where' | k='orderby' | k='group' | k='by' | k='ascending' | k='descending' 
+    | k='equals' | k='select' | k='pragma' | k='let' | k='remove' | k='get' | k='set' | k='var' | k='__arglist' | k='dynamic'
+    | k='elif' | k='endif' | k='define' | k='undef'
     ;
 
-literal
-    : Real_literal
-    | NUMBER
-    | Hex_number
-    | Character_literal
-    | STRINGLITERAL
-    | Verbatim_string_literal
-    | TRUE
-    | FALSE
-    | NULL 
+literal returns [name]
+@after {
+    name = l.text
+}
+    : l=Real_literal
+    | l=NUMBER
+    | l=Hex_number
+    | l=Character_literal
+    | l=STRINGLITERAL
+    | l=Verbatim_string_literal
+    | l=TRUE
+    | l=FALSE
+    | l=NULL 
     ;
 
 ///////////////////////////////////////////////////////
