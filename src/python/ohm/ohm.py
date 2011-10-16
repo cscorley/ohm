@@ -25,17 +25,21 @@ from datetime import datetime
 
 from snippets import _uniq, _make_dir
 
-#argouml_svn_url = 'http://argouml.tigris.org/svn/argouml/trunk'
-argouml_svn_url = 'http://steel.cs.ua.edu/repos/argouml/trunk/'
-#carol_svn_url = 'svn://svn.forge.objectweb.org/svnroot/carol/trunk'
-carol_svn_url = 'http://steel.cs.ua.edu/repos/carol/trunk/'
-steel_svn_url = 'https://steel.cs.ua.edu/svn/projects/clones/src/ohm/trunk/'
-tomcat_svn_url = 'http://svn.apache.org/repos/asf/tomcat/trunk/'
-ant_svn_url = 'http://steel.cs.ua.edu/repos/ant/ant/core/trunk/'
-derby_svn_url = 'http://svn.apache.org/repos/asf/db/derby/code/trunk/'
-jedit_svn_url = 'http://steel.cs.ua.edu/repos/jedit/jEdit/trunk/'
-vuze_svn_url = 'http://steel.cs.ua.edu/repos/vuze/client/trunk/'
-gwt_svn_url = 'http://steel.cs.ua.edu/repos/google-web-toolkit/trunk/'
+base_svn='http://steel.cs.ua.edu/repos/'
+#base_svn='/var/lib/svn/repos/'
+trunks = {
+        'ant' : 'ant/core/trunk/',
+        'argouml': 'argouml/trunk/',
+        'carol': 'carol/trunk/',
+        'columba' : 'columba/columba/trunk/',
+        'dnsjava' : 'dnsjava/trunk/',
+        'geclipse' : 'geclipse/trunk/',
+        'gwt' : 'google-web-toolkit/trunk/',
+        'jabref' : 'jabref/trunk/',
+        'jedit' : 'jedit/jEdit/trunk/',
+        'subversive' : 'subversive/trunk/',
+        'vuze' : 'vuze/client/trunk/'
+        }
 
 
 def selinupChanges(db, uid, added, deleted):
@@ -559,36 +563,24 @@ def main(argv):
     starting_revision = int(options.project_revision)
     ending_revision = int(options.project_revision_end)
 
+    project_url = None
+    project_name = None
+
     # set project_name and project_url
     if not options.custom_url is None:
         project_url = options.custom_url
-    elif options.project_name is None:
+
+    if options.project_name is None:
         optparser.error('You must supply a project name (ArgoUML or Carol)!')
     else:
         project_name = options.project_name
 
         if options.custom_url is None:
-            if project_name.upper() == 'ARGOUML':
-                project_url = argouml_svn_url
-            elif project_name.upper() == 'CAROL':
-                project_url = carol_svn_url
-            elif project_name.upper() == 'ANT':
-                project_url = ant_svn_url
-            elif project_name.upper() == 'TOMCAT':
-                project_url = tomcat_svn_url
-            elif project_name.upper() == 'DERBY':
-                project_url = derby_svn_url
-            elif project_name.upper() == 'JEDIT':
-                project_url = jedit_svn_url
-            elif project_name.upper() == 'VUZE':
-                project_url = vuze_svn_url
-            elif project_name.upper() == 'GWT':
-                project_url = gwt_svn_url
-            elif project_name.upper() == 'OHM':
-                project_url = steel_svn_url
-            else:
-                optparser.error('No known project given, or custom project url\
-                        (-c) unset!')
+            if project_name.lower() in trunks:
+                project_url = base_svn + trunks[project_name.lower()]
+    
+    if project_url is None or project_name is None:
+        optparser.error('No known project given, no name (-n), or custom project url (-c) unset!')
 
     # create output directory
     tmp_dir = '/'.join([options.output_dir.rstrip('/')])
