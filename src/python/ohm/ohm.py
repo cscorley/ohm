@@ -25,8 +25,8 @@ from datetime import datetime
 
 from snippets import _uniq, _make_dir
 
-base_svn='http://steel.cs.ua.edu/repos/'
-#base_svn='/var/lib/svn/repos/'
+#base_svn='http://steel.cs.ua.edu/repos/'
+base_svn='svn://localhost/'
 trunks = {
         'ant' : 'ant/core/trunk/',
         'argouml': 'argouml/trunk/',
@@ -255,6 +255,34 @@ def build_db(db, name, url, starting_revision, ending_revision):
 
         for digestion in patch.digest():
             insert_changes(db, [digestion[0]], None, uid)
+
+def speed_run(name, url, starting_revision, ending_revision):
+    project_repo = Repository(name, url, starting_revision, ending_revision)
+    total_revs = len(project_repo.revList)
+    count = 0
+    print(project_repo)
+    for revision_info in project_repo.getRevisions():
+        if os.path.exists('/tmp/ohm/svn/'):
+            try:
+                rmtree('/tmp/ohm/svn/', True)
+            except OSError:
+                pass
+        if len(revision_info[0]) > 0:
+            log = revision_info[0][0]
+        else:
+            continue
+        diff = revision_info[1]
+
+        curr = log.revision.number
+        count += 1
+        print('Revision %d -- %f complete' % (curr,
+            (float(count)/float(total_revs))*100))
+
+        # parse for the changes
+        patch = Patch(diff, project_repo)
+
+        for digestion in patch.digest():
+            pass
 
 def generate(db, name, url, starting_revision, ending_revision, use_renames, use_sums):
     # this dictionary is to hold the current collection of uid's needed by
@@ -518,6 +546,7 @@ def main(argv):
     optparser.set_defaults(generate=False)
     optparser.set_defaults(build_db=False)
     optparser.set_defaults(tester=False)
+    optparser.set_defaults(speed_run=False)
     optparser.set_defaults(output_dir='/tmp/ohm')
     optparser.set_defaults(project_revision='-1')
     optparser.set_defaults(project_revision_end='-1')
@@ -544,6 +573,8 @@ def main(argv):
             help='Generate vectors', action='store_true')
     optparser.add_option('-t', '--tester', dest='tester',
             help='Run tester function', action='store_true')
+    optparser.add_option('-s', '--speed_run', dest='speed_run',
+            help='Run without database interactions', action='store_true')
     optparser.add_option('-b', '--build', dest='build_db',
             help='Run analysis and build database', action='store_true')
     optparser.add_option('-a', '--host', dest='database_host',
@@ -606,6 +637,9 @@ def main(argv):
         db._create_or_replace_views()
         db._create_or_replace_triggers()
         db.commit()
+
+    if options.speed_run:
+        speed_run(project_name, project_url, starting_revision, ending_revision)
 
     if options.build_db:
         build_db(db, project_name, project_url, starting_revision, ending_revision)

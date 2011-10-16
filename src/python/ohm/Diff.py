@@ -96,6 +96,8 @@ class Diff:
                 return Java5Lexer
             elif revision > 275290:
                 return Java4Lexer
+        elif name.upper() == 'COLUMBA':
+            return Java5Lexer
 
         return JavaLexer
 

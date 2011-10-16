@@ -41,9 +41,19 @@ class Database:
 
 
     def _create_or_replace_views(self):
+        with open('../../sql/views.sql', 'r') as f:
+            sql_lines = f.readlines()
+
+        sql = ''.join(sql_lines)
+        self.execute(sql, ())
         pass
+
     def _create_or_replace_triggers(self):
-        pass
+        with open('../../sql/triggers.sql', 'r') as f:
+            sql_lines = f.readlines()
+
+        sql = ''.join(sql_lines)
+        self.execute(sql, ())
 
     def _create_or_replace_tables(self):
         tables = TableConfigParser.parse()
