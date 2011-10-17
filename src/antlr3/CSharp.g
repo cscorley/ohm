@@ -13,6 +13,11 @@ options {
     self.Returns = []
 }
 
+@header {
+from Block import Block
+from File import File
+}
+
 @rulecatch {
 except RecognitionException as e:
     #print(self.getRuleInvocationStack())
