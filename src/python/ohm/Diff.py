@@ -26,15 +26,20 @@ from JavaLexer import JavaLexer
 from Java4Lexer import Java4Lexer
 from Java5Lexer import Java5Lexer
 from JavaParser import JavaParser
+from CSharpLexer import CSharpLexer
+from CSharpParser import CSharpParser
 from snippets import _make_dir, _uniq, _file_len
 import pysvn
 
 
 class Diff:
-    def __init__(self, project_repo):
+    def __init__(self, project_repo, extension):
         self.cvs_file_path = None
         self.revision = None
         self.project_repo = project_repo
+        self.extension = extension
+        if '.' not in extension:
+            self.extension = '.' + extension
 
         self.scp = []
 
@@ -45,8 +50,8 @@ class Diff:
         self.digestion = None
 
 
-        self.old_file_svn = re.compile('--- ([-/._\w ]+.java)\t\(revision (\d+)\)')
-        self.new_file_svn = re.compile('\+\+\+ ([-/._\w ]+.java)\t(?:\([\s\S]*\)\t)?\(revision (\d+)\)')
+        self.old_file_svn = re.compile('--- ([-/._\w ]+' + extension + ')\t\(revision (\d+)\)')
+        self.new_file_svn = re.compile('\+\+\+ ([-/._\w ]+' + extension + ')\t(?:\([\s\S]*\)\t)?\(revision (\d+)\)')
         self.chunk_startu = re.compile('@@ -(\d+)(?:,(\d+))? \+(\d+)(?:,(\d+))? @@')
 
     def _printToLog(self, source, revision_number, log):
@@ -98,8 +103,22 @@ class Diff:
                 return Java4Lexer
         elif name.upper() == 'COLUMBA':
             return Java5Lexer
+        elif name.lower() == 'care':
+            return CSharpLexer
+        elif name.lower() == 'ecitation':
+            return CSharpLexer
 
-        return JavaLexer
+        return None
+
+
+    def _getParserClass(self):
+        if self.extension.lower() == '.java':
+            return JavaParser
+        elif self.extension.lower() == '.cs':
+            return CSharpParser
+
+        return None
+
 
     def _getParserResults(self, source, revision_number):
         filePath = self.project_repo.checkout(source, revision_number)
@@ -112,7 +131,9 @@ class Diff:
             lexer = LexyLexer(ANTLRFileStream(filePath, 'latin-1'))
         except IOError:
             return None
-        parser = JavaParser(CommonTokenStream(lexer))
+
+        ParsyParser = self._getParserClass()
+        parser = ParsyParser(CommonTokenStream(lexer))
         parser.file_name = source
         parser.file_len = _file_len(filePath)
         return parser.compilationUnit()
@@ -155,14 +176,14 @@ class Diff:
                     new_revision_number = int(nm.group(2))
 
                 # allows for spaces in the filename
-                if '.java' in self.old_source and not self.old_source.endswith('.java'):
-                    self.old_source = self.old_source.split('.java')[0] + '.java'
-                if '.java' in self.new_source and not self.new_source.endswith('.java'):
-                    self.new_source = self.new_source.split('.java')[0] + '.java'
+                if self.extension in self.old_source and not self.old_source.endswith(self.extension):
+                    self.old_source = self.old_source.split(self.extension)[0] + self.extension
+                if self.extension in self.new_source and not self.new_source.endswith(self.extension):
+                    self.new_source = self.new_source.split(self.extension)[0] + self.extension
 
-                if not self.old_source.endswith('.java'):
+                if not self.old_source.endswith(self.extension):
                     return None
-                elif not self.new_source.endswith('.java'):
+                elif not self.new_source.endswith(self.extension):
                     return None
 
                 if (old_revision_number == 0):

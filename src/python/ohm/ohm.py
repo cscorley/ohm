@@ -27,18 +27,20 @@ from snippets import _uniq, _make_dir
 
 #base_svn='http://steel.cs.ua.edu/repos/'
 base_svn='svn://localhost/'
-trunks = {
-        'ant' : 'ant/core/trunk/',
-        'argouml': 'argouml/trunk/',
-        'carol': 'carol/trunk/',
-        'columba' : 'columba/columba/trunk/',
-        'dnsjava' : 'dnsjava/trunk/',
-        'geclipse' : 'geclipse/trunk/',
-        'gwt' : 'google-web-toolkit/trunk/',
-        'jabref' : 'jabref/trunk/',
-        'jedit' : 'jedit/jEdit/trunk/',
-        'subversive' : 'subversive/trunk/',
-        'vuze' : 'vuze/client/trunk/'
+projects = {
+        'ant' : ('ant/core/trunk/', '.java'),
+        'argouml': ('argouml/trunk/', '.java'),
+        'carol': ('carol/trunk/', '.java'),
+        'columba' : ('columba/columba/trunk/', '.java'),
+        'dnsjava' : ('dnsjava/trunk/', '.java'),
+        'geclipse' : ('geclipse/trunk/', '.java'),
+        'gwt' : ('google-web-toolkit/trunk/', '.java'),
+        'jabref' : ('jabref/trunk/', '.java'),
+        'jedit' : ('jedit/jEdit/trunk/', '.java'),
+        'subversive' : ('subversive/trunk/', '.java'),
+        'vuze' : ('vuze/client/trunk/', '.java'),
+        'care' : ('CARE/trunk/', '.cs'),
+        'ecitation' : ('eCitation/trunk/', '.cs')
         }
 
 
@@ -251,7 +253,7 @@ def build_db(db, name, url, starting_revision, ending_revision):
         uid['revision'] = getUID(db, 'revision', ('number', 'project'), propDict)
 
         # parse for the changes
-        patch = Patch(diff, project_repo)
+        patch = Patch(diff, project_repo, projects[name][1])
 
         for digestion in patch.digest():
             insert_changes(db, [digestion[0]], None, uid)
@@ -279,7 +281,7 @@ def speed_run(name, url, starting_revision, ending_revision):
             (float(count)/float(total_revs))*100))
 
         # parse for the changes
-        patch = Patch(diff, project_repo)
+        patch = Patch(diff, project_repo, projects[name][1])
 
         for digestion in patch.digest():
             pass
@@ -607,8 +609,8 @@ def main(argv):
         project_name = options.project_name
 
         if options.custom_url is None:
-            if project_name.lower() in trunks:
-                project_url = base_svn + trunks[project_name.lower()]
+            if project_name.lower() in projects:
+                project_url = base_svn + projects[project_name.lower()][0]
     
     if project_url is None or project_name is None:
         optparser.error('No known project given, no name (-n), or custom project url (-c) unset!')
@@ -649,7 +651,8 @@ def main(argv):
                ending_revision, True, False)
 
 
-    if not (options.force_drop or options.build_db or options.generate):
+    if not (options.force_drop or options.build_db or options.generate or
+            options.speed_run):
         optparser.error('Did not have any action to perform. Must either drop\
                 tables (-f), build tables (-b), or generate vectors from tables\
                 (-g)')

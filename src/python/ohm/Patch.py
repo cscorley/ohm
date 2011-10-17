@@ -20,10 +20,11 @@ from snippets import _uniq
 
 
 class Patch:
-    def __init__(self, patch_file, project_repo):
+    def __init__(self, patch_file, project_repo, extension):
         self.patch_file = patch_file
         self.diffs = []
         self.project_repo = project_repo
+        self.extension = extension
 
         #methods is the list of methods affected by the patch
         self.digestion = []
@@ -63,7 +64,7 @@ class Patch:
             temp.append(lines[j])
         diffs.append(temp)
 
-        d = Diff(self.project_repo)
+        d = Diff(self.project_repo, self.extension)
         for diff in diffs:
             d.digest(diff)
             if d.digestion is None:
