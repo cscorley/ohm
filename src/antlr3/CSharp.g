@@ -1115,7 +1115,7 @@ get_accessor_declaration
     ;
 
 set_accessor_declaration
-    : accessor_modifier?   'set'   accessor_body
+    : accessor_modifier*   'set'   accessor_body
     ;
 
 accessor_modifier
@@ -1390,8 +1390,8 @@ interface_get_accessor_declaration
     : 'get'   ';'
     ;
 
-interface_set_accessor_declaration:
-    'set'   ';'
+interface_set_accessor_declaration
+    : 'set'   ';'
     ;
 
 method_modifiers
