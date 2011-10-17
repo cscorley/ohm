@@ -1999,7 +1999,7 @@ fragment IF_TOKEN
     : ('#'   TS*  'if'   TS+   ppe = PP_EXPRESSION)
         {
         # if our parent is processing check this if
-        assert(len(self.Processing) > 0)
+        #assert(len(self.Processing) > 0)
         if (len(self.Processing) > 0) and self.Processing[-1]:
             self.Processing.append(self.Returns.pop())
         else:
@@ -2028,11 +2028,11 @@ fragment ELSE_TOKEN
         {
         # We are in an elif
         if ($e is None):
-            assert(len(self.Processing) > 0)
+            #assert(len(self.Processing) > 0)
             if (len(self.Processing) > 0) and self.Processing[-1] == False:
                 self.Processing.pop()
                 # if our parent was processing, do else logic
-                assert(len(self.Processing) > 0)
+                #assert(len(self.Processing) > 0)
                 if (len(self.Processing) > 0) and Processing[-1]:
                     self.Processing.append(self.Returns.pop())
                 else:
@@ -2046,7 +2046,7 @@ fragment ELSE_TOKEN
                 bDoElse = not self.Processing.pop()
 
                 # if our parent was processing             
-                assert(len(self.Processing) > 0)
+                #assert(len(self.Processing) > 0)
                 if (len(self.Processing) > 0) and Processing[-1]:
                     self.Processing.append(bDoElse)
                 else:
@@ -2172,4 +2172,8 @@ fragment Sign
 
 fragment Real_type_suffix
     : 'F' | 'f' | 'D' | 'd' | 'M' | 'm'
-    ; 
+    ;
+
+ILLEGAL_CHAR
+    : .
+    ;
