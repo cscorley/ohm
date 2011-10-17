@@ -1021,7 +1021,7 @@ class_body
             self.class_names.pop()
             #print('END class')
 
-            self.addBlock($l.line, $r.line, $l.line)
+            self.addBlock(l.line, r.line, l.line)
         }
     ;
 
@@ -1338,7 +1338,7 @@ interface_body
             self.class_names.pop()
             #print('END interface')
 
-            self.addBlock($l.line, $r.line, $l.line)
+            self.addBlock(l.line, r.line, l.line)
         }
     ;
 
@@ -1432,7 +1432,7 @@ struct_body
             self.class_names.pop()
             #print('END struct')
 
-            self.addBlock($l.line, $r.line, $l.line)
+            self.addBlock(l.line, r.line, l.line)
         }
     ;
 
