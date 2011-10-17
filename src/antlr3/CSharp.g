@@ -1334,11 +1334,11 @@ interface_base
     ;
 
 interface_body
-    : '{'
+    : l='{'
         {
             self.object_scopes.append([])
         }
-      interface_member_declarations?   '}'
+      interface_member_declarations?   r='}'
         {
             self.class_names.pop()
             #print('END interface')
