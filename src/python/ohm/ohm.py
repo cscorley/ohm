@@ -138,12 +138,25 @@ def getBlockUID(db, block, cid, uid):
                 'block': cid
                 }
         block_uid = getUID(db, 'block', ('hash', 'block', 'project'), propDict)
-        result = db.execute('SELECT full_name FROM block where id=%s;',
-                (block_uid,))
-        if result[0][0] != block.full_name:
-            print('updated %s %s' % (str(block_uid), str(block.full_name)))
-            db.execute('UPDATE block SET full_name=%s WHERE id=%s;',
-                    (block.full_name, block_uid))
+
+        if block.block_type == 'file':
+            if block.package_name is not None:
+                propDict = {
+                        'project': uid['project'],
+                        'name': block.package_name,
+                        'full_name': block.package_name,
+                        'hash': hash(block.package_name),
+                        'type': 'package',
+                        'block': block_uid
+                        }
+                block_uid = getUID(db, 'block', ('hash', 'block', 'project'), propDict)
+        else:
+            result = db.execute('SELECT full_name FROM block where id=%s;',
+                    (block_uid,))
+            if result[0][0] != block.full_name:
+                print('updated %s %s' % (str(block_uid), str(block.full_name)))
+                db.execute('UPDATE block SET full_name=%s WHERE id=%s;',
+                        (block.full_name, block_uid))
 
         return block_uid
 
