@@ -41,3 +41,26 @@ $$;
 
 CREATE TRIGGER propagate_rename AFTER INSERT ON rename FOR EACH ROW
     EXECUTE PROCEDURE propagate_rename_trg();
+
+
+create or replace function full_name(next_id INT) RETURNS TEXT
+LANGUAGE plpgsql
+AS $$
+DECLARE
+    block_row block%ROWTYPE;
+BEGIN
+    SELECT * into block_row from block where id=next_id;
+    IF block_row.type = 'file'
+    THEN
+        RETURN '';
+    ELSIF block_row.type = 'package'
+    THEN
+        RETURN block_row.block || '.';
+    ELSIF block_row.block is NULL
+    THEN
+        RETURN block_row.name;
+    ELSE
+        RETURN trim(both '.' from full_name(block_row.block) || '.' || block_row.name);
+    END IF;
+END;
+$$;
