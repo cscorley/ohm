@@ -39,8 +39,12 @@ projects = {
         'jedit' : ('jedit/jEdit/trunk/', '.java'),
         'subversive' : ('subversive/trunk/', '.java'),
         'vuze' : ('vuze/client/trunk/', '.java'),
-        'care' : ('CARE/trunk/', '.cs'),
-        'ecitation' : ('eCitation/trunk/', '.cs')
+        'ecite' : ('eCitation/trunk/eCite', '.cs'),
+        'ecrash' : ('eCitation/trunk/eCrash' , '.cs'),
+        'care10' : ('CARE/trunk/CARE 10', '.cs'), 
+        'care8' : ('CARE/trunk/Care 8', '.cs'), 
+        'amplifi' : ('Amplifi/trunk/Amplifi', '.cs'),
+        'sentri' : ('Amplifi/trunk/Plugins/Sentri', '.cs')
         }
 
 

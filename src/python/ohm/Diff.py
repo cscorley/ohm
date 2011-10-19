@@ -103,9 +103,9 @@ class Diff:
                 return Java4Lexer
         elif name.upper() == 'COLUMBA':
             return Java5Lexer
-        elif name.lower() == 'care':
-            return CSharpLexer
-        elif name.lower() == 'ecitation':
+        elif self.extension.lower() == '.java':
+            return JavaLexer
+        elif self.extension.lower() == '.cs':
             return CSharpLexer
 
         return None
@@ -231,6 +231,7 @@ class Diff:
         
         # Check out from SVN the original file
         if not isNewFile:
+            print(self.old_source, old_revision_number)
             res = self._getParserResults(self.old_source, old_revision_number)
             if res is None:
                 # some error has occured.
@@ -246,6 +247,7 @@ class Diff:
             #self.old_file.recursive_print()
         
         if not isRemovedFile:
+            print(self.new_source, new_revision_number)
             res = self._getParserResults(self.new_source, new_revision_number)
             if res is None:
                 # some error has occured.
