@@ -25,8 +25,13 @@ CREATE OR REPLACE FUNCTION propagate_rename(newrow rename) RETURNS void
 LANGUAGE plpgsql
 AS $$
 BEGIN
-        UPDATE r_change SET block = newrow.target WHERE
-        block = newrow.original AND newrow.ratio >= 0.6; 
+    IF newrow.ratio >= 0.6
+    THEN
+        UPDATE change SET block = newrow.target WHERE
+        block = newrow.original; 
+        UPDATE block SET block = newrow.target WHERE
+        block = newrow.original;
+    END IF;
 END;
 $$;
 
@@ -50,17 +55,19 @@ DECLARE
     block_row block%ROWTYPE;
 BEGIN
     SELECT * into block_row from block where id=next_id;
-    IF block_row.type = 'file'
-    THEN
-        RETURN '';
-    ELSIF block_row.type = 'package'
-    THEN
-        RETURN block_row.block || '.';
-    ELSIF block_row.block is NULL
+    IF block_row.block is NULL
     THEN
         RETURN block_row.name;
     ELSE
-        RETURN trim(both '.' from full_name(block_row.block) || '.' || block_row.name);
+        IF block_row.type = 'file'
+        THEN
+            RETURN full_name(block_row.block);
+        ELSIF block_row.type = 'package'
+        THEN
+            RETURN block_row.block || '.';
+        ELSE
+            RETURN trim(both '.' from full_name(block_row.block) || '.' || block_row.name);
+        END IF;
     END IF;
 END;
 $$;

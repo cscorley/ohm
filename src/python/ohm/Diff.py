@@ -108,7 +108,7 @@ class Diff:
         elif self.extension.lower() == '.cs':
             return CSharpLexer
 
-        return None
+        return JavaLexer
 
 
     def _getParserClass(self):
@@ -231,7 +231,6 @@ class Diff:
         
         # Check out from SVN the original file
         if not isNewFile:
-            print(self.old_source, old_revision_number)
             res = self._getParserResults(self.old_source, old_revision_number)
             if res is None:
                 # some error has occured.
@@ -247,7 +246,6 @@ class Diff:
             #self.old_file.recursive_print()
         
         if not isRemovedFile:
-            print(self.new_source, new_revision_number)
             res = self._getParserResults(self.new_source, new_revision_number)
             if res is None:
                 # some error has occured.

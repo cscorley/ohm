@@ -45,7 +45,7 @@ class Database:
             sql_lines = f.readlines()
 
         sql = ''.join(sql_lines)
-        self.execute(sql, ())
+        self._cursor.execute(sql)
         pass
 
     def _create_or_replace_triggers(self):
@@ -53,7 +53,7 @@ class Database:
             sql_lines = f.readlines()
 
         sql = ''.join(sql_lines)
-        self.execute(sql, ())
+        self._cursor.execute(sql)
 
     def _create_or_replace_tables(self):
         tables = TableConfigParser.parse()

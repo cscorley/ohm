@@ -18,11 +18,11 @@ from Block import Block
 from File import File
 }
 
-@rulecatch {
+/*@rulecatch {
 except RecognitionException as e:
     #print(self.getRuleInvocationStack())
     raise e
-}
+}*/
 
 @init {
     # Code in this section is added to the CSharpParser constructor.

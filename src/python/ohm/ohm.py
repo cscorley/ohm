@@ -129,17 +129,7 @@ def insert_renames(db, affected, cid, uid):
                 values)
 
 def getBlockUID(db, block, cid, uid):
-        propDict = {
-                'project': uid['project'],
-                'name': block.name,
-                'full_name': block.full_name,
-                'hash': hash(block),
-                'type': block.block_type,
-                'block': cid
-                }
-        block_uid = getUID(db, 'block', ('hash', 'block', 'project'), propDict)
-
-        if block.block_type == 'file':
+        if block.block_type == 'file' and cid is None:
             if block.package_name is not None:
                 propDict = {
                         'project': uid['project'],
@@ -147,16 +137,26 @@ def getBlockUID(db, block, cid, uid):
                         'full_name': block.package_name,
                         'hash': hash(block.package_name),
                         'type': 'package',
-                        'block': block_uid
+                        'block': None 
                         }
-                block_uid = getUID(db, 'block', ('hash', 'block', 'project'), propDict)
-        else:
-            result = db.execute('SELECT full_name FROM block where id=%s;',
-                    (block_uid,))
-            if result[0][0] != block.full_name:
-                print('updated %s %s' % (str(block_uid), str(block.full_name)))
-                db.execute('UPDATE block SET full_name=%s WHERE id=%s;',
-                        (block.full_name, block_uid))
+                cid = getUID(db, 'block', ('hash', 'block', 'project'), propDict)
+
+        propDict = {
+                'project': uid['project'],
+                'name': block.name,
+                'full_name': block.full_name,
+                'hash': hash(block),
+                'type': block.block_type,
+                'block': cid
+            }
+        block_uid = getUID(db, 'block', ('hash', 'block', 'project'), propDict)
+
+        result = db.execute('SELECT full_name FROM block where id=%s;',
+                (block_uid,))
+        if result[0][0] != block.full_name:
+            print('updated %s %s' % (str(block_uid), str(block.full_name)))
+            db.execute('UPDATE block SET full_name=%s WHERE id=%s;',
+                    (block.full_name, block_uid))
 
         return block_uid
 
@@ -346,9 +346,9 @@ def generate(db, name, url, starting_revision, ending_revision, use_renames, use
 
     # before we start generating class vectors, lets build a list of duplicates
     # to save off for merging later
-    dup_results = db.execute('select full_name from block where \
+    dup_results = db.execute('select full_name(id) from block where \
             project=%s and (block.type=%s or block.type=%s or block.type=%s)\
-            group by full_name having (count(full_name) > 1);',
+            group by full_name(id) having (count(full_name(id)) > 1);',
             (uid['project'], 'class', 'enum', 'interface' ))
     duplicated = []
 
@@ -359,7 +359,8 @@ def generate(db, name, url, starting_revision, ending_revision, use_renames, use
 
     data_table = 'change_data'
     if use_renames:
-        data_table = 'r_' + data_table
+#        data_table = 'r_' + data_table
+        pass
        
     if use_sums:
         data_table = data_table + '_sums'
@@ -367,7 +368,7 @@ def generate(db, name, url, starting_revision, ending_revision, use_renames, use
         data_table = data_table + '_count'
 
     c = db.cursor
-    c.execute('SELECT block.id, block.full_name, {table}.sum, owner_id \
+    c.execute('SELECT block.id, full_name(block.id), {table}.sum, owner_id \
             from {table} join block on \
             {table}.block_id = block.id \
             where block.project=%s and \
@@ -397,7 +398,7 @@ def generate(db, name, url, starting_revision, ending_revision, use_renames, use
                         f.write(curr_full_name + ' ')
                         f.write(valstr % o_tuple)
                 curr_id = each[0]
-                curr_full_name = each[1]
+                curr_full_name = each[1] 
                 ownership_profile = {}
                 for o in owners:
                     ownership_profile[o[0]] = 0
