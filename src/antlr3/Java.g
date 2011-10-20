@@ -183,6 +183,13 @@ options {
 
     def assertIsKeyword(self):
         return False
+
+    def displayRecognitionError(self, tokenNames, e):
+        hdr = self.getErrorHeader(e)
+        msg = self.getErrorMessage(e, tokenNames)
+        self.emitErrorMessage(hdr+" "+msg)
+        #if isinstance(e, MismatchedTokenException):
+        #    raise ValueError
 }
 
 @header {

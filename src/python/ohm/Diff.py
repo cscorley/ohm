@@ -124,9 +124,9 @@ class Diff:
         LexyLexer = self._getLexerClass(revision_number)
         # Run ANTLR on the original source and build a list of the methods
         try:
-            lexer = LexyLexer(ANTLRFileStream(filePath, 'utf-8'))
-        except UnicodeDecodeError:
             lexer = LexyLexer(ANTLRFileStream(filePath, 'latin-1'))
+        except ValueError:
+            lexer = LexyLexer(ANTLRFileStream(filePath, 'utf-8'))
         except IOError:
             return None
 

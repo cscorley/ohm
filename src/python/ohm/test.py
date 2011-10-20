@@ -6,18 +6,24 @@ import sys
 from shutil import rmtree
 
 # now for the real test....
-from antlr3 import ANTLRFileStream, ANTLRInputStream, CommonTokenStream
+from antlr3 import ANTLRFileStream, ANTLRInputStream, CommonTokenStream,  MismatchedTokenException
 from Java5Lexer import Java5Lexer
 from JavaParser import JavaParser
 
-tests = ['Test.java', 'Test2.java', 'Test3.java', 'Test4.java']
-tests = []
+tests = ['Test.java', 'Test2.java']
 for test_java_file in tests:
-    lexer = Java5Lexer(ANTLRFileStream(test_java_file, 'utf-8'))
-    parser = JavaParser(CommonTokenStream(lexer))
-    parser.file_name = test_java_file
-    parser.file_len = _file_len(test_java_file)
-    results = parser.compilationUnit()
+    try:
+        lexer = Java5Lexer(ANTLRFileStream(test_java_file, 'utf-8'))
+        parser = JavaParser(CommonTokenStream(lexer))
+        parser.file_name = test_java_file
+        parser.file_len = _file_len(test_java_file)
+        results = parser.compilationUnit()
+    except ValueError:
+        lexer = Java5Lexer(ANTLRFileStream(test_java_file, 'latin-1'))
+        parser = JavaParser(CommonTokenStream(lexer))
+        parser.file_name = test_java_file
+        parser.file_len = _file_len(test_java_file)
+        results = parser.compilationUnit()
 
     with open(test_java_file, 'r') as f:
         text = f.readlines()
@@ -26,6 +32,8 @@ for test_java_file in tests:
     filet.text = text
     filet.recursive_print()
 
+
+sys.exit(0)
 
 print('diff test')
 # diff test
@@ -37,8 +45,8 @@ url = 'http://steel.cs.ua.edu/repos/google-web-toolkit/trunk/'
 # this dictionary is used throughout as a unique properties dictionary
 # used to get the UID of the entries in the table its used for. It should
 
-starting_revision=2192
-ending_revision=2192
+starting_revision=10063
+ending_revision=10063
 project_repo = Repository(name, url, starting_revision, ending_revision)
 total_revs = len(project_repo.revList)
 pprint(project_repo.revList)
