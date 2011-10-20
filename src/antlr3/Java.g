@@ -1161,7 +1161,7 @@ classCreatorRest
     :   arguments (  
            {    
                anon_name = '$' + str(self._anon_stack[-1])
-               self.scopes.append(('class',anon_name))
+               self.scopes.append(('anon_class',anon_name))
                self._anon_stack[-1] += 1
            }
         classBody)?
