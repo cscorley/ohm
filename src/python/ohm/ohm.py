@@ -273,7 +273,7 @@ def build_db(db, name, url, starting_revision, ending_revision):
         patch = Patch(diff, project_repo, projects[name][1])
 
         for digestion in patch.digest():
-            insert_changes(db, [digestion[0]], None, uid)
+            insert_changes(db, [digestion], None, uid)
 
 def speed_run(name, url, starting_revision, ending_revision):
     project_repo = Repository(name, url, starting_revision, ending_revision)

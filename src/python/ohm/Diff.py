@@ -34,8 +34,6 @@ import pysvn
 
 class Diff:
     def __init__(self, project_repo, extension):
-        self.cvs_file_path = None
-        self.revision = None
         self.project_repo = project_repo
         self.extension = extension
         if '.' not in extension:
@@ -272,10 +270,10 @@ class Diff:
         if not isRemovedFile:
             self.digestion.removed_count += self.new_file.removed_count
             self.digestion.added_count += self.new_file.added_count
-            self.recursive_wtf(self.digestion, self.new_file)
+            self.recursive_walk(self.digestion, self.new_file)
 
 
-    def recursive_wtf(self, old, new):
+    def recursive_walk(self, old, new):
         if old is None or new is None:
             return
 
@@ -304,7 +302,7 @@ class Diff:
         #    if o.removed_count == 0 and o.added_count == 0:
         #        old.sub_blocks.remove(o)
         #    else:
-            self.recursive_wtf(o, n)
+            self.recursive_walk(o, n)
 
         old.sub_blocks.extend(added_set)
 

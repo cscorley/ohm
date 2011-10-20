@@ -75,6 +75,3 @@ class PatchLineDivision:
             else:
                 k += 1
                 nk += 1
-
-    def getDigestion(self):
-        return self.blocks

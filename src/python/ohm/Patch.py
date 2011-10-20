@@ -26,11 +26,6 @@ class Patch:
         self.project_repo = project_repo
         self.extension = extension
 
-        #methods is the list of methods affected by the patch
-        self.digestion = []
-        self.chunk_startu = re.compile('@@ -(\d+),(\d+) \+(\d+),(\d+) @@')
-        self.chunk_startc = re.compile('\*\*\* (\d+),(\d+) \*\*\*')
-
     def digest(self):
         lines = self.patch_file
 
@@ -69,4 +64,4 @@ class Patch:
             d.digest(diff)
             if d.digestion is None:
                 continue
-            yield (d.digestion, d.scp)
+            yield d.digestion
