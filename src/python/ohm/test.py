@@ -32,13 +32,13 @@ print('diff test')
 from Repository import Repository
 from Patch import Patch
 
-name='jedit'
-url = 'http://steel.cs.ua.edu/repos/argouml/trunk/'
+name='gwt'
+url = 'http://steel.cs.ua.edu/repos/google-web-toolkit/trunk/'
 # this dictionary is used throughout as a unique properties dictionary
 # used to get the UID of the entries in the table its used for. It should
 
-starting_revision=13457
-ending_revision=13457
+starting_revision=2192
+ending_revision=2192
 project_repo = Repository(name, url, starting_revision, ending_revision)
 total_revs = len(project_repo.revList)
 pprint(project_repo.revList)
@@ -56,7 +56,7 @@ for revision_info in project_repo.getRevisions():
     print('Revision %d -- %f complete' % (curr,
         (float(count)/float(total_revs))*100))
 
-    patch = Patch(diff, project_repo)
+    patch = Patch(diff, project_repo, '.java')
 
     for digestion in patch.digest():
-        digestion[0].recursive_print()
+        digestion.recursive_print()

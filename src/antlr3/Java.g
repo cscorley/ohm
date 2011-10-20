@@ -821,11 +821,27 @@ elementValueArrayInitializer
     ;
 
 annotationTypeDeclaration
-    :   '@' 'interface' Identifier annotationTypeBody
+    :   '@' 'interface' i=Identifier
+            {
+                self.scopes.append(('@interface', $i.getText()))
+            }
+    annotationTypeBody
     ;
 
 annotationTypeBody
-    :   '{' (annotationTypeElementDeclaration)* '}'
+//    :   '{' (annotationTypeElementDeclaration)* '}'
+    :       {
+                self._anon_stack.append(1)
+            }
+       l='{'
+            {
+                self.object_scopes.append([])
+            }
+    (annotationTypeElementDeclaration)* r='}'
+            {
+                self._anon_stack.pop()
+                self.addBlock(min(self.modifier_line, $l.getLine()), $r.getLine(), $l.getLine())
+            }
 ;
 
 annotationTypeElementDeclaration
