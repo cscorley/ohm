@@ -349,7 +349,7 @@ def generate(db, name, url, starting_revision, ending_revision, use_renames, use
     dup_results = db.execute('select full_name(id) from block where \
             project=%s and (block.type=%s or block.type=%s or block.type=%s)\
             group by full_name(id) having (count(full_name(id)) > 1);',
-            (uid['project'], 'class', 'enum', 'interface' ))
+            (uid['project'], 'class', 'enum', 'interface', '@interface' ))
     duplicated = []
 
     # copy just the strings
