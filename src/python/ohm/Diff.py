@@ -36,7 +36,7 @@ class Diff:
     def __init__(self, project_repo, extension):
         self.project_repo = project_repo
         self.extension = extension
-        self.base_dir = '/tmp/ohm/' + self.project_repo.name + '-svn/' 
+        self.base_dir = '/tmp/ohm/' + project_repo.name + '-svn/' 
         if '.' not in extension:
             self.extension = '.' + extension
 
@@ -57,7 +57,7 @@ class Diff:
         if len(log) > 0:
             revCurr = self.project_repo.revCurr
             _make_dir('/tmp/ohm/')
-            with open('/tmp/ohm/errors.log', 'a') as f:
+            with open('/tmp/ohm/' + self.project_repo.name + '-errors.log', 'a') as f:
                 f.write("\n\n***********************************\n\n")
                 for each in log:
                     output = str(datetime.now())
@@ -279,6 +279,8 @@ class Diff:
             self.digestion = self.new_file
         else:
             self.digestion = self.old_file
+
+        if not isRemovedFile and not isNewFile:
             if self.old_file.package_name != self.new_file.package_name:
                 self.digestion.package_name = self.new_file.package_name
 
