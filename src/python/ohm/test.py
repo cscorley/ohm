@@ -5,6 +5,7 @@ import os
 import sys
 from shutil import rmtree
 from Repository import Repository
+from Patch import Patch
 
 from pysvn import ClientError
 
@@ -12,7 +13,8 @@ from antlr3 import ANTLRFileStream, ANTLRInputStream, CommonTokenStream,  Mismat
 from Java5Lexer import Java5Lexer
 from JavaParser import JavaParser
 
-base_svn='svn://localhost/'
+base_svn='http://steel.cs.ua.edu/repos/'
+#base_svn='svn://localhost/'
 projects = {
         'ant' : ('ant/ant/core/trunk/', '.java'),
         'argouml': ('argouml/trunk/', '.java'),
@@ -70,7 +72,7 @@ def diff_test():
     # this dictionary is used throughout as a unique properties dictionary
     # used to get the UID of the entries in the table its used for. It should
 
-    name = 'ant'
+    name = 'gwt'
     url = base_svn + projects[name][0]
     starting_revision=10063
     ending_revision=10063

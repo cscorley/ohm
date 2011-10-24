@@ -203,7 +203,9 @@ class Diff:
                 if len(diff_divisions) == 0:
                     if int(chunk_matcher.group(1)) == 0 and int(chunk_matcher.group(2)) == 0:
                         if not isNewFile:
-                            print('Uhh.... captain? New file not new?')
+                            print('Uhh.... captain? New file not new?',
+                                    self.old_source, old_revision_number,
+                                    self.new_source, new_revision_number)
                         isNewFile = True
                     elif int(chunk_matcher.group(3)) == 0 and int(chunk_matcher.group(4)) == 0:
                         isRemovedFile = True
@@ -266,11 +268,14 @@ class Diff:
             self.digestion = self.new_file
         else:
             self.digestion = self.old_file
+            if self.old_file.package_name != self.new_file.package_name:
+                self.digestion.package_name = self.new_file.package_name
 
         if not isRemovedFile:
             self.digestion.removed_count += self.new_file.removed_count
             self.digestion.added_count += self.new_file.added_count
             self.recursive_walk(self.digestion, self.new_file)
+
 
 
     def recursive_walk(self, old, new):
