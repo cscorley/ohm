@@ -25,8 +25,8 @@ from datetime import datetime
 
 from snippets import _uniq, _make_dir
 
-base_svn='http://steel.cs.ua.edu/repos/'
-#base_svn='svn://localhost/'
+#base_svn='http://steel.cs.ua.edu/repos/'
+base_svn='svn://localhost/'
 projects = {
         'ant' : ('ant/ant/core/trunk/', '.java'),
         'argouml': ('argouml/trunk/', '.java'),
@@ -222,9 +222,9 @@ def build_db(db, name, url, starting_revision, ending_revision):
     count = 0
     print(project_repo)
     for revision_info in project_repo.getRevisions():
-        if os.path.exists('/tmp/ohm/svn/'):
+        if os.path.exists('/tmp/ohm/' + name + '-svn/'):
             try:
-                rmtree('/tmp/ohm/svn/', True)
+                rmtree('/tmp/ohm/' + name + '-svn/', True)
             except OSError:
                 pass
         if len(revision_info[0]) > 0:

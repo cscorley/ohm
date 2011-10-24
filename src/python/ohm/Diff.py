@@ -36,6 +36,7 @@ class Diff:
     def __init__(self, project_repo, extension):
         self.project_repo = project_repo
         self.extension = extension
+        self.base_dir = '/tmp/ohm/' + self.project_repo.name + '-svn/' 
         if '.' not in extension:
             self.extension = '.' + extension
 
@@ -237,7 +238,7 @@ class Diff:
                 return None
             self.old_file = res[0]
             log = res[1]
-            with open('/tmp/ohm/svn/' + self.old_source, 'r') as f:
+            with open(self.base_dir + self.old_source, 'r') as f:
                 self.old_source_text = f.readlines()
 
             self.old_file.text = self.old_source_text    
@@ -253,7 +254,7 @@ class Diff:
             self.new_file = res[0]
             log = res[1]
 
-            with open('/tmp/ohm/svn/' + self.new_source, 'r') as f:
+            with open(self.base_dir + self.new_source, 'r') as f:
                 self.new_source_text = f.readlines()
 
             self.new_file.text = self.new_source_text

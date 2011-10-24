@@ -104,7 +104,7 @@ class Repository:
         if not fileName.startswith('/'):
             fileName = '/' + fileName
 
-        output = '/tmp/ohm/svn' + fileName
+        output = '/tmp/ohm/'+ self.name + '-svn' + fileName
         _make_dir(output[:output.rfind('/')])
 
         try:
