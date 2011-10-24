@@ -72,36 +72,46 @@ class Diff:
 
     def _getLexerClass(self, revision):
         name = self.project_repo.getName()
-        if name.upper() == 'ARGOUML':
+        if name.lower() == 'argouml':
             if revision > 13020:
                 return Java5Lexer
             elif revision > 8295:
                 return Java4Lexer
-        elif name.upper() == 'CAROL':
-            if revision > 1290:
-                return Java5Lexer
-        elif name.upper() == 'JEDIT':
-            if revision > 8265:
-                return Java5Lexer
-            elif revision > 6800:
-                return Java4Lexer
-        elif name.upper() == 'VUZE':
-            if revision > 14990:
-                return Java5Lexer
-            elif revision > 5635:
-                return Java4Lexer
-        elif name.upper() == 'GWT':
-            if revision > 1340:
-                return Java5Lexer
-            elif revision > 0:
-                return Java4Lexer
-        elif name.upper() == 'ANT':
+        elif name.lower() == 'ant':
             if revision > 277860:
                 return Java5Lexer
             elif revision > 275290:
                 return Java4Lexer
-        elif name.upper() == 'COLUMBA':
+        elif name.lower() == 'carol':
+            if revision > 1290:
+                return Java5Lexer
+        elif name.lower() == 'columba':
             return Java5Lexer
+        elif name.lower() == 'dnsjava':
+            return JavaLexer
+        elif name.lower() == 'geclipse':
+            return Java5Lexer
+        elif name.lower() == 'gwt':
+            if revision > 1340:
+                return Java5Lexer
+            elif revision > 0:
+                return Java4Lexer
+        elif name.lower() == 'itext':
+            return JavaLexer
+        elif name.lower() == 'jabref':
+            return JavaLexer
+        elif name.lower() == 'jedit':
+            if revision > 8265:
+                return Java5Lexer
+            elif revision > 6800:
+                return Java4Lexer
+        elif name.lower() == 'subversive':
+            return JavaLexer
+        elif name.lower() == 'vuze':
+            if revision > 14990:
+                return Java5Lexer
+            elif revision > 5635:
+                return Java4Lexer
         elif self.extension.lower() == '.java':
             return JavaLexer
         elif self.extension.lower() == '.cs':
