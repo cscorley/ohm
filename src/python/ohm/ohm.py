@@ -25,26 +25,21 @@ from datetime import datetime
 
 from snippets import _uniq, _make_dir
 
-#base_svn='http://steel.cs.ua.edu/repos/'
-base_svn='svn://localhost/'
+base_svn='http://steel.cs.ua.edu/repos/'
+#base_svn='svn://localhost/'
 projects = {
-        'ant' : ('ant/core/trunk/', '.java'),
+        'ant' : ('ant/ant/core/trunk/', '.java'),
         'argouml': ('argouml/trunk/', '.java'),
         'carol': ('carol/trunk/', '.java'),
         'columba' : ('columba/columba/trunk/', '.java'),
         'dnsjava' : ('dnsjava/trunk/', '.java'),
         'geclipse' : ('geclipse/trunk/', '.java'),
         'gwt' : ('google-web-toolkit/trunk/', '.java'),
+        'itext' : ('itext/trunk/', '.java'),
         'jabref' : ('jabref/trunk/', '.java'),
         'jedit' : ('jedit/jEdit/trunk/', '.java'),
         'subversive' : ('subversive/trunk/', '.java'),
         'vuze' : ('vuze/client/trunk/', '.java'),
-        'ecite' : ('eCitation/trunk/eCite', '.cs'),
-        'ecrash' : ('eCitation/trunk/eCrash' , '.cs'),
-        'care10' : ('CARE/trunk/CARE 10', '.cs'), 
-        'care8' : ('CARE/trunk/Care 8', '.cs'), 
-        'amplifi' : ('Amplifi/trunk/Amplifi', '.cs'),
-        'sentri' : ('Amplifi/trunk/Plugins/Sentri', '.cs')
         }
 
 
@@ -347,7 +342,8 @@ def generate(db, name, url, starting_revision, ending_revision, use_renames, use
     # before we start generating class vectors, lets build a list of duplicates
     # to save off for merging later
     dup_results = db.execute('select full_name(id) from block where \
-            project=%s and (block.type=%s or block.type=%s or block.type=%s)\
+            project=%s and (block.type=%s or block.type=%s or block.type=%s or \
+            block.type=%s)\
             group by full_name(id) having (count(full_name(id)) > 1);',
             (uid['project'], 'class', 'enum', 'interface', '@interface' ))
     duplicated = []
@@ -372,8 +368,8 @@ def generate(db, name, url, starting_revision, ending_revision, use_renames, use
             from {table} join block on \
             {table}.block_id = block.id \
             where block.project=%s and \
-            (block.type=%s or block.type=%s or block.type=%s)'.format(table=data_table),
-            (uid['project'], 'class', 'enum', 'interface' ))
+            (block.type=%s or block.type=%s or block.type=%s or block.type=%s)'.format(table=data_table),
+            (uid['project'], 'class', 'enum', 'interface', '@interface' ))
 
     curr_id = -1
     curr_full_name = ''
