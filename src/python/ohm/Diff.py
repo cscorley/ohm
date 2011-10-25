@@ -102,12 +102,14 @@ class Diff:
         elif name.lower() == 'jabref':
             if revision > 2410:
                 return Java5Lexer
-            return JavaLexer
         elif name.lower() == 'jedit':
             if revision > 8265:
                 return Java5Lexer
             elif revision > 6800:
                 return Java4Lexer
+        elif name.lower() == 'jhotdraw':
+            if revision > 270:
+                return Java5Lexer
         elif name.lower() == 'subversive':
             if revision > 6940:
                 return Java5Lexer

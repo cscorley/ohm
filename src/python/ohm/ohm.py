@@ -38,6 +38,7 @@ projects = {
         'itext' : ('itext/trunk/', '.java'),
         'jabref' : ('jabref/trunk/', '.java'),
         'jedit' : ('jedit/jEdit/trunk/', '.java'),
+        'jhotdraw' : ('jhotdraw/trunk/', '.java'),
         'subversive' : ('subversive/trunk/', '.java'),
         'vuze' : ('vuze/client/trunk/', '.java'),
         }
