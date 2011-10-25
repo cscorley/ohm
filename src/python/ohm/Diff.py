@@ -97,8 +97,11 @@ class Diff:
             elif revision > 0:
                 return Java4Lexer
         elif name.lower() == 'itext':
-            return JavaLexer
+            if revision > 4290:
+                return Java5Lexer
         elif name.lower() == 'jabref':
+            if revision > 2410:
+                return Java5Lexer
             return JavaLexer
         elif name.lower() == 'jedit':
             if revision > 8265:
@@ -106,6 +109,8 @@ class Diff:
             elif revision > 6800:
                 return Java4Lexer
         elif name.lower() == 'subversive':
+            if revision > 6940:
+                return Java5Lexer
             return JavaLexer
         elif name.lower() == 'vuze':
             if revision > 14990:
