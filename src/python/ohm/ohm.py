@@ -299,15 +299,10 @@ def speed_run(name, url, starting_revision, ending_revision):
         for digestion in patch.digest():
             pass
 
-def generate(db, name, url, starting_revision, ending_revision, use_renames, use_sums):
-    # this dictionary is to hold the current collection of uid's needed by
-    # various select queries. It should never be completely reassigned
-    uid = {
-            'project': None,
-            'revision': None,
-            'owner': None,
-            'block': None,
-            }
+def generate(db, name, url, starting_revision, ending_revision, use_sums,
+        type_list, profile_name = ''):
+    # from type list, build query info
+    typestr = ' or '.join('block.type=%s' * len(type_list))
 
     # this dictionary is used throughout as a unique properties dictionary
     # used to get the UID of the entries in the table its used for. It should
@@ -317,11 +312,11 @@ def generate(db, name, url, starting_revision, ending_revision, use_renames, use
             'url': url
             }
     # get the project uid
-    uid['project'] = getUID(db, 'project', ('url',), propDict)
+    pid = getUID(db, 'project', ('url',), propDict)
     
     revisions = db.execute('SELECT number from revision where project=%s \
             order by number desc',
-            (uid['project'], ))
+            (pid, ))
 
     if revisions is None or len(revisions) == 0:
         print('Error: project has not been built yet, use -b')
@@ -332,9 +327,9 @@ def generate(db, name, url, starting_revision, ending_revision, use_renames, use
     if False == os.path.exists(output_dir):
         _make_dir(output_dir)
 
-    owner_remap(db, name, uid['project'])
+    owner_remap(db, name, pid)
     owners = db.execute('SELECT * from owner where project=%s',
-            (uid['project'], ))
+            (pid, ))
 
     with open(output_dir + 'key.txt', 'w') as f:
         for each in owners:
@@ -343,10 +338,9 @@ def generate(db, name, url, starting_revision, ending_revision, use_renames, use
     # before we start generating class vectors, lets build a list of duplicates
     # to save off for merging later
     dup_results = db.execute('select full_name(id) from block where \
-            project=%s and (block.type=%s or block.type=%s or block.type=%s or \
-            block.type=%s)\
-            group by full_name(id) having (count(full_name(id)) > 1);',
-            (uid['project'], 'class', 'enum', 'interface', '@interface' ))
+            project=%s and ({types}) group by full_name(id) \
+            having (count(full_name(id)) > 1);'.format(types=typestr),
+            (pid, ) + tuple(type_list))
     duplicated = []
 
     # copy just the strings
@@ -355,9 +349,6 @@ def generate(db, name, url, starting_revision, ending_revision, use_renames, use
 
 
     data_table = 'change_data'
-    if use_renames:
-#        data_table = 'r_' + data_table
-        pass
        
     if use_sums:
         data_table = data_table + '_sums'
@@ -366,11 +357,10 @@ def generate(db, name, url, starting_revision, ending_revision, use_renames, use
 
     c = db.cursor
     c.execute('SELECT block.id, full_name(block.id), {table}.sum, owner_id \
-            from {table} join block on \
-            {table}.block_id = block.id \
+            from {table} join block on {table}.block_id = block.id \
             where block.project=%s and \
-            (block.type=%s or block.type=%s or block.type=%s or block.type=%s)'.format(table=data_table),
-            (uid['project'], 'class', 'enum', 'interface', '@interface' ))
+            ({types})'.format(table=data_table,types=typestr),
+            (pid, ) + tuple(type_list))
 
     curr_id = -1
     curr_full_name = ''
@@ -381,7 +371,7 @@ def generate(db, name, url, starting_revision, ending_revision, use_renames, use
     for d in duplicated:
         duplicated_profiles[d] = []
 
-    with open(output_dir + 'profiles.txt', 'w') as f:
+    with open(output_dir + profile_name + 'profiles.txt', 'w') as f:
         for each in c:
             if curr_id != each[0]:
                 if curr_id != -1:
@@ -663,7 +653,16 @@ def main(argv):
         
     if options.generate:
        generate(db, project_name, project_url, starting_revision,
-               ending_revision, True, False)
+               ending_revision, False, 
+               ('class', 'enum', 'interface', '@interface'),
+               profile_name='') # just leave name as 'profiles.txt'
+       generate(db, project_name, project_url, starting_revision,
+               ending_revision, False, 
+               ('method'), profile_name='method_')
+       generate(db, project_name, project_url, starting_revision,
+               ending_revision, False, 
+               ('file'), profile_name='file_')
+
 
 
     if not (options.force_drop or options.build_db or options.generate or
