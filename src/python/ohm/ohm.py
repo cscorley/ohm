@@ -302,7 +302,8 @@ def speed_run(name, url, starting_revision, ending_revision):
 def generate(db, name, url, starting_revision, ending_revision, use_sums,
         type_list, profile_name = ''):
     # from type list, build query info
-    typestr = ' or '.join('block.type=%s' * len(type_list))
+    typestr = 'block.type=%s or ' * len(type_list)
+    typestr = typestr.rstrip(' or ')
 
     # this dictionary is used throughout as a unique properties dictionary
     # used to get the UID of the entries in the table its used for. It should
