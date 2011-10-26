@@ -300,10 +300,19 @@ def speed_run(name, url, starting_revision, ending_revision):
             pass
 
 def generate(db, name, url, starting_revision, ending_revision, use_sums,
-        type_list, profile_name = ''):
+        type_list, profile_name = '', no_full_name_func=False):
     # from type list, build query info
     typestr = 'block.type=%s or ' * len(type_list)
     typestr = typestr.rstrip(' or ')
+
+
+    # set the name string used in the queries.
+    if no_full_name_func:
+        # just use the block's saved full_name as-is
+        namestr = 'block.full_name'
+    else:
+        # use the sql function instead to build the full_name
+        namestr = 'full_name(block.id)' 
 
     # this dictionary is used throughout as a unique properties dictionary
     # used to get the UID of the entries in the table its used for. It should
@@ -336,11 +345,12 @@ def generate(db, name, url, starting_revision, ending_revision, use_sums,
         for each in owners:
             f.write('%s\n' % each[1])
 
+
     # before we start generating class vectors, lets build a list of duplicates
     # to save off for merging later
-    dup_results = db.execute('select full_name(id) from block where \
-            project=%s and ({types}) group by full_name(id) \
-            having (count(full_name(id)) > 1);'.format(types=typestr),
+    dup_results = db.execute('select {name} from block where \
+            project=%s and ({types}) group by {name} \
+            having (count({name}) > 1)'.format(name=namestr, types=typestr),
             (pid, ) + tuple(type_list))
     duplicated = []
 
@@ -357,10 +367,10 @@ def generate(db, name, url, starting_revision, ending_revision, use_sums,
         data_table = data_table + '_count'
 
     c = db.cursor
-    c.execute('SELECT block.id, full_name(block.id), {table}.sum, owner_id \
+    c.execute('SELECT block.id, {name}, {table}.sum, owner_id \
             from {table} join block on {table}.block_id = block.id \
             where block.project=%s and \
-            ({types})'.format(table=data_table,types=typestr),
+            ({types})'.format(table=data_table,name=namestr,types=typestr),
             (pid, ) + tuple(type_list))
 
     curr_id = -1
@@ -657,12 +667,34 @@ def main(argv):
                ending_revision, False, 
                ('class', 'enum', 'interface', '@interface'),
                profile_name='') # just leave name as 'profiles.txt'
+
+
+       # generate the methods
        generate(db, project_name, project_url, starting_revision,
                ending_revision, False, 
-               ('method'), profile_name='method_')
+               ('method', ), profile_name='method_')
+
+       # the following will seem weird, but in the database the full_name()
+       # function will ignore file types when building the block's full name so
+       # if we use it on the file type, we just get the package name. generate
+       # will merge all the duplicate information into one package for us
+       # afterward.
+
+       # warning: if a file did not have an associated package, it will show up
+       # in this list rather than the package name. this is a nifty workaround
+       # to tracking package changes via the file changes.
        generate(db, project_name, project_url, starting_revision,
                ending_revision, False, 
-               ('file'), profile_name='file_')
+               ('file', ), profile_name='package_') 
+
+       # here, we will disable generates use of the full_name in its queries,
+       # giving us only the file name (and more importantly, excluding the
+       # package)
+       generate(db, project_name, project_url, starting_revision,
+               ending_revision, False, 
+               ('file', ), profile_name='file_',
+               no_full_name_func=True)
+
 
 
 
