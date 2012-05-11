@@ -12,33 +12,25 @@ from __future__ import print_function
 __author__  = 'Christopher S. Corley <cscorley@crimson.ua.edu>'
 __version__ = '$Id$'
 
-import re
 import os
+import sys
 import codecs
 from difflib import SequenceMatcher
 from datetime import datetime
 from pprint import pprint
 
-from PatchLineDivision import PatchLineDivision
+from Chunk import Chunk
 from File import File
 from antlr3 import ANTLRFileStream, ANTLRInputStream, CommonTokenStream
-from JavaLexer import JavaLexer
-from Java4Lexer import Java4Lexer
-from Java5Lexer import Java5Lexer
-from JavaParser import JavaParser
-from CSharpLexer import CSharpLexer
-from CSharpParser import CSharpParser
+
 from snippets import _make_dir, _uniq, _file_len
 import pysvn
 
 
 class Diff:
-    def __init__(self, project_repo, extension):
+    def __init__(self, project_repo):
         self.project_repo = project_repo
-        self.extension = extension
         self.base_dir = '/tmp/ohm/' + project_repo.name + '-svn/'
-        if '.' not in extension:
-            self.extension = '.' + extension
 
         self.scp = []
 
@@ -47,11 +39,6 @@ class Diff:
         self.old_file = None
         self.new_file = None
         self.digestion = None
-
-
-        self.old_file_svn = re.compile('--- ([-/._\w ]+' + extension + ')\t\(revision (\d+)\)')
-        self.new_file_svn = re.compile('\+\+\+ ([-/._\w ]+' + extension + ')\t(?:\([\s\S]*\)\t)?\(revision (\d+)\)')
-        self.chunk_startu = re.compile('@@ -(\d+)(?:,(\d+))? \+(\d+)(?:,(\d+))? @@')
 
     def _printToLog(self, source, revision_number, log):
         if len(log) > 0:
@@ -70,91 +57,36 @@ class Diff:
                     output += '\n'
                     f.write(output)
 
-    def _getLexerClass(self, revision):
-        name = self.project_repo.getName()
-        if name.lower() == 'argouml':
-            if revision > 13020:
-                return Java5Lexer
-            elif revision > 8295:
-                return Java4Lexer
-        elif name.lower() == 'ant':
-            if revision > 277860:
-                return Java5Lexer
-            elif revision > 275290:
-                return Java4Lexer
-        elif name.lower() == 'carol':
-            if revision > 1290:
-                return Java5Lexer
-        elif name.lower() == 'columba':
-            return Java5Lexer
-        elif name.lower() == 'dnsjava':
-            return JavaLexer
-        elif name.lower() == 'geclipse':
-            return Java5Lexer
-        elif name.lower() == 'gwt':
-            if revision > 1340:
-                return Java5Lexer
-            elif revision > 0:
-                return Java4Lexer
-        elif name.lower() == 'itext':
-            if revision > 4290:
-                return Java5Lexer
-        elif name.lower() == 'jabref':
-            if revision > 2410:
-                return Java5Lexer
-        elif name.lower() == 'jedit':
-            if revision > 8265:
-                return Java5Lexer
-            elif revision > 6800:
-                return Java4Lexer
-        elif name.lower() == 'jhotdraw':
-            if revision > 270:
-                return Java5Lexer
-        elif name.lower() == 'subversive':
-            if revision > 6940:
-                return Java5Lexer
-            return JavaLexer
-        elif name.lower() == 'vuze':
-            if revision > 14990:
-                return Java5Lexer
-            elif revision > 5635:
-                return Java4Lexer
-        elif self.extension.lower() == '.java':
-            return JavaLexer
-        elif self.extension.lower() == '.cs':
-            return CSharpLexer
-
-        return JavaLexer
-
-
-    def _getParserClass(self):
-        if self.extension.lower() == '.java':
-            return JavaParser
-        elif self.extension.lower() == '.cs':
-            return CSharpParser
-
-        return None
-
-
     def _getParserResults(self, source, revision_number):
         filePath = self.project_repo.checkout(source, revision_number)
+        ext = os.path.splitext(source)[1]
 
-        LexyLexer = self._getLexerClass(revision_number)
+        SourceLexer = self.project_repo.get_lexer(revision_number, ext)
+        if SourceLexer is None:
+            return None
+
         # Run ANTLR on the original source and build a list of the methods
         try:
-            lexer = LexyLexer(ANTLRFileStream(filePath, 'latin-1'))
+            lexer = SourceLexer(ANTLRFileStream(filePath, 'latin-1'))
         except ValueError:
-            lexer = LexyLexer(ANTLRFileStream(filePath, 'utf-8'))
+            lexer = SourceLexer(ANTLRFileStream(filePath, 'utf-8'))
         except IOError:
             return None
 
-        ParsyParser = self._getParserClass()
-        parser = ParsyParser(CommonTokenStream(lexer))
+        SourceParser = self.project_repo.get_parser(revision_number, ext)
+        if SourceParser is None:
+            return None
+
+        parser = SourceParser(CommonTokenStream(lexer))
         parser.file_name = source
         parser.file_len = _file_len(filePath)
         return parser.compilationUnit()
 
     def digest(self, diff_file):
+        old_file_regex = self.project_repo.old_file_regex
+        new_file_regex = self.project_repo.new_file_regex
+        chunk_regex = self.project_repo.chunk_regex
+
         self.scp = []
 
         diff_divisions = []
@@ -180,27 +112,16 @@ class Diff:
         isNewFile = False
         isRemovedFile = False
 
-        while start < len(diff_file) and not self.chunk_startu.match(diff_file[start]):
-            m = self.old_file_svn.match(diff_file[start])
+        while start < len(diff_file) and not chunk_regex.match(diff_file[start]):
+            m = old_file_regex.match(diff_file[start])
             if m:
                 self.old_source = m.group(1)
                 old_revision_number = int(m.group(2))
 
-                nm = self.new_file_svn.match(diff_file[start + 1])
+                nm = new_file_regex.match(diff_file[start + 1])
                 if nm:
                     self.new_source = nm.group(1)
                     new_revision_number = int(nm.group(2))
-
-                # allows for spaces in the filename
-                if self.extension in self.old_source and not self.old_source.endswith(self.extension):
-                    self.old_source = self.old_source.split(self.extension)[0] + self.extension
-                if self.extension in self.new_source and not self.new_source.endswith(self.extension):
-                    self.new_source = self.new_source.split(self.extension)[0] + self.extension
-
-                if not self.old_source.endswith(self.extension):
-                    return None
-                elif not self.new_source.endswith(self.extension):
-                    return None
 
                 if (old_revision_number == 0):
                     isNewFile = True
@@ -216,7 +137,7 @@ class Diff:
         # Divide the diff into separate chunks
         for i in range(start + 1, len(diff_file)):
             tmp = diff_file[i]
-            chunk_matcher = self.chunk_startu.match(tmp)
+            chunk_matcher = chunk_regex.match(tmp)
             if chunk_matcher:
                 if len(diff_divisions) == 0:
                     if int(chunk_matcher.group(1)) == 0 and int(chunk_matcher.group(2)) == 0:
@@ -238,7 +159,7 @@ class Diff:
             temp.append(diff_file[j])
         diff_divisions.append(temp)
 
-        self.PLD = PatchLineDivision(diff_divisions)
+        self.PLD = Chunk(diff_divisions)
 
         if old_revision_number == 0:
             isNewFile = True
@@ -296,6 +217,8 @@ class Diff:
             self.digestion.added_count += self.new_file.added_count
             self.recursive_walk(self.digestion, self.new_file)
 
+        # make sure digestion is a list before stopping
+        self.digestion = [self.digestion]
 
 
     def recursive_walk(self, old, new):

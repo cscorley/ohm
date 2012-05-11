@@ -103,7 +103,7 @@ class Database:
     def commit(self):
         self._connection.commit()
 
-    def get_datetime(date):
+    def get_datetime(self, date):
         return psycopg2.TimestampFromTicks(date)
 
     def execute(self, commandstr, args):

@@ -18,13 +18,11 @@ from pprint import pprint
 from Diff import Diff
 from snippets import _uniq
 
-
 class Patch:
-    def __init__(self, patch_file, project_repo, extension):
+    def __init__(self, patch_file, project_repo):
         self.patch_file = patch_file
         self.diffs = []
         self.project_repo = project_repo
-        self.extension = extension
 
     def digest(self):
         lines = self.patch_file
@@ -46,6 +44,7 @@ class Patch:
         # Split each diff and append those to the diffs list.  We also must
         # ensure that the lines start with the same beginning as the first
         # diff as the other beginnings will appear as well anyway.
+        # SVN patch specific
         for i in range(first + 1, len(lines)):
             if (lines[i].startswith('Index:') and lines[first].startswith('Index:')):
                 for j in range(start, i):
@@ -59,7 +58,9 @@ class Patch:
             temp.append(lines[j])
         diffs.append(temp)
 
-        d = Diff(self.project_repo, self.extension)
+        # Do each Diff individually and yeild the results,
+        # may run out of memory for large patches
+        d = Diff(self.project_repo)
         for diff in diffs:
             d.digest(diff)
             if d.digestion is None:

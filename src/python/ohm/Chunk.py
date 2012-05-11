@@ -13,7 +13,7 @@ import re
 from snippets import _uniq
 
 
-class PatchLineDivision:
+class Chunk:
     def __init__(self, divisions):
         self.chunk_startu = re.compile('@@ -(\d+)(?:,(\d+))? \+(\d+)(?:,(\d+))? @@')
         self.chunk_startc = re.compile('\*\*\* (\d+),(\d+) \*\*\*')

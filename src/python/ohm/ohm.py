@@ -16,31 +16,11 @@ import sys
 from shutil import rmtree
 from optparse import OptionParser, SUPPRESS_HELP
 
-from Patch import Patch
+import config 
 from Repository import Repository
 from Database import Database
-from datetime import datetime
 
 from snippets import _uniq, _make_dir
-
-base_svn='http://steel.cs.ua.edu/repos/'
-#base_svn='svn://localhost/'
-projects = {
-        'ant' : ('ant/ant/core/trunk/', '.java'),
-        'argouml': ('argouml/trunk/', '.java'),
-        'carol': ('carol/trunk/', '.java'),
-        'columba' : ('columba/columba/trunk/', '.java'),
-        'dnsjava' : ('dnsjava/trunk/', '.java'),
-        'geclipse' : ('geclipse/trunk/', '.java'),
-        'gwt' : ('google-web-toolkit/trunk/', '.java'),
-        'itext' : ('itext/trunk/', '.java'),
-        'jabref' : ('jabref/trunk/', '.java'),
-        'jedit' : ('jedit/jEdit/trunk/', '.java'),
-        'jhotdraw' : ('jhotdraw/trunk/', '.java'),
-        'subversive' : ('subversive/trunk/', '.java'),
-        'vuze' : ('vuze/client/trunk/', '.java'),
-        }
-
 
 def selinupChanges(db, uid, added, deleted):
     # these two strings will be used to build the WHERE section of our queries
@@ -196,7 +176,7 @@ def getUID(db, table, id_key, propDict):
     return result
 
 
-def build_db(db, name, url, starting_revision, ending_revision):
+def build_db(db, project, starting_revision, ending_revision):
     # this dictionary is to hold the current collection of uid's needed by
     # various select queries. It should never be completely reassigned
     uid = {
@@ -210,33 +190,17 @@ def build_db(db, name, url, starting_revision, ending_revision):
     # used to get the UID of the entries in the table its used for. It should
     # always be reassigned when used.
     propDict = {
-            'name': name,
-            'url': url
+            'name': project.name,
+            'url': project.url
             }
     # get the project uid
     uid['project'] = getUID(db, 'project', ('url',), propDict)
 
-    project_repo = Repository(name, url, starting_revision, ending_revision)
+    project_repo = Repository(project, starting_revision, ending_revision)
     total_revs = len(project_repo.revList)
     count = 0
     print(project_repo)
-    for revision_info in project_repo.getRevisions():
-        if os.path.exists('/tmp/ohm/' + name + '-svn/'):
-            try:
-                rmtree('/tmp/ohm/' + name + '-svn/', True)
-            except OSError:
-                pass
-        if len(revision_info[0]) > 0:
-            log = revision_info[0][0]
-        else:
-            continue
-        diff = revision_info[1]
-
-        curr = log.revision.number
-        count += 1
-        print('Revision %d -- %f complete' % (curr,
-            (float(count)/float(total_revs))*100))
-
+    for log, changes in project_repo.getRevisions():
         # there are two uid's which we can extract from the log for this
         # revision
 
@@ -246,7 +210,6 @@ def build_db(db, name, url, starting_revision, ending_revision):
                 'name': str(log.author).lower()
                 }
         uid['owner'] = getUID(db, 'owner', ('name', 'project'), propDict)
-
 
         try:
             dt = db.get_datetime(log.date)
@@ -263,41 +226,17 @@ def build_db(db, name, url, starting_revision, ending_revision):
                 }
         uid['revision'] = getUID(db, 'revision', ('number', 'project'), propDict)
 
-        # parse for the changes
-        patch = Patch(diff, project_repo, projects[name][1])
+        insert_changes(db, changes, None, uid)
 
-        for digestion in patch.digest():
-            insert_changes(db, [digestion], None, uid)
-
-def speed_run(name, url, starting_revision, ending_revision):
-    project_repo = Repository(name, url, starting_revision, ending_revision)
+def speed_run(config, starting_revision, ending_revision):
+    project_repo = Repository(config, starting_revision, ending_revision)
     total_revs = len(project_repo.revList)
     count = 0
     print(project_repo)
-    for revision_info in project_repo.getRevisions():
-        if os.path.exists('/tmp/ohm/svn/'):
-            try:
-                rmtree('/tmp/ohm/svn/', True)
-            except OSError:
-                pass
-        if len(revision_info[0]) > 0:
-            log = revision_info[0][0]
-        else:
-            continue
-        diff = revision_info[1]
+    for log, changes in project_repo.getRevisions():
+        pass
 
-        curr = log.revision.number
-        count += 1
-        print('Revision %d -- %f complete' % (curr,
-            (float(count)/float(total_revs))*100))
-
-        # parse for the changes
-        patch = Patch(diff, project_repo, projects[name][1])
-
-        for digestion in patch.digest():
-            pass
-
-def generate(db, name, url, starting_revision, ending_revision, use_sums,
+def generate(db, project, starting_revision, ending_revision, use_sums,
         type_list, profile_name = '', no_full_name_func=False):
     # from type list, build query info
     typestr = 'block.type=%s or ' * len(type_list)
@@ -316,8 +255,8 @@ def generate(db, name, url, starting_revision, ending_revision, use_sums,
     # used to get the UID of the entries in the table its used for. It should
     # always be reassigned when used.
     propDict = {
-            'name': name,
-            'url': url
+            'name': project.name,
+            'url': project.url
             }
     # get the project uid
     pid = getUID(db, 'project', ('url',), propDict)
@@ -330,12 +269,12 @@ def generate(db, name, url, starting_revision, ending_revision, use_sums,
         print('Error: project has not been built yet, use -b')
         return
 
-    output_dir = '/tmp/ohm/{name}-r{revision}/'.format(name=name,
+    output_dir = '/tmp/ohm/{name}-r{revision}/'.format(name=project.name,
             revision=revisions[0][0])
     if False == os.path.exists(output_dir):
         _make_dir(output_dir)
 
-    owner_remap(db, name, pid)
+    owner_remap(db, project.name, pid)
     owners = db.execute('SELECT * from owner where project=%s',
             (pid, ))
 
@@ -476,7 +415,7 @@ def owner_remap(db, name, pid):
     db.commit()
 
 
-def tester(db, name, url, starting_revision, ending_revision):
+def tester(db, project, starting_revision, ending_revision):
     # this dictionary is to hold the current collection of uid's needed by
     # various select queries. It should never be completely reassigned
     uid = {
@@ -490,8 +429,8 @@ def tester(db, name, url, starting_revision, ending_revision):
     # used to get the UID of the entries in the table its used for. It should
     # always be reassigned when used.
     propDict = {
-            'name': name,
-            'url': url
+            'name': project.name,
+            'url': project.url
             }
     # get the project uid
     uid['project'] = getUID(db, 'project', ('url',), propDict)
@@ -579,8 +518,6 @@ def main(argv):
             help='Project revision to begin upon')
     optparser.add_option('-e', '--revision_end', dest='project_revision_end',
             help='Project revision to stop after')
-    optparser.add_option('-c', '--custom_url', dest='custom_url',
-            help='Custom URL to a repository')
     optparser.add_option('-f', '--force_drop', dest='force_drop',
             help='Drop all tables before beginning', action='store_true')
     optparser.add_option('-v', '--verbose', dest='verbose',
@@ -610,24 +547,19 @@ def main(argv):
     starting_revision = int(options.project_revision)
     ending_revision = int(options.project_revision_end)
 
-    project_url = None
-    project_name = None
-
-    # set project_name and project_url
-    if not options.custom_url is None:
-        project_url = options.custom_url
-
     if options.project_name is None:
-        optparser.error('You must supply a project name (ArgoUML or Carol)!')
+        optparser.error('You must supply a project name!')
     else:
         project_name = options.project_name
 
-        if options.custom_url is None:
-            if project_name.lower() in projects:
-                project_url = base_svn + projects[project_name.lower()][0]
+        #if project_name.lower() in config.projects:
+        #    project_url = base_svn + config.projects[project_name.lower()][0]
 
-    if project_url is None or project_name is None:
-        optparser.error('No known project given, no name (-n), or custom project url (-c) unset!')
+        if project_name not in config.projects:
+            print('Project information not in config.py')
+            sys.exit()
+
+        project = config.projects[project_name]
 
     # create output directory
     tmp_dir = '/'.join([options.output_dir.rstrip('/')])
@@ -644,7 +576,7 @@ def main(argv):
             verbose=options.verbose
             )
     if options.tester:
-        tester(db, project_name, project_url, starting_revision, ending_revision)
+        tester(db, project, starting_revision, ending_revision)
         sys.exit(0)
 
 
@@ -655,20 +587,20 @@ def main(argv):
         db.commit()
 
     if options.speed_run:
-        speed_run(project_name, project_url, starting_revision, ending_revision)
+        speed_run(project, starting_revision, ending_revision)
 
     if options.build_db:
-        build_db(db, project_name, project_url, starting_revision, ending_revision)
+        build_db(db, project, starting_revision, ending_revision)
 
     if options.generate:
-       generate(db, project_name, project_url, starting_revision,
+       generate(db, project, starting_revision,
                ending_revision, False,
                ('class', 'enum', 'interface', '@interface'),
-               profile_name='') # just leave name as 'profiles.txt'
+               profile_name='class_') # just leave name as 'profiles.txt'
 
 
        # generate the methods
-       generate(db, project_name, project_url, starting_revision,
+       generate(db, project, starting_revision,
                ending_revision, False,
                ('method', ), profile_name='method_')
 
@@ -681,14 +613,14 @@ def main(argv):
        # warning: if a file did not have an associated package, it will show up
        # in this list rather than the package name. this is a nifty workaround
        # to tracking package changes via the file changes.
-       generate(db, project_name, project_url, starting_revision,
+       generate(db, project, starting_revision,
                ending_revision, False,
                ('file', ), profile_name='package_')
 
        # here, we will disable generates use of the full_name in its queries,
        # giving us only the file name (and more importantly, excluding the
        # package)
-       generate(db, project_name, project_url, starting_revision,
+       generate(db, project, starting_revision,
                ending_revision, False,
                ('file', ), profile_name='file_',
                no_full_name_func=True)
