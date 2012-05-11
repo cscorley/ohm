@@ -36,7 +36,7 @@ class Diff:
     def __init__(self, project_repo, extension):
         self.project_repo = project_repo
         self.extension = extension
-        self.base_dir = '/tmp/ohm/' + project_repo.name + '-svn/' 
+        self.base_dir = '/tmp/ohm/' + project_repo.name + '-svn/'
         if '.' not in extension:
             self.extension = '.' + extension
 
@@ -168,7 +168,7 @@ class Diff:
         self.old_file = None
         self.new_file = None
         self.digestion = None
-        
+
         log = []
 
         temp = []
@@ -176,7 +176,7 @@ class Diff:
         old_revision_number = 0
         new_revision_number = 0
         list_itr = None
-        
+
         isNewFile = False
         isRemovedFile = False
 
@@ -204,7 +204,7 @@ class Diff:
 
                 if (old_revision_number == 0):
                     isNewFile = True
-                
+
                 start += 1
                 break
             start += 1
@@ -212,7 +212,7 @@ class Diff:
         # catch diffs that are for only property changes
         if self.old_source is None and self.new_source is None:
             return None
-        
+
         # Divide the diff into separate chunks
         for i in range(start + 1, len(diff_file)):
             tmp = diff_file[i]
@@ -239,14 +239,14 @@ class Diff:
         diff_divisions.append(temp)
 
         self.PLD = PatchLineDivision(diff_divisions)
-        
+
         if old_revision_number == 0:
             isNewFile = True
         if new_revision_number == 0:
             isRemovedFile = True
 
         # Begin prep to run ANTLR on the source files
-        
+
         # Check out from SVN the original file
         if not isNewFile:
             res = self._getParserResults(self.old_source, old_revision_number)
@@ -258,11 +258,11 @@ class Diff:
             with open(self.base_dir + self.old_source, 'r') as f:
                 self.old_source_text = f.readlines()
 
-            self.old_file.text = self.old_source_text    
+            self.old_file.text = self.old_source_text
             self._printToLog(self.old_source, old_revision_number, log)
             self.PLD.digest_old(self.old_file)
             #self.old_file.recursive_print()
-        
+
         if not isRemovedFile:
             res = self._getParserResults(self.new_source, new_revision_number)
             if res is None:
@@ -278,8 +278,8 @@ class Diff:
             self._printToLog(self.new_source, new_revision_number, log)
             self.PLD.digest_new(self.new_file)
             #self.new_file.recursive_print()
-        
-            
+
+
 
         self.recursive_scp(self.old_file, self.new_file)
         if isNewFile:
@@ -312,11 +312,11 @@ class Diff:
             else:
                 new_set = set()
         else:
-            return 
+            return
 
         common_set = old_set & new_set
         added_set = new_set - common_set
-        
+
         for block in common_set:
             o = old.sub_blocks[old.sub_blocks.index(block)]
             n = new.sub_blocks[new.sub_blocks.index(block)]
@@ -342,12 +342,12 @@ class Diff:
             old_set = set(old.sub_blocks)
             new_set = set(new.sub_blocks)
         else:
-            return 
+            return
 
         common_set = old_set & new_set
         added_set = new_set - common_set
         removed_set = old_set - common_set
-        
+
         for block in common_set:
             o = old.sub_blocks[old.sub_blocks.index(block)]
             n = new.sub_blocks[new.sub_blocks.index(block)]
@@ -414,7 +414,7 @@ class Diff:
                         tiebreak_pairs.append((r_block, a_block,
                             relation_value))
                         tiebreak_pairs.append(max_pair)
-                    
+
                     if tb == 1:
                         max_pair = (r_block, a_block, relation_value)
 
@@ -436,7 +436,7 @@ class Diff:
         # find pairs which have duplicates, select only best
         more_possible = []
         tiebreak_pairs = []
-        
+
         max_pair = None
         for each in possible_pairs:
             tiebreak_pairs = []
@@ -456,7 +456,7 @@ class Diff:
                 #possible_pairs.extend(tiebreak_pairs)
                 pass
 
-        
+
         tiebreak_pairs = []
         most_possible = []
         for each in more_possible:
@@ -477,7 +477,7 @@ class Diff:
                 #possible_pairs.extend(tiebreak_pairs)
                 pass
 
-                        
+
         return _uniq(most_possible)
 
     def _tiebreaker(self, old, new_a, new_b):

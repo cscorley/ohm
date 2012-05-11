@@ -22,7 +22,7 @@ class PatchLineDivision:
         self.removed_lines = []
         for division in divisions:
             self._add_mappings(division)
-    
+
     def digest_old(self, block):
         if block is None:
             return

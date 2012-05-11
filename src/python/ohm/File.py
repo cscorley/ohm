@@ -16,12 +16,12 @@ class File(Block):
     def __init__(self, path, sub_blocks, file_len, package_name=None, text=None):
         super(File, self).__init__(
                 block_type='file',
-                name=path, 
-                start_line=1, 
+                name=path,
+                start_line=1,
                 body_line=1,
                 end_line=file_len,
                 super_block_name=None,
-                sub_blocks=sub_blocks, 
+                sub_blocks=sub_blocks,
                 text=text
                 )
 

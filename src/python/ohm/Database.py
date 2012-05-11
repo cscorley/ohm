@@ -12,7 +12,6 @@ __version__ = '$Id$'
 import psycopg2
 from TableConfigParser import TableConfigParser
 
-
 class Database:
     def __init__(self, host, port, user, password, database, verbose):
         self._connection = psycopg2.connect(
@@ -103,6 +102,9 @@ class Database:
 
     def commit(self):
         self._connection.commit()
+
+    def get_datetime(date):
+        return psycopg2.TimestampFromTicks(date)
 
     def execute(self, commandstr, args):
         if self.verbose:

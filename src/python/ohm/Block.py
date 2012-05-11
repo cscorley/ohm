@@ -21,7 +21,7 @@ class Block(object):
         self.block_type = str(block_type)
         self.name = str(name)
         self.full_name = str(name)
-        
+
         # define all other metadata
         self.start_line = start_line
         self.body_line = body_line

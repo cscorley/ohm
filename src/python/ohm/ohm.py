@@ -19,14 +19,12 @@ from optparse import OptionParser, SUPPRESS_HELP
 from Patch import Patch
 from Repository import Repository
 from Database import Database
-import psycopg2
-from psycopg2 import IntegrityError
 from datetime import datetime
 
 from snippets import _uniq, _make_dir
 
-#base_svn='http://steel.cs.ua.edu/repos/'
-base_svn='svn://localhost/'
+base_svn='http://steel.cs.ua.edu/repos/'
+#base_svn='svn://localhost/'
 projects = {
         'ant' : ('ant/ant/core/trunk/', '.java'),
         'argouml': ('argouml/trunk/', '.java'),
@@ -133,7 +131,7 @@ def getBlockUID(db, block, cid, uid):
                         'full_name': block.package_name,
                         'hash': hash(block.package_name),
                         'type': 'package',
-                        'block': None 
+                        'block': None
                         }
                 cid = getUID(db, 'block', ('hash', 'block', 'project'), propDict)
 
@@ -249,11 +247,11 @@ def build_db(db, name, url, starting_revision, ending_revision):
                 }
         uid['owner'] = getUID(db, 'owner', ('name', 'project'), propDict)
 
-        try:
-            dt = psycopg2.TimestampFromTicks(log.date)
-        except ValueError:
-            dt = psycopg2.TimestampFromTicks(log.date - 1.0)
 
+        try:
+            dt = db.get_datetime(log.date)
+        except ValueError:  # ?
+            dt = db.get_datetime(log.date - 1.0)
 
         # get the revision uid
         propDict = {
@@ -312,7 +310,7 @@ def generate(db, name, url, starting_revision, ending_revision, use_sums,
         namestr = 'block.full_name'
     else:
         # use the sql function instead to build the full_name
-        namestr = 'full_name(block.id)' 
+        namestr = 'full_name(block.id)'
 
     # this dictionary is used throughout as a unique properties dictionary
     # used to get the UID of the entries in the table its used for. It should
@@ -323,7 +321,7 @@ def generate(db, name, url, starting_revision, ending_revision, use_sums,
             }
     # get the project uid
     pid = getUID(db, 'project', ('url',), propDict)
-    
+
     revisions = db.execute('SELECT number from revision where project=%s \
             order by number desc',
             (pid, ))
@@ -360,7 +358,7 @@ def generate(db, name, url, starting_revision, ending_revision, use_sums,
 
 
     data_table = 'change_data'
-       
+
     if use_sums:
         data_table = data_table + '_sums'
     else:
@@ -396,11 +394,11 @@ def generate(db, name, url, starting_revision, ending_revision, use_sums,
                         f.write(curr_full_name + ' ')
                         f.write(valstr % o_tuple)
                 curr_id = each[0]
-                curr_full_name = each[1] 
+                curr_full_name = each[1]
                 ownership_profile = {}
                 for o in owners:
                     ownership_profile[o[0]] = 0
-            
+
             ownership_profile[each[3]] = each[2]
 
             if c.rownumber == c.rowcount:
@@ -439,7 +437,7 @@ def owner_remap(db, name, pid):
 
     with open(filename, 'r') as f:
         maps = f.readlines()
-    
+
     for m in maps:
         mapping = m.replace('\n', '')
         mapping = mapping.split(',')
@@ -454,7 +452,7 @@ def owner_remap(db, name, pid):
         elif len(result[0]) == 0:
             continue
 
-        oid0 = result[0][0]  
+        oid0 = result[0][0]
 
         result = db.execute('SELECT id from owner where project=%s and name=%s',
             (pid, mapping[1] ))
@@ -465,7 +463,7 @@ def owner_remap(db, name, pid):
             continue
         elif len(result[0]) == 0:
             continue
-        oid1 = result[0][0]  
+        oid1 = result[0][0]
 
         db.execute('UPDATE revision SET owner=%s WHERE owner=%s',
                 (oid1, oid0))
@@ -525,7 +523,7 @@ def tester(db, name, url, starting_revision, ending_revision):
                 order by block.id; \
                 ',
                 (uid['project'], cid))
-        
+
         if not (subblocks is None or len(subblocks) == 0):
             total = len(subblocks)
             for sb in subblocks:
@@ -546,7 +544,7 @@ def tester(db, name, url, starting_revision, ending_revision):
 
     for each in classcount:
         cc = len(each)
-        print('>%d0: %d / %d = %f' % (i, cc, class_total, 
+        print('>%d0: %d / %d = %f' % (i, cc, class_total,
             (float(cc)/float(class_total))))
 
     for c in classes_no_owner:
@@ -627,7 +625,7 @@ def main(argv):
         if options.custom_url is None:
             if project_name.lower() in projects:
                 project_url = base_svn + projects[project_name.lower()][0]
-    
+
     if project_url is None or project_name is None:
         optparser.error('No known project given, no name (-n), or custom project url (-c) unset!')
 
@@ -661,17 +659,17 @@ def main(argv):
 
     if options.build_db:
         build_db(db, project_name, project_url, starting_revision, ending_revision)
-        
+
     if options.generate:
        generate(db, project_name, project_url, starting_revision,
-               ending_revision, False, 
+               ending_revision, False,
                ('class', 'enum', 'interface', '@interface'),
                profile_name='') # just leave name as 'profiles.txt'
 
 
        # generate the methods
        generate(db, project_name, project_url, starting_revision,
-               ending_revision, False, 
+               ending_revision, False,
                ('method', ), profile_name='method_')
 
        # the following will seem weird, but in the database the full_name()
@@ -684,14 +682,14 @@ def main(argv):
        # in this list rather than the package name. this is a nifty workaround
        # to tracking package changes via the file changes.
        generate(db, project_name, project_url, starting_revision,
-               ending_revision, False, 
-               ('file', ), profile_name='package_') 
+               ending_revision, False,
+               ('file', ), profile_name='package_')
 
        # here, we will disable generates use of the full_name in its queries,
        # giving us only the file name (and more importantly, excluding the
        # package)
        generate(db, project_name, project_url, starting_revision,
-               ending_revision, False, 
+               ending_revision, False,
                ('file', ), profile_name='file_',
                no_full_name_func=True)
 

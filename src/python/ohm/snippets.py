@@ -13,34 +13,6 @@ __version__ = '$Id$'
 
 import os
 
-
-def _monthNum(month):
-    if 'Jan' == month:
-        return 1
-    elif 'Feb' == month:
-        return 2
-    elif 'Mar' == month:
-        return 3
-    elif 'Apr' == month:
-        return 4
-    elif 'May' == month:
-        return 5
-    elif 'Jun' == month:
-        return 6
-    elif 'Jul' == month:
-        return 7
-    elif 'Aug' == month:
-        return 8
-    elif 'Sep' == month:
-        return 9
-    elif 'Oct' == month:
-        return 10
-    elif 'Nov' == month:
-        return 11
-    elif 'Dec' == month:
-        return 12
-
-
 # order preserving uniq for lists
 def _uniq(L):
     seen = {}

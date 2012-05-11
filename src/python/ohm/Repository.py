@@ -27,7 +27,7 @@ class Repository:
         self.username = username
         self.password = password
         self.count = 0
-        
+
         if starting_revision < 0:
             self.revStart = pysvn.Revision(pysvn.opt_revision_kind.number,
                     0)
@@ -90,7 +90,7 @@ class Repository:
             self.revPrev = self.revCurr
             self.revCurr = self.revList.pop()
             if self.revPrev is None:
-                self.revPrev = pysvn.Revision(pysvn.opt_revision_kind.number, 
+                self.revPrev = pysvn.Revision(pysvn.opt_revision_kind.number,
                         self.revCurr.number - 1)
 
     # warning
@@ -140,10 +140,10 @@ class Repository:
                     continue
 
 
-                if self.count == 1: 
+                if self.count == 1:
                     # first time trunk appears here...
                     diff = self.client.diff('./',
-                            url_or_path=self.url.split('trunk/')[0], 
+                            url_or_path=self.url.split('trunk/')[0],
                             revision1=self.revPrev,
                             url_or_path2=self.url,
                             revision2=self.revCurr)
