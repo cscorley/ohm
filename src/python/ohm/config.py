@@ -1,19 +1,30 @@
+#!/usr/bin/env python2.6
+#
+# [The "New BSD" license]
+# Copyright (c) 2011 The Board of Trustees of The University of Alabama
+# All rights reserved.
+#
+# See LICENSE for details.
+
+# Users, please only edit between the section marked "user config"
+
+from collections import namedtuple
+Project = namedtuple('Project' , 'name url type lexers parsers')
+
+# Begin user config
+
 from JavaLexer import JavaLexer
 from Java4Lexer import Java4Lexer
 from Java5Lexer import Java5Lexer
 from JavaParser import JavaParser
 
-from collections import namedtuple
-
-Project = namedtuple('Project' , 'name url type lexers parsers')
 
 base_svn='http://steel.cs.ua.edu/repos/'
 #base_svn='svn://localhost/'
 
-projects = {
-        'ant' :
+projects_list = [
                 # url, repo type
-                Project('ant', base_svn + 'ant/ant/core/trunk/', 'svn',
+    Project('ant', base_svn + 'ant/ant/core/trunk/', 'svn',
                 # lexer info
                 {'.java' : [
                            (277860, Java5Lexer)
@@ -26,8 +37,7 @@ projects = {
                            (0, JavaParser)
                            ]
                 }),
-        'argouml':
-                Project('argouml', base_svn + 'argouml/trunk/', 'svn',
+    Project('argouml', base_svn + 'argouml/trunk/', 'svn',
                 {'.java' : [
                            (13020, Java5Lexer)
                          , (8295, Java4Lexer)
@@ -38,8 +48,7 @@ projects = {
                            (0, JavaParser)
                            ]
                 }),
-        'carol':
-                Project('carol', base_svn + 'carol/trunk/', 'svn',
+    Project('carol', base_svn + 'carol/trunk/', 'svn',
                 {'.java' : [
                            (1290, Java5Lexer)
                          , (0, JavaLexer)
@@ -49,8 +58,7 @@ projects = {
                            (0, JavaParser)
                            ]
                 }),
-        'columba' :
-                Project('columba', base_svn + 'columba/columba/trunk/', 'svn',
+    Project('columba', base_svn + 'columba/columba/trunk/', 'svn',
                 {'.java' : [
                            (0, Java5Lexer)
                            ]
@@ -59,8 +67,7 @@ projects = {
                            (0, JavaParser)
                            ]
                 }),
-        'dnsjava' :
-                Project('dnsjava', base_svn + 'dnsjava/trunk/', 'svn',
+    Project('dnsjava', base_svn + 'dnsjava/trunk/', 'svn',
                 {'.java' : [
                            (0, JavaLexer)
                            ]
@@ -69,8 +76,7 @@ projects = {
                            (0, JavaParser)
                            ]
                 }),
-        'geclipse' :
-                Project('geclipse', base_svn + 'geclipse/trunk/', 'svn',
+    Project('geclipse', base_svn + 'geclipse/trunk/', 'svn',
                 {'.java' : [
                            (0, Java5Lexer)
                            ]
@@ -79,8 +85,7 @@ projects = {
                            (0, JavaParser)
                            ]
                 }),
-        'gwt' :
-                Project('gwt', base_svn + 'google-web-toolkit/trunk/', 'svn',
+    Project('gwt', base_svn + 'google-web-toolkit/trunk/', 'svn',
                 {'.java' : [
                            (1340, Java5Lexer)
                          , (0, Java4Lexer)
@@ -90,8 +95,7 @@ projects = {
                            (0, JavaParser)
                            ]
                 }),
-        'itext' :
-                Project('itext', base_svn + 'itext/trunk/', 'svn',
+    Project('itext', base_svn + 'itext/trunk/', 'svn',
                 {'.java' : [
                            (4290, Java5Lexer)
                          , (0, JavaLexer)
@@ -101,8 +105,7 @@ projects = {
                            (0, JavaParser)
                            ]
                 }),
-        'jabref' :
-                Project('jabref', base_svn + 'jabref/trunk/', 'svn',
+    Project('jabref', base_svn + 'jabref/trunk/', 'svn',
                 {'.java' : [
                            (2410, Java5Lexer)
                          , (0, JavaLexer)
@@ -112,8 +115,7 @@ projects = {
                            (0, JavaParser)
                            ]
                 }),
-        'jedit' :
-                Project('jedit', base_svn + 'jedit/jEdit/trunk/', 'svn',
+    Project('jedit', base_svn + 'jedit/jEdit/trunk/', 'svn',
                 {'.java' : [
                            (8265, Java5Lexer)
                          , (6800, Java4Lexer)
@@ -124,8 +126,7 @@ projects = {
                            (0, JavaParser)
                            ]
                 }),
-        'jhotdraw' :
-                Project('jhotdraw', base_svn + 'jhotdraw/trunk/', 'svn',
+    Project('jhotdraw', base_svn + 'jhotdraw/trunk/', 'svn',
                 {'.java' : [
                            (270, Java5Lexer)
                          , (0, JavaLexer)
@@ -135,8 +136,7 @@ projects = {
                            (0, JavaParser)
                            ]
                 }),
-        'subversive' :
-                Project('subversive', base_svn + 'subversive/trunk/', 'svn',
+    Project('subversive', base_svn + 'subversive/trunk/', 'svn',
                 {'.java' : [
                            (6940, Java5Lexer)
                          , (0, JavaLexer)
@@ -146,8 +146,7 @@ projects = {
                            (0, JavaParser)
                            ]
                 }),
-        'vuze' :
-                Project('vuze', base_svn + 'vuze/client/trunk/', 'svn',
+    Project('vuze', base_svn + 'vuze/client/trunk/', 'svn',
                 {'.java' : [
                            (14990, Java5Lexer)
                          , (5635, Java4Lexer)
@@ -158,4 +157,8 @@ projects = {
                            (0, JavaParser)
                            ]
                 }),
-        }
+        ]
+
+# End user config
+
+projects = dict((p.name, p) for p in projects_list)

@@ -17,7 +17,7 @@ from shutil import rmtree
 from optparse import OptionParser, SUPPRESS_HELP
 
 import config 
-from Repository import Repository
+from SubversionRepository import SubversionRepository
 from Database import Database
 
 from snippets import _uniq, _make_dir
@@ -196,11 +196,11 @@ def build_db(db, project, starting_revision, ending_revision):
     # get the project uid
     uid['project'] = getUID(db, 'project', ('url',), propDict)
 
-    project_repo = Repository(project, starting_revision, ending_revision)
+    project_repo = SubversionRepository(project, starting_revision, ending_revision)
     total_revs = len(project_repo.revList)
     count = 0
     print(project_repo)
-    for log, changes in project_repo.getRevisions():
+    for log, changes in project_repo.get_revisions():
         # there are two uid's which we can extract from the log for this
         # revision
 
@@ -229,11 +229,11 @@ def build_db(db, project, starting_revision, ending_revision):
         insert_changes(db, changes, None, uid)
 
 def speed_run(config, starting_revision, ending_revision):
-    project_repo = Repository(config, starting_revision, ending_revision)
+    project_repo = SubversionRepository(config, starting_revision, ending_revision)
     total_revs = len(project_repo.revList)
     count = 0
     print(project_repo)
-    for log, changes in project_repo.getRevisions():
+    for log, changes in project_repo.get_revisions():
         pass
 
 def generate(db, project, starting_revision, ending_revision, use_sums,

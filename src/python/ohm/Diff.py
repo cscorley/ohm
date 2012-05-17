@@ -30,7 +30,6 @@ import pysvn
 class Diff:
     def __init__(self, project_repo):
         self.project_repo = project_repo
-        self.base_dir = '/tmp/ohm/' + project_repo.name + '-svn/'
 
         self.scp = []
 
@@ -40,26 +39,8 @@ class Diff:
         self.new_file = None
         self.digestion = None
 
-    def _printToLog(self, source, revision_number, log):
-        if len(log) > 0:
-            revCurr = self.project_repo.revCurr
-            _make_dir('/tmp/ohm/')
-            with open('/tmp/ohm/' + self.project_repo.name + '-errors.log', 'a') as f:
-                f.write("\n\n***********************************\n\n")
-                for each in log:
-                    output = str(datetime.now())
-                    output += ' ' + str(revCurr.number)
-                    output += ' ' + source
-                    output += ' ' + str(revision_number)
-                    output += '\n\t' + each[0]
-                    output += ' ' + each[1]
-                    output += '\n\t' + str(each[2])
-                    output += '\n'
-                    f.write(output)
-
-    def _getParserResults(self, source, revision_number):
-        filePath = self.project_repo.checkout(source, revision_number)
-        ext = os.path.splitext(source)[1]
+    def _get_parser_results(self, file_path, source, revision_number):
+        ext = os.path.splitext(file_path)[1]
 
         SourceLexer = self.project_repo.get_lexer(revision_number, ext)
         if SourceLexer is None:
@@ -67,9 +48,9 @@ class Diff:
 
         # Run ANTLR on the original source and build a list of the methods
         try:
-            lexer = SourceLexer(ANTLRFileStream(filePath, 'latin-1'))
+            lexer = SourceLexer(ANTLRFileStream(file_path, 'latin-1'))
         except ValueError:
-            lexer = SourceLexer(ANTLRFileStream(filePath, 'utf-8'))
+            lexer = SourceLexer(ANTLRFileStream(file_path, 'utf-8'))
         except IOError:
             return None
 
@@ -79,13 +60,11 @@ class Diff:
 
         parser = SourceParser(CommonTokenStream(lexer))
         parser.file_name = source
-        parser.file_len = _file_len(filePath)
+        parser.file_len = _file_len(file_path)
         return parser.compilationUnit()
 
     def digest(self, diff_file):
-        old_file_regex = self.project_repo.old_file_regex
-        new_file_regex = self.project_repo.new_file_regex
-        chunk_regex = self.project_repo.chunk_regex
+        regex = self.project_repo.diff_regex
 
         self.scp = []
 
@@ -112,13 +91,13 @@ class Diff:
         isNewFile = False
         isRemovedFile = False
 
-        while start < len(diff_file) and not chunk_regex.match(diff_file[start]):
-            m = old_file_regex.match(diff_file[start])
+        while start < len(diff_file) and not regex.chunk.match(diff_file[start]):
+            m = regex.old_file.match(diff_file[start])
             if m:
                 self.old_source = m.group(1)
                 old_revision_number = int(m.group(2))
 
-                nm = new_file_regex.match(diff_file[start + 1])
+                nm = regex.new_file.match(diff_file[start + 1])
                 if nm:
                     self.new_source = nm.group(1)
                     new_revision_number = int(nm.group(2))
@@ -137,7 +116,7 @@ class Diff:
         # Divide the diff into separate chunks
         for i in range(start + 1, len(diff_file)):
             tmp = diff_file[i]
-            chunk_matcher = chunk_regex.match(tmp)
+            chunk_matcher = regex.chunk.match(tmp)
             if chunk_matcher:
                 if len(diff_divisions) == 0:
                     if int(chunk_matcher.group(1)) == 0 and int(chunk_matcher.group(2)) == 0:
@@ -170,33 +149,33 @@ class Diff:
 
         # Check out from SVN the original file
         if not isNewFile:
-            res = self._getParserResults(self.old_source, old_revision_number)
+            file_path = self.project_repo.get_file(self.old_source, old_revision_number)
+            res = self._get_parser_results(file_path, self.old_source, old_revision_number)
             if res is None:
                 # some error has occured.
                 return None
             self.old_file = res[0]
             log = res[1]
-            with open(self.base_dir + self.old_source, 'r') as f:
+            with open(file_path, 'r') as f:
                 self.old_source_text = f.readlines()
 
             self.old_file.text = self.old_source_text
-            self._printToLog(self.old_source, old_revision_number, log)
             self.PLD.digest_old(self.old_file)
             #self.old_file.recursive_print()
 
         if not isRemovedFile:
-            res = self._getParserResults(self.new_source, new_revision_number)
+            file_path = self.project_repo.get_file(self.new_source, new_revision_number)
+            res = self._get_parser_results(file_path, self.new_source, new_revision_number)
             if res is None:
                 # some error has occured.
                 return None
             self.new_file = res[0]
             log = res[1]
 
-            with open(self.base_dir + self.new_source, 'r') as f:
+            with open(file_path, 'r') as f:
                 self.new_source_text = f.readlines()
 
             self.new_file.text = self.new_source_text
-            self._printToLog(self.new_source, new_revision_number, log)
             self.PLD.digest_new(self.new_file)
             #self.new_file.recursive_print()
 
