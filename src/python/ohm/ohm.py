@@ -197,7 +197,6 @@ def build_db(db, project, starting_revision, ending_revision):
     uid['project'] = getUID(db, 'project', ('url',), propDict)
 
     project_repo = SubversionRepository(project, starting_revision, ending_revision)
-    total_revs = len(project_repo.revList)
     count = 0
     print(project_repo)
     for log, changes in project_repo.get_revisions():
@@ -219,7 +218,7 @@ def build_db(db, project, starting_revision, ending_revision):
         # get the revision uid
         propDict = {
                 'project': uid['project'],
-                'number': log.revision.number,
+                'number': str(log.revision.number),
                 'message': log.message,
                 'datetime': dt,
                 'owner': uid['owner']
@@ -230,7 +229,6 @@ def build_db(db, project, starting_revision, ending_revision):
 
 def speed_run(config, starting_revision, ending_revision):
     project_repo = SubversionRepository(config, starting_revision, ending_revision)
-    total_revs = len(project_repo.revList)
     count = 0
     print(project_repo)
     for log, changes in project_repo.get_revisions():
