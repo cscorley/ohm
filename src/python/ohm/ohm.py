@@ -406,8 +406,6 @@ def owner_remap(db, name, pid):
                 (oid1, oid0))
         db.execute('UPDATE change SET owner=%s WHERE owner=%s',
                 (oid1, oid0))
-        db.execute('UPDATE r_change SET owner=%s WHERE owner=%s',
-                (oid1, oid0))
         db.execute('DELETE from owner where id=%s', (oid0,))
 
     db.commit()
@@ -579,10 +577,7 @@ def main(argv):
 
 
     if options.force_drop:
-        db._create_or_replace_tables()
-        db._create_or_replace_views()
-        db._create_or_replace_triggers()
-        db.commit()
+        db.force_drop()
 
     if options.speed_run:
         speed_run(project, starting_revision, ending_revision)

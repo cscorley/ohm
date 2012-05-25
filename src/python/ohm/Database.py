@@ -6,11 +6,13 @@
 #
 # See LICENSE for details.
 
+from __future__ import with_statement, print_function
+
 __author__  = 'Christopher S. Corley <cscorley@crimson.ua.edu>'
 __version__ = '$Id$'
 
+import re
 import psycopg2
-from TableConfigParser import TableConfigParser
 
 class Database:
     def __init__(self, host, port, user, password, database, verbose):
@@ -38,6 +40,11 @@ class Database:
                 tables.append(table)
         return tables
 
+    def force_drop(self):
+        self._create_or_replace_tables()
+        self._create_or_replace_views()
+        self._create_or_replace_triggers()
+        self.commit()
 
     def _create_or_replace_views(self):
         with open('../../sql/views.sql', 'r') as f:
@@ -55,8 +62,8 @@ class Database:
         self._cursor.execute(sql)
 
     def _create_or_replace_tables(self):
-        tables = TableConfigParser.parse()
-        for (name, (data, fkeys, pkeys)) in tables.items():
+        tables = self._parse_tables()
+        for (name, data, fkeys, pkeys) in tables:
             self._create_or_replace_table(name, data, fkeys, pkeys)
 
     def _create_or_replace_table(self, name, data, fkeys, pkeys):
@@ -88,6 +95,58 @@ class Database:
         if self.verbose:
             print(command)
         self._cursor.execute(command)
+
+    def _parse_tables(self, file_name='tables.conf'):
+        tables = list()
+        try:
+            with open(file_name, 'r') as f:
+                table_re = re.compile(r'^\[(\w+)\]$')
+                column_re = re.compile(r'^(\w+)\s*=\s*(.*)$')
+                data_re = re.compile(r'^(\w+)\(([\s\w]+)\)$')
+                fkey_re = re.compile(r'^(\w+)(?:\((\w+)\))?$')
+                while True:
+                    line = f.readline()
+                    if not line:
+                        break
+                    content = line.strip()
+                    if not content or '#' == content[0]:
+                        continue
+                    table_result = table_re.search(content)
+                    if table_result:
+                        name = table_result.group(1)
+                        data = []
+                        fkeys = []
+                        pkeys = []
+                        line = f.readline()
+                        content = line.strip()
+                        while content:
+                            column_result = column_re.search(content)
+                            (key, value) = column_result.groups()
+                            if 'data' == key:
+                                values = value.split(':')
+                                for v in values:
+                                    data_result = data_re.search(v)
+                                    if data_result:
+                                        data.append(data_result.groups())
+                            elif 'fkeys' == key:
+                                values = value.split(':')
+                                for v in values:
+                                    fkeys_result = fkey_re.search(v)
+                                    if fkeys_result:
+                                        fkeys.append(fkeys_result.groups(fkeys_result.group(1)))
+                            elif 'pkeys' == key:
+                                values = value.split(':')
+                                for v in values:
+                                    pkeys_result = fkey_re.search(v)
+                                    if pkeys_result:
+                                        pkeys.append(pkeys_result.groups(pkeys_result.group(1)))
+                            line = f.readline()
+                            content = line.strip()
+                        tables.append((name, data, fkeys, pkeys))
+        except IOError as e:
+            print('Failed to open tables configuration file {name}\
+                    '.format(name=file_name))
+        return tables
 
     def setverbose(self, v=True):
         self.verbose = v
