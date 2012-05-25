@@ -8,9 +8,6 @@
 
 from __future__ import with_statement, print_function
 
-__author__  = 'Christopher S. Corley <cscorley@crimson.ua.edu>'
-__version__ = '$Id$'
-
 import os
 import sys
 from shutil import rmtree
@@ -197,7 +194,6 @@ def build_db(db, project, starting_revision, ending_revision):
     uid['project'] = getUID(db, 'project', ('url',), propDict)
 
     project_repo = SubversionRepository(project, starting_revision, ending_revision)
-    count = 0
     print(project_repo)
     for log, changes in project_repo.get_revisions():
         # there are two uid's which we can extract from the log for this
@@ -206,7 +202,7 @@ def build_db(db, project, starting_revision, ending_revision):
         # get the owner/commiter uid
         propDict = {
                 'project': uid['project'],
-                'name': str(log.author).lower()
+                'name': str(log.committer).lower()
                 }
         uid['owner'] = getUID(db, 'owner', ('name', 'project'), propDict)
 
@@ -218,7 +214,7 @@ def build_db(db, project, starting_revision, ending_revision):
         # get the revision uid
         propDict = {
                 'project': uid['project'],
-                'number': str(log.revision.number),
+                'number': str(log.commit_id),
                 'message': log.message,
                 'datetime': dt,
                 'owner': uid['owner']
@@ -229,7 +225,6 @@ def build_db(db, project, starting_revision, ending_revision):
 
 def speed_run(config, starting_revision, ending_revision):
     project_repo = SubversionRepository(config, starting_revision, ending_revision)
-    count = 0
     print(project_repo)
     for log, changes in project_repo.get_revisions():
         pass
@@ -260,7 +255,7 @@ def generate(db, project, starting_revision, ending_revision, use_sums,
     pid = getUID(db, 'project', ('url',), propDict)
 
     revisions = db.execute('SELECT number from revision where project=%s \
-            order by number desc',
+            order by id desc',
             (pid, ))
 
     if revisions is None or len(revisions) == 0:

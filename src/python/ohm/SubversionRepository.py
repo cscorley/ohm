@@ -14,7 +14,7 @@ import os
 from shutil import rmtree
 
 from snippets import _make_dir
-from Patch import Patch
+from SubversionPatch import SubversionPatch
 from Repository import Repository
 from collections import namedtuple
 import pysvn
@@ -33,12 +33,6 @@ class SubversionRepository(Repository):
 
         # Regex strings for diff files in this repository
 
-        DiffRegex = namedtuple('DiffRegex', 'old_file new_file chunk')
-        self._diff_regex = DiffRegex(
-              old_file=re.compile('--- ([-/._\w ]+)\t\(revision (\d+)\)')
-            , new_file=re.compile('\+\+\+ ([-/._\w ]+)\t(?:\([\s\S]*\)\t)?\(revision (\d+)\)')
-            , chunk=re.compile('@@ -(\d+)(?:,(\d+))? \+(\d+)(?:,(\d+))? @@')
-            )
 
         if starting_revision < 0:
             self.revStart = pysvn.Revision(pysvn.opt_revision_kind.number,
@@ -110,10 +104,6 @@ class SubversionRepository(Repository):
     @property
     def project(self):
         return self._project
-
-    @property
-    def diff_regex(self):
-        return self._diff_regex
 
     def get_lexer(self, revision_number, file_ext):
         if file_ext not in self.project.lexers:
@@ -193,10 +183,16 @@ class SubversionRepository(Repository):
         while len(self.revList) > 0:
             self._move_next_revision()
             try:
-                log = self.client.log(self.project.url, revision_start=self.revCurr,
+                svn_log = self.client.log(self.project.url, revision_start=self.revCurr,
                         revision_end=self.revCurr, limit=1)
+
+                if len(svn_log) > 0:
+                    svn_log = svn_log[0]
+                else:
+                    continue
+
                 try:
-                    log[0].author
+                    svn_log.author
                 except (AttributeError, IndexError):
                     print('skipping %d' % self.revCurr.number)
                     continue
@@ -216,10 +212,14 @@ class SubversionRepository(Repository):
 
                 patch_lines = patch_file.split('\n')
 
-                if len(log) > 0:
-                    log = log[0]
-                else:
-                    continue
+                #LogInfo = namedtuple('LogInfo', 'commit_id author committer date message')
+                log = self.LogInfo(
+                      author = svn_log.author
+                    , committer = svn_log.author
+                    , commit_id = self.revCurr.number # or commit.id ?
+                    , date = svn_log.date
+                    , message = svn_log.message
+                )
 
                 if os.path.exists('/tmp/ohm/' + self.project.name + '-svn/'):
                     try:
@@ -227,16 +227,19 @@ class SubversionRepository(Repository):
                     except OSError:
                         pass
 
-                curr = log.revision.number
-                print('Revision %d -- %f complete' % (curr,
-                    (float(self.count)/float(self.total_revs))*100))
+                print('%f complete -- Revision %s' % (
+                    (float(self.count)/float(self.total_revs))*100,
+                    log.commit_id)
+                    )
 
                 # parse for the changes
-                patch = Patch(patch_lines, self)
+                patch = SubversionPatch(patch_lines, self)
 
                 # Process each diff in the Patch individually for each revision
                 # otherwise, we may run into memory troubles for large patches
-                for changes in patch.digest():
+                for changes in patch.get_affected():
+                    if changes is None:
+                        continue
                     yield log, changes
 
             except pysvn.ClientError as e:

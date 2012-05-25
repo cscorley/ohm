@@ -8,9 +8,6 @@
 
 from __future__ import with_statement, print_function
 
-__author__  = 'Christopher S. Corley <cscorley@crimson.ua.edu>'
-__version__ = '$Id$'
-
 import re
 import psycopg2
 

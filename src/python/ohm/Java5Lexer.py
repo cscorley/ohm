@@ -6,9 +6,6 @@
 #
 # See LICENSE for details.
 
-__author__  = 'Nicholas A. Kraft <nkraft@cs.ua.edu>'
-__version__ = '$Id$'
-
 from JavaLexer import JavaLexer
 
 

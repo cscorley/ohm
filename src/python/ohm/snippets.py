@@ -8,9 +8,6 @@
 
 from __future__ import print_function
 
-__author__  = 'Christopher S. Corley <cscorley@crimson.ua.edu>'
-__version__ = '$Id$'
-
 import os
 
 # order preserving uniq for lists

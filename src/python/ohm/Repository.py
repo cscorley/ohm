@@ -8,14 +8,12 @@
 
 from __future__ import print_function
 
-__author__  = 'Christopher S. Corley <cscorley@crimson.ua.edu>'
-__version__ = '$Id$'
-
 import re
 import sys
 import os
 from shutil import rmtree
 from abc import ABCMeta, abstractmethod, abstractproperty
+from collections import namedtuple
 
 from snippets import _make_dir
 from Patch import Patch
@@ -24,16 +22,7 @@ from Patch import Patch
 class Repository:
     __metaclass__ = ABCMeta
 
-    @abstractproperty
-    def diff_regex(self):
-        """
-        Return the regex namedtuple needed to match header strings in the diff
-        files.
-
-        Usage:
-        from collections import namedtuple
-        DiffRegex = namedtuple('DiffRegex', 'old_file new_file chunk')
-        """
+    LogInfo = namedtuple('LogInfo', 'commit_id author committer date message')
 
     @abstractproperty
     def project(self):

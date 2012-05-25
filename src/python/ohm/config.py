@@ -136,6 +136,16 @@ projects_list = [
                            (0, JavaParser)
                            ]
                 }),
+    Project('jhotdraw-git', '~/svn2gits/jhotdraw/', 'git',
+                {'.java' : [
+                           ('145e28ee44dc2ea3e23bec91c9c490af16f2d66a', Java5Lexer)
+                         , ('c49519ed6aba0ce98876f389c60f622a35d153fe', JavaLexer)
+                           ]
+                },
+                {'.java' : [
+                           ('c49519ed6aba0ce98876f389c60f622a35d153fe', JavaParser)
+                           ]
+                }),
     Project('subversive', base_svn + 'subversive/trunk/', 'svn',
                 {'.java' : [
                            (6940, Java5Lexer)

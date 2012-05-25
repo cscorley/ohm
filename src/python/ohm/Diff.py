@@ -9,17 +9,13 @@
 from __future__ import with_statement
 from __future__ import print_function
 
-__author__  = 'Christopher S. Corley <cscorley@crimson.ua.edu>'
-__version__ = '$Id$'
-
 import os
 import sys
 import codecs
 from difflib import SequenceMatcher
 from datetime import datetime
-from pprint import pprint
+from abc import ABCMeta, abstractmethod, abstractproperty
 
-from Chunk import Chunk
 from File import File
 from antlr3 import ANTLRFileStream, ANTLRInputStream, CommonTokenStream
 
@@ -28,16 +24,57 @@ import pysvn
 
 
 class Diff:
-    def __init__(self, project_repo):
-        self.project_repo = project_repo
+    __metaclass__ = ABCMeta
 
+    def __init__(self, project_repo, diff_file):
+        self.project_repo = project_repo
+        self.diff_file = diff_file
+
+        # lol
         self.scp = []
+
+        self.added_lines = []
+        self.removed_lines = []
 
         self.old_source = None
         self.new_source = None
+        self.old_source_text = None
+        self.new_source_text = None
+
         self.old_file = None
         self.new_file = None
-        self.digestion = None
+        self.old_revision_id = 0
+        self.new_revision_id = 0
+        self.isNewFile = False
+        self.isRemovedFile = False
+
+    def __str__(self):
+        return '%s %s %s %s' % (self.old_source, self.old_revision_id,
+                        self.new_source, self.new_revision_id)
+
+    def digest_old(self, block):
+        if block is None:
+            return
+
+        for line in self.removed_lines:
+            if line in block.line_range:
+                block.removed_count += 1
+
+        if block.has_sub_blocks:
+            for sub_block in block.sub_blocks:
+                self.digest_old(sub_block)
+
+    def digest_new(self, block):
+        if block is None:
+            return
+
+        for line in self.added_lines:
+            if line in block.line_range:
+                block.added_count += 1
+
+        if block.has_sub_blocks:
+            for sub_block in block.sub_blocks:
+                self.digest_new(sub_block)
 
     def _get_parser_results(self, file_path, source, revision_number):
         ext = os.path.splitext(file_path)[1]
@@ -63,141 +100,74 @@ class Diff:
         parser.file_len = _file_len(file_path)
         return parser.compilationUnit()
 
-    def digest(self, diff_file):
-        regex = self.project_repo.diff_regex
+    @abstractmethod
+    def do_split_diff(self):
+        """ Splits the diff up into chunks """
 
-        self.scp = []
+    @abstractmethod
+    def do_chunk_add_mappings(self):
+        """ Map """
 
-        diff_divisions = []
-        self.old_source = None
-        self.new_source = None
-        self.old_source_text = None
-        self.new_source_text = None
-        if len(diff_file) == 0:
-            return None
 
-        self.old_file = None
-        self.new_file = None
-        self.digestion = None
+    def get_affected(self):
+        divisions = self.do_split_diff()
+        self.do_chunk_add_mappings(divisions)
 
-        log = []
-
-        temp = []
-        start = 0
-        old_revision_number = 0
-        new_revision_number = 0
-        list_itr = None
-
-        isNewFile = False
-        isRemovedFile = False
-
-        while start < len(diff_file) and not regex.chunk.match(diff_file[start]):
-            m = regex.old_file.match(diff_file[start])
-            if m:
-                self.old_source = m.group(1)
-                old_revision_number = int(m.group(2))
-
-                nm = regex.new_file.match(diff_file[start + 1])
-                if nm:
-                    self.new_source = nm.group(1)
-                    new_revision_number = int(nm.group(2))
-
-                if (old_revision_number == 0):
-                    isNewFile = True
-
-                start += 1
-                break
-            start += 1
-
-        # catch diffs that are for only property changes
-        if self.old_source is None and self.new_source is None:
-            return None
-
-        # Divide the diff into separate chunks
-        for i in range(start + 1, len(diff_file)):
-            tmp = diff_file[i]
-            chunk_matcher = regex.chunk.match(tmp)
-            if chunk_matcher:
-                if len(diff_divisions) == 0:
-                    if int(chunk_matcher.group(1)) == 0 and int(chunk_matcher.group(2)) == 0:
-                        if not isNewFile:
-                            print('Uhh.... captain? New file not new?',
-                                    self.old_source, old_revision_number,
-                                    self.new_source, new_revision_number)
-                        isNewFile = True
-                    elif int(chunk_matcher.group(3)) == 0 and int(chunk_matcher.group(4)) == 0:
-                        isRemovedFile = True
-                for j in range(start, i - 1):
-                    temp.append(diff_file[j])
-                if len(temp) > 0:
-                    diff_divisions.append(temp)
-                temp = []
-                start = i
-
-        for j in range(start, len(diff_file)):
-            temp.append(diff_file[j])
-        diff_divisions.append(temp)
-
-        self.PLD = Chunk(diff_divisions)
-
-        if old_revision_number == 0:
-            isNewFile = True
-        if new_revision_number == 0:
-            isRemovedFile = True
+        if self.old_revision_id == 0:
+            self.isNewFile = True
+        if self.new_revision_id == 0:
+            self.isRemovedFile = True
 
         # Begin prep to run ANTLR on the source files
 
         # Check out from SVN the original file
-        if not isNewFile:
-            file_path = self.project_repo.get_file(self.old_source, old_revision_number)
-            res = self._get_parser_results(file_path, self.old_source, old_revision_number)
+        if not self.isNewFile:
+            file_path = self.project_repo.get_file(self.old_source, self.old_revision_id)
+            res = self._get_parser_results(file_path, self.old_source, self.old_revision_id)
             if res is None:
                 # some error has occured.
                 return None
             self.old_file = res[0]
-            log = res[1]
             with open(file_path, 'r') as f:
                 self.old_source_text = f.readlines()
 
             self.old_file.text = self.old_source_text
-            self.PLD.digest_old(self.old_file)
-            #self.old_file.recursive_print()
+            self.digest_old(self.old_file)
 
-        if not isRemovedFile:
-            file_path = self.project_repo.get_file(self.new_source, new_revision_number)
-            res = self._get_parser_results(file_path, self.new_source, new_revision_number)
+        if not self.isRemovedFile:
+            file_path = self.project_repo.get_file(self.new_source, self.new_revision_id)
+            res = self._get_parser_results(file_path, self.new_source, self.new_revision_id)
             if res is None:
                 # some error has occured.
                 return None
             self.new_file = res[0]
-            log = res[1]
 
             with open(file_path, 'r') as f:
                 self.new_source_text = f.readlines()
 
             self.new_file.text = self.new_source_text
-            self.PLD.digest_new(self.new_file)
-            #self.new_file.recursive_print()
-
-
+            self.digest_new(self.new_file)
 
         self.recursive_scp(self.old_file, self.new_file)
-        if isNewFile:
-            self.digestion = self.new_file
+        if self.isNewFile:
+            affected = self.new_file
         else:
-            self.digestion = self.old_file
+            affected = self.old_file
 
-        if not isRemovedFile and not isNewFile:
+        if not self.isRemovedFile and not self.isNewFile:
             if self.old_file.package_name != self.new_file.package_name:
-                self.digestion.package_name = self.new_file.package_name
+                affected.package_name = self.new_file.package_name
 
-        if not isRemovedFile:
-            self.digestion.removed_count += self.new_file.removed_count
-            self.digestion.added_count += self.new_file.added_count
-            self.recursive_walk(self.digestion, self.new_file)
+        if not self.isRemovedFile:
+            affected.removed_count += self.new_file.removed_count
+            affected.added_count += self.new_file.added_count
+            self.recursive_walk(affected, self.new_file)
 
         # make sure digestion is a list before stopping
-        self.digestion = [self.digestion]
+        if affected is None:
+            return []
+
+        return [affected]
 
 
     def recursive_walk(self, old, new):
