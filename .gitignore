@@ -32,3 +32,14 @@ nosetests.xml
 #Mr Developer
 .mr.developer.cfg
 
+
+# ohm specific
+# generated code; use ant to compile
+
+src/python/ohm/CSharp.tokens
+src/python/ohm/CSharpLexer.py
+src/python/ohm/CSharpParser.py
+src/python/ohm/Java.tokens
+src/python/ohm/JavaLexer.py
+src/python/ohm/JavaParser.py
+
