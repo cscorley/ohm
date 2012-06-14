@@ -1,13 +1,12 @@
-#!/USR/BIn/env python2.6
+#!/usr/bin/env python2.6
 #
 # [The "New BSD" license]
-# Copyright (c) 2010,2011 The Board of Trustees of The University of Alabama
+# Copyright (c) 2012 The Board of Trustees of The University of Alabama
 # All rights reserved.
 #
 # See LICENSE for details.
 
-from __future__ import with_statement
-from __future__ import print_function
+from __future__ import with_statement, print_function
 
 import os
 import sys

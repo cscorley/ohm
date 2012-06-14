@@ -1,3 +1,11 @@
+#!/usr/bin/env python2.6
+#
+# [The "New BSD" license]
+# Copyright (c) 2012 The Board of Trustees of The University of Alabama
+# All rights reserved.
+#
+# See LICENSE for details.
+
 import re
 from Diff import Diff
 

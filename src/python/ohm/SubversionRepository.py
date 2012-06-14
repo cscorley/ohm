@@ -1,7 +1,7 @@
 #!/usr/bin/env python2.6
 #
 # [The "New BSD" license]
-# Copyright (c) 2011 The Board of Trustees of The University of Alabama
+# Copyright (c) 2012 The Board of Trustees of The University of Alabama
 # All rights reserved.
 #
 # See LICENSE for details.
@@ -18,6 +18,7 @@ from SubversionPatch import SubversionPatch
 from Repository import Repository
 from collections import namedtuple
 import pysvn
+
 
 class SubversionRepository(Repository):
     def __init__(self, project, starting_revision=-1, ending_revision=-1,

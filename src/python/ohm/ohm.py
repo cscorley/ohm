@@ -1,7 +1,7 @@
 #!/usr/bin/env python2.6
 #
 # [The "New BSD" license]
-# Copyright (c) 2011 The Board of Trustees of The University of Alabama
+# Copyright (c) 2012 The Board of Trustees of The University of Alabama
 # All rights reserved.
 #
 # See LICENSE for details.
@@ -18,6 +18,7 @@ from SubversionRepository import SubversionRepository
 from Database import Database
 
 from snippets import _uniq, _make_dir
+
 
 def selinupChanges(db, uid, added, deleted):
     # these two strings will be used to build the WHERE section of our queries
