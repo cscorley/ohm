@@ -148,6 +148,16 @@ projects_list = [
                            ('c49519ed6aba0ce98876f389c60f622a35d153fe', JavaParser)
                            ]
                 }),
+    Project('mucommander', base_svn + 'mucommander/trunk/', 'svn',
+                {'.java' : [
+                          # (270, Java5Lexer)
+                           (0, JavaLexer)
+                           ]
+                },
+                {'.java' : [
+                           (0, JavaParser)
+                           ]
+                }),
     Project('subversive', base_svn + 'subversive/trunk/', 'svn',
                 {'.java' : [
                            (6940, Java5Lexer)
