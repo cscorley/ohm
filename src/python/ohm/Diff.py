@@ -75,6 +75,23 @@ class Diff:
             for sub_block in block.sub_blocks:
                 self.digest_new(sub_block)
 
+    def _printToLog(self, source, revision_number, log):
+        if len(log) > 0:
+            revCurr = self.project_repo.revCurr
+            _make_dir('/tmp/ohm/')
+            with open('/tmp/ohm/' + self.project_repo.project.name + '-errors.log', 'a') as f:
+                f.write("\n\n***********************************\n\n")
+                for each in log:
+                    output = str(datetime.now())
+                    output += ' ' + str(revCurr.number)
+                    output += ' ' + source
+                    output += ' ' + str(revision_number)
+                    output += '\n\t' + each[0]
+                    output += ' ' + each[1]
+                    output += '\n\t' + str(each[2])
+                    output += '\n'
+                    f.write(output)
+
     def _get_parser_results(self, file_path, source, revision_number):
         ext = os.path.splitext(file_path)[1]
 
@@ -131,6 +148,7 @@ class Diff:
                 self.old_source_text = f.readlines()
 
             self.old_file.text = self.old_source_text
+            self._printToLog(self.old_source, self.old_revision_id, res[1])
             self.digest_old(self.old_file)
 
         if not self.isRemovedFile:
@@ -145,6 +163,7 @@ class Diff:
                 self.new_source_text = f.readlines()
 
             self.new_file.text = self.new_source_text
+            self._printToLog(self.new_source, self.new_revision_id, res[1])
             self.digest_new(self.new_file)
 
         self.recursive_scp(self.old_file, self.new_file)
