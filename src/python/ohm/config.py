@@ -150,7 +150,7 @@ projects_list = [
                 }),
     Project('mucommander', base_svn + 'mucommander/trunk/', 'svn',
                 {'.java' : [
-                          # (270, Java5Lexer)
+                           (3505, Java5Lexer),
                            (0, JavaLexer)
                            ]
                 },
