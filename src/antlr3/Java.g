@@ -217,7 +217,7 @@ def addBlock(self, startln, endln, bodystart):
     scope_type = scope[0]
     name = scope[1]
     if scope_type =='method':
-        formals = self.formals.pop() 
+        formals = self.formals.pop()
         formals.reverse()
         method_name = name + '(' + ','.join(formals) + ')'
         self.object_scopes[-1].append(
@@ -251,7 +251,7 @@ def file_len(self, value):
 
 def createFile(self):
     classes = self.object_scopes.pop()
-            
+
     return File(self.file_name, classes, self.file_len, self.pkg_name)
 
 def displayRecognitionError(self, tokenNames, e):
@@ -267,11 +267,11 @@ compilationUnit returns [file_and_log]
         |   classOrInterfaceDeclaration typeDeclaration*
         ) EOF
             {
-                $file_and_log = (self.createFile(), self.log) 
+                $file_and_log = (self.createFile(), self.log)
             }
     |   packageDeclaration? importDeclaration* typeDeclaration* EOF
             {
-                $file_and_log = (self.createFile(), self.log) 
+                $file_and_log = (self.createFile(), self.log)
             }
     ;
 
@@ -358,12 +358,16 @@ enumDeclaration
     ;
 
 enumBody
-    :   l='{' 
+    :       {
+                self._anon_stack.append(1)
+            }
+        l='{'
             {
                 self.object_scopes.append([])
             }
      enumConstants? ','? enumBodyDeclarations? r='}'
             {
+                self._anon_stack.pop()
                 self.addBlock(min(self.modifier_line, $l.getLine()), $r.getLine(), $l.getLine())
             }
     ;
@@ -373,9 +377,9 @@ enumConstants
     ;
 
 enumConstant
-    :   annotations? i=Identifier 
-            {   
-                self.scopes.append(('enum', $i.getText())) 
+    :   annotations? i=Identifier
+            {
+                self.scopes.append(('enum', $i.getText()))
                 self.prev_scopes_len = len(self.scopes)
             }
     arguments? classBody?
@@ -411,7 +415,7 @@ classBody
     :       {
                 self._anon_stack.append(1)
             }
-        l='{' 
+        l='{'
             {
                 self.object_scopes.append([])
             }
@@ -677,9 +681,9 @@ type returns [name]
     ;
 
 classOrInterfaceType returns [name]
-    :   i=Identifier typeArguments? 
+    :   i=Identifier typeArguments?
             { $name = $i.getText() }
-        ('.' j=Identifier typeArguments? 
+        ('.' j=Identifier typeArguments?
             { $name += ('.' + $j.getText()) }
         )*
     ;
@@ -741,7 +745,7 @@ formalParameterDeclsRest
     ;
 
 methodBody
-    :   l='{' 
+    :   l='{'
             {
                 self.object_scopes.append([])
             }
@@ -752,7 +756,7 @@ methodBody
     ;
 
 constructorBody
-    :   l='{' 
+    :   l='{'
             {
                 self.object_scopes.append([])
             }
@@ -1165,8 +1169,8 @@ arrayCreatorRest
     ;
 
 classCreatorRest
-    :   arguments (  
-           {    
+    :   arguments (
+           {
                anon_name = '$' + str(self._anon_stack[-1])
                self.scopes.append(('anon_class',anon_name))
                self._anon_stack[-1] += 1

@@ -114,7 +114,13 @@ class Diff:
         parser = SourceParser(CommonTokenStream(lexer))
         parser.file_name = source
         parser.file_len = _file_len(file_path)
-        return parser.compilationUnit()
+        try:
+            results = parser.compilationUnit()
+        except Exception:
+            print(file_path, source, revision_number)
+            sys.exit()
+
+        return results
 
     @abstractmethod
     def do_split_diff(self):

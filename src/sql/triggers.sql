@@ -21,8 +21,8 @@ BEGIN
 END;
 $$;
 
-CREATE TRIGGER propagate_rename AFTER INSERT ON rename FOR EACH ROW
-    EXECUTE PROCEDURE propagate_rename_trg();
+--CREATE TRIGGER propagate_rename AFTER INSERT ON rename FOR EACH ROW
+--    EXECUTE PROCEDURE propagate_rename_trg();
 
 
 create or replace function full_name(next_id INT) RETURNS TEXT

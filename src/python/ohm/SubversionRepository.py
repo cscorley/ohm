@@ -152,6 +152,7 @@ class SubversionRepository(Repository):
             file_name = '/' + file_name
 
         # now url + file_name is valid
+        # TODO: handle spaces? Used to work, but does not seem to be now
 
         # create output directory for checking out files
         output = '/tmp/ohm/'+ self.project.name + '-svn' + file_name
@@ -164,18 +165,18 @@ class SubversionRepository(Repository):
                 # success!
                 break
             except pysvn.ClientError as e:
-                for message, code in e.args[1]:
-                    if code == 175002:
-                        # Retry to check out file
-                        print('Code:', code, 'Message:', message, '\n',
-                                file_name, revision_number)
-                        tries -= 1
-                        continue
-                    else:
-                        # Some other error, just quit trying
-                        print('Code:', code, 'Message:', message, '\n',
-                                file_name, revision_number)
-                        break
+                message, code = e.args[1][0]
+                if code == 175002:
+                    # Retry to check out file
+                    print('Code:', code, 'Message:', message, '\n',
+                            file_name, revision_number)
+                    tries -= 1
+                    continue
+                else:
+                    # Some other error, just quit trying
+                    print('Code:', code, 'Message:', message, '\n',
+                            file_name, revision_number)
+                    break
 
         return output
 
