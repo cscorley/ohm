@@ -216,6 +216,7 @@ def build_db(db, project, starting_revision, ending_revision):
         propDict = {
                 'project': uid['project'],
                 'number': str(log.commit_id),
+                'parent': str(log.parent_commit_id),
                 'message': log.message,
                 'datetime': dt,
                 'owner': uid['owner']

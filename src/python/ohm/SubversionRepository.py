@@ -219,6 +219,7 @@ class SubversionRepository(Repository):
                       author = svn_log.author
                     , committer = svn_log.author
                     , commit_id = self.revCurr.number # or commit.id ?
+                    , parent_commit_id = self.revPrev.number # or commit.id ?
                     , date = svn_log.date
                     , message = svn_log.message
                 )

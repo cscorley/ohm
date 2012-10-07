@@ -123,6 +123,9 @@ class GitRepository(Repository):
             for parent in commit.parents:
                 patch_file = StringIO()
 
+                # Be sure to set the parent commit id
+                log.parent_commit_id = parent.sha
+
                 dulwich.patch.write_tree_diff(patch_file, self.repo.object_store,
                         self.repo[parent].tree, commit.tree)
 
