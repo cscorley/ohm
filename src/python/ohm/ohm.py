@@ -56,6 +56,9 @@ def selinupChanges(db, uid, added, deleted):
 
 
 def insert_changes(db, affected, cid, uid):
+    if affected is None:
+        return
+
     for affected_block in affected:
         cursor = db.cursor
         if cursor.closed:

@@ -50,6 +50,9 @@ class GitRepository(Repository):
 
         self.total_revs = len(self.revList)
 
+        self.old_ch = None
+        self.new_ch = None
+
     def __str__(self):
         return '%s %s %s %s' % (self.project.url, self.revStart,
                 self.revEnd, self.total_revs)
@@ -105,9 +108,9 @@ class GitRepository(Repository):
 
     # warning
     def get_file(self, file_name, revision_number, tries=5):
-        if file_name == self.old_ch.path:
+        if self.old_ch is not None and file_name == self.old_ch.path:
             return self.repo[self.old_ch.sha].data
-        elif file_name == self.new_ch.path:
+        elif self.new_ch is not None and file_name == self.new_ch.path:
             return self.repo[self.new_ch.sha].data
 
         return ''
@@ -145,6 +148,10 @@ class GitRepository(Repository):
                     , message = commit.message
                 )
 
+                print('%f complete -- Revision %s->%s' % (
+                    (float(self.count)/float(self.total_revs))*100,
+                    log.parent_commit_id, log.commit_id))
+
                 for ch in dulwich.diff_tree.tree_changes(
                         self.repo.object_store,
                         self.repo[parent].tree,
@@ -152,10 +159,6 @@ class GitRepository(Repository):
                         ):
 
                     patch_file = StringIO()
-
-                    print('%f complete -- Revision %s->%s' % (
-                        (float(self.count)/float(self.total_revs))*100,
-                        log.parent_commit_id, log.commit_id))
 
 
                     dulwich.patch.write_object_diff(patch_file, self.repo.object_store,

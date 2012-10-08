@@ -19,7 +19,7 @@ from JavaLexer import JavaLexer
 from Java4Lexer import Java4Lexer
 from Java5Lexer import Java5Lexer
 from JavaParser import JavaParser
-from GitRepoistory import GitRepository
+from GitRepository import GitRepository
 from SubversionRepository import SubversionRepository
 
 
