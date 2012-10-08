@@ -34,8 +34,9 @@ class SubversionRepository(Repository):
 
         # Regex strings for diff files in this repository
         starting_revision = int(starting_revision)
+        ending_revision = int(ending_revision)
 
-        if starting_revision < 0:
+        if starting_revision < 0 or starting_revision is None:
             self.revStart = pysvn.Revision(pysvn.opt_revision_kind.number,
                     0)
             self.revEnd = pysvn.Revision(pysvn.opt_revision_kind.head)
@@ -49,7 +50,7 @@ class SubversionRepository(Repository):
                     starting_revision)
 
         # get the head revision number
-        if ending_revision < 0:
+        if ending_revision < 0 or ending_revision is None:
             self.revEnd = pysvn.Revision(pysvn.opt_revision_kind.head)
             revlog = self.client.log(self.project.url, self.revEnd, self.revEnd)
 
@@ -95,7 +96,6 @@ class SubversionRepository(Repository):
     # this function is to be used to cycle the revision objects
     def _move_next_revision(self):
         if len(self.revList) > 0:
-            self.count += 1
             self.revPrev = self.revCurr
             self.revCurr = self.revList.pop()
             if self.revPrev is None:
@@ -186,7 +186,7 @@ class SubversionRepository(Repository):
 
 
         with open(output, 'r') as f:
-            file_contents = f.readlines()
+            file_contents = ''.join(f.readlines())
 
         return file_contents
 
@@ -240,10 +240,7 @@ class SubversionRepository(Repository):
                     except OSError:
                         pass
 
-                print('%f complete -- Revision %s' % (
-                    (float(self.count)/float(self.total_revs))*100,
-                    log.commit_id)
-                    )
+                self.print_status(log)
 
                 # parse for the changes
                 patch = SubversionPatch(patch_lines, self)
@@ -264,3 +261,10 @@ class SubversionRepository(Repository):
                     else:
                         print('Code:', code, 'Message:', message)
                         print(self.revPrev.number, self.revCurr.number)
+
+    def print_status(self, log):
+        self.count += 1
+        print('%f complete (%d/%d) -- Revision %s->%s' % (
+            (float(self.count)/float(self.total_revs))*100,
+            self.count, self.total_revs,
+            log.parent_commit_id, log.commit_id))
