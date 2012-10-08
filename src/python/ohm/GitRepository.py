@@ -114,7 +114,7 @@ class GitRepository(Repository):
 
 
     def get_revisions(self):
-        for walk_entry in self.repo.get_walker():#reverse=True):
+        for walk_entry in self.repo.get_walker(reverse=True):
             commit = walk_entry.commit
             self.count += 1
 
