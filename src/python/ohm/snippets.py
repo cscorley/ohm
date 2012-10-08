@@ -42,3 +42,10 @@ def _file_len(fname):
         for i, l in enumerate(f):
             pass
     return i + 1
+
+def short(sha):
+    if sha is not None and len(sha) > 7:
+        return sha[:7]
+    else:
+        return sha
+

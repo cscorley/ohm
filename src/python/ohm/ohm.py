@@ -14,7 +14,6 @@ from shutil import rmtree
 from optparse import OptionParser, SUPPRESS_HELP
 
 import config 
-from SubversionRepository import SubversionRepository
 from Database import Database
 
 from snippets import _uniq, _make_dir
@@ -230,8 +229,9 @@ def build_db(db, project, starting_revision, ending_revision):
 
         insert_changes(db, changes, None, uid)
 
-def speed_run(config, starting_revision, ending_revision):
-    project_repo = SubversionRepository(config, starting_revision, ending_revision)
+def speed_run(project, starting_revision, ending_revision):
+    UserRepository = project.repo
+    project_repo = UserRepository(project, starting_revision, ending_revision)
     print(project_repo)
     for log, changes in project_repo.get_revisions():
         pass
@@ -542,8 +542,8 @@ def main(argv):
     # Invoke option parser
     (options, args) = optparser.parse_args(argv)
 
-    starting_revision = int(options.project_revision)
-    ending_revision = int(options.project_revision_end)
+    starting_revision = options.project_revision
+    ending_revision = options.project_revision_end
 
     if options.project_name is None:
         optparser.error('You must supply a project name!')

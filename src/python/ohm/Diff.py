@@ -82,7 +82,7 @@ class Diff:
                 f.write("\n\n***********************************\n\n")
                 for each in log:
                     output = str(datetime.now())
-                    output += ' ' + str(revCurr.number)
+                    output += ' ' + str(revCurr)
                     output += ' ' + source
                     output += ' ' + str(revision_number)
                     output += '\n\t' + each[0]

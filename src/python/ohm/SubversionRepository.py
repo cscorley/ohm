@@ -33,7 +33,7 @@ class SubversionRepository(Repository):
         self.count = 0
 
         # Regex strings for diff files in this repository
-
+        starting_revision = int(starting_revision)
 
         if starting_revision < 0:
             self.revStart = pysvn.Revision(pysvn.opt_revision_kind.number,

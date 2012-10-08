@@ -16,14 +16,40 @@ class GitDiff(Diff):
         temp = []
         start = 0
 
+# index dac18a4..e8f069f 100644
+        index = re.compile('index ([\w]{7})..([\w]{7}) \d+')
         old_file = re.compile('--- ([-/._\w ]+)')
         new_file = re.compile('\+\+\+ ([-/._\w ]+)')
         chunk = re.compile('@@ -(\d+)(?:,(\d+))? \+(\d+)(?:,(\d+))? @@')
 
         while start < len(self.diff_file) and not chunk.match(self.diff_file[start]):
-            m = old_file.match(self.diff_file[start])
+            m = index.match(self.diff_file[start])
             if m:
-                start += 1
+                old_index = m.group(1)
+                new_index = m.group(2)
+                om = old_file.match(self.diff_file[start+1])
+                if om:
+                    s = om.group(1)
+                    if s.startswith('a/'):
+                        s = s[2:]
+                    if s != self.old_source and s != '/dev/null':
+                        print("CONFLICT:", s, self.old_source, old_index, self.old_revision_id)
+                    if self.old_source is None:
+                        self.old_source = s
+                nm = old_file.match(self.diff_file[start+2])
+                if nm:
+                    s = nm.group(1)
+                    if s.startswith('b/'):
+                        s = s[2:]
+                    if s != self.new_source and s != '/dev/null':
+                        print("CONFLICT:", s, self.new_source, new_index, self.new_revision_id)
+                    if self.new_source is None:
+                        self.new_source = s
+
+                self.old_revision_id = old_index
+                self.new_revision_id = new_index
+
+                start += 2
                 break
             start += 1
 
