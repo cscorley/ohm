@@ -32,6 +32,7 @@ class SubversionDiff(Diff):
 
                 if (self.old_revision_id == 0):
                     self.isNewFile = True
+                    self.old_revision_id = None
 
                 start += 1
                 break

@@ -16,7 +16,8 @@ class GitPatch(Patch):
 
     def do_split_patch(self):
         """ returns patch split into a list of diffs """
-        diff_header = re.compile('Index: [-/._\w ]+')
+        #diff --git a/build.xml b/build.xml
+        diff_header = re.compile('diff --git [-/._\w ]+')
         lines = self.patch_file
 
         # Find the beginning of the first diff in the patch file
@@ -36,7 +37,6 @@ class GitPatch(Patch):
         # Split each diff and append those to the diffs list.  We also must
         # ensure that the lines start with the same beginning as the first
         # diff as the other beginnings will appear as well anyway.
-        # SVN patch specific
         for i in range(first + 1, len(lines)):
             if diff_header.match(lines[i]):
                 for j in range(start, i):
@@ -45,14 +45,14 @@ class GitPatch(Patch):
                 temp = []
                 start = i
 
-        # Writes last division since no more 'Index' lines to match
+        # Writes last division since no more diff_header lines to match
         for j in range(start, len(lines)):
             temp.append(lines[j])
         raw_diffs.append(temp)
 
-
         diffs = []
         for d in raw_diffs:
             diffs.append(GitDiff(self.project_repo, d))
+
 
         return diffs

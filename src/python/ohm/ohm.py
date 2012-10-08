@@ -194,7 +194,9 @@ def build_db(db, project, starting_revision, ending_revision):
     # get the project uid
     uid['project'] = getUID(db, 'project', ('url',), propDict)
 
-    project_repo = SubversionRepository(project, starting_revision, ending_revision)
+    UserRepository = project.repo
+
+    project_repo = UserRepository(project, starting_revision, ending_revision)
     print(project_repo)
     for log, changes in project_repo.get_revisions():
         # there are two uid's which we can extract from the log for this

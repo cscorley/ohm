@@ -14,13 +14,12 @@ import codecs
 from difflib import SequenceMatcher
 from datetime import datetime
 from abc import ABCMeta, abstractmethod, abstractproperty
+from StringIO import StringIO
 
 from File import File
 from antlr3 import ANTLRFileStream, ANTLRInputStream, CommonTokenStream
 
 from snippets import _make_dir, _uniq, _file_len
-import pysvn
-
 
 class Diff:
     __metaclass__ = ABCMeta
@@ -42,8 +41,8 @@ class Diff:
 
         self.old_file = None
         self.new_file = None
-        self.old_revision_id = 0
-        self.new_revision_id = 0
+        self.old_revision_id = None
+        self.new_revision_id = None
         self.isNewFile = False
         self.isRemovedFile = False
 
@@ -92,8 +91,8 @@ class Diff:
                     output += '\n'
                     f.write(output)
 
-    def _get_parser_results(self, file_path, source, revision_number):
-        ext = os.path.splitext(file_path)[1]
+    def _get_parser_results(self, fileptr, source_text, source, revision_number):
+        ext = os.path.splitext(source)[1]
 
         SourceLexer = self.project_repo.get_lexer(revision_number, ext)
         if SourceLexer is None:
@@ -101,9 +100,9 @@ class Diff:
 
         # Run ANTLR on the original source and build a list of the methods
         try:
-            lexer = SourceLexer(ANTLRFileStream(file_path, 'latin-1'))
+            lexer = SourceLexer(ANTLRInputStream(fileptr, 'latin-1'))
         except ValueError:
-            lexer = SourceLexer(ANTLRFileStream(file_path, 'utf-8'))
+            lexer = SourceLexer(ANTLRInputStream(fileptr, 'utf-8'))
         except IOError:
             return None
 
@@ -113,11 +112,11 @@ class Diff:
 
         parser = SourceParser(CommonTokenStream(lexer))
         parser.file_name = source
-        parser.file_len = _file_len(file_path)
+        parser.file_len = len(source_text)
         try:
             results = parser.compilationUnit()
         except Exception:
-            print(file_path, source, revision_number)
+            print(source, source, revision_number)
             sys.exit()
 
         return results
@@ -135,38 +134,35 @@ class Diff:
         divisions = self.do_split_diff()
         self.do_chunk_add_mappings(divisions)
 
-        if self.old_revision_id == 0:
+        if self.old_revision_id is None:
             self.isNewFile = True
-        if self.new_revision_id == 0:
+        if self.new_revision_id is None:
             self.isRemovedFile = True
 
         # Begin prep to run ANTLR on the source files
 
         # Check out from SVN the original file
         if not self.isNewFile:
-            file_path = self.project_repo.get_file(self.old_source, self.old_revision_id)
-            res = self._get_parser_results(file_path, self.old_source, self.old_revision_id)
+            self.old_source_text = self.project_repo.get_file(self.old_source, self.old_revision_id)
+            fileptr = StringIO(self.old_source_text)
+            res = self._get_parser_results(fileptr, self.old_source_text, self.old_source, self.old_revision_id)
             if res is None:
                 # some error has occured.
                 return None
             self.old_file = res[0]
-            with open(file_path, 'r') as f:
-                self.old_source_text = f.readlines()
 
             self.old_file.text = self.old_source_text
             self._printToLog(self.old_source, self.old_revision_id, res[1])
             self.digest_old(self.old_file)
 
         if not self.isRemovedFile:
-            file_path = self.project_repo.get_file(self.new_source, self.new_revision_id)
-            res = self._get_parser_results(file_path, self.new_source, self.new_revision_id)
+            self.new_source_text = self.project_repo.get_file(self.new_source, self.new_revision_id)
+            fileptr = StringIO(self.new_source_text)
+            res = self._get_parser_results(fileptr, self.new_source_text, self.new_source, self.new_revision_id)
             if res is None:
                 # some error has occured.
                 return None
             self.new_file = res[0]
-
-            with open(file_path, 'r') as f:
-                self.new_source_text = f.readlines()
 
             self.new_file.text = self.new_source_text
             self._printToLog(self.new_source, self.new_revision_id, res[1])

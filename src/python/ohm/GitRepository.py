@@ -14,12 +14,13 @@ import os
 from shutil import rmtree
 
 from snippets import _make_dir
-from GitPatch import GitPatch
+from GitDiff import GitDiff
 from Repository import Repository
 from collections import namedtuple
 from StringIO import StringIO
 import dulwich
 import dulwich.patch
+import dulwich.diff_tree
 
 class GitRepository(Repository):
     def __init__(self, project, starting_revision=None, ending_revision=None,
@@ -79,6 +80,8 @@ class GitRepository(Repository):
         # sort by indexes
         # key=lambda l: find(revlist, l[0])
 
+        return lexers[0][1]
+
         # lexer list is now in descending order, so we can just return on
         # first lexer revision number is greater than
         for lexer in lexers:
@@ -94,57 +97,89 @@ class GitRepository(Repository):
         parsers = sorted(self.project.parsers[file_ext], key=lambda p: p[0],
                 reverse=True)
 
+        return parsers[0][1]
+
         for parser in parsers:
             if revision_number > parser[0]:
                 return parser[1]
 
     # warning
     def get_file(self, file_name, revision_number, tries=5):
-        output = None
+        if file_name == self.old_ch.path:
+            return self.repo[self.old_ch.sha].data
+        elif file_name == self.new_ch.path:
+            return self.repo[self.new_ch.sha].data
 
-        return output
+        return ''
 
 
     def get_revisions(self):
-        for walk_entry in self.repo.get_walker(reverse=True):
+        for walk_entry in self.repo.get_walker():#reverse=True):
             commit = walk_entry.commit
             self.count += 1
-#            if len(commit.parents) == 0:
-#                print "START OF REPO"
 
             log = self.LogInfo(
                     author = commit.author
                 , committer = commit.committer
-                , commit_id = commit.sha # or commit.id ?
+                , commit_id = commit.id # or commit.id ?
+                , parent_commit_id = None
                 , date = commit.commit_time # + commit.commit_time_zone ?
                 , message = commit.message
             )
 
+            if len(commit.parents) == 0:
+                print("START OF REPO")
+                print(log)
+
+
             for parent in commit.parents:
-                patch_file = StringIO()
 
                 # Be sure to set the parent commit id
-                log.parent_commit_id = parent.sha
+                log = self.LogInfo(
+                        author = commit.author
+                    , committer = commit.committer
+                    , commit_id = commit.id # or commit.id ?
+                    , parent_commit_id = parent
+                    , date = commit.commit_time # + commit.commit_time_zone ?
+                    , message = commit.message
+                )
 
-                dulwich.patch.write_tree_diff(patch_file, self.repo.object_store,
-                        self.repo[parent].tree, commit.tree)
+#                dulwich.patch.write_tree_diff(patch_file, self.repo.object_store,
+#                        self.repo[parent].tree, commit.tree)
+#                patch_lines = patch_file.split('\n')
 
-                patch_lines = patch_file.split('\n')
+                for ch in dulwich.diff_tree.tree_changes(
+                        self.repo.object_store,
+                        self.repo[parent].tree,
+                        commit.tree
+                        ):
 
-                if os.path.exists('/tmp/ohm/' + self.project.name + '-git/'):
-                    try:
-                        rmtree('/tmp/ohm/' + self.project.name + '-git/', True)
-                    except OSError:
-                        pass
+                    patch_file = StringIO()
 
-                print('%f complete -- Revision %s->%s' % (
-                    (float(self.count)/float(self.total_revs))*100),
-                    parent, log.commit_id)
+                    print('%f complete -- Revision %s->%s' % (
+                        (float(self.count)/float(self.total_revs))*100,
+                        log.parent_commit_id, log.commit_id))
 
-                # parse for the changes
-                patch = GitPatch(patch_lines, self)
 
-                # Process each diff in the Patch individually for each revision
-                # otherwise, we may run into memory troubles for large patches
-                for changes in patch.get_affected():
-                    yield log, changes
+                    dulwich.patch.write_object_diff(patch_file, self.repo.object_store,
+                            (ch.old.path, ch.old.mode, ch.old.sha),
+                            (ch.new.path, ch.new.mode, ch.new.sha))
+                    patch_lines = patch_file.getvalue()
+                    patch_lines = patch_lines.split('\n')
+#                    print(ch.old.sha)
+
+                    # parse for the changes
+                    diff = GitDiff(self, patch_lines)
+                    diff.old_source = ch.old.path
+                    diff.new_source = ch.new.path
+                    if ch.old.sha is not None:
+                        diff.old_source_text = self.repo[ch.old.sha]
+                        self.old_ch = ch.old
+                        diff.old_revision_id = log.parent_commit_id
+
+                    if ch.new.sha is not None:
+                        diff.new_source_text = self.repo[ch.new.sha]
+                        self.new_ch = ch.new
+                        diff.new_revision_id = log.commit_id
+
+                    yield log, diff.get_affected()

@@ -11,7 +11,7 @@
 #
 
 from collections import namedtuple
-Project = namedtuple('Project' , 'name url type lexers parsers')
+Project = namedtuple('Project' , 'name url repo lexers parsers')
 
 # Begin user config
 
@@ -19,6 +19,8 @@ from JavaLexer import JavaLexer
 from Java4Lexer import Java4Lexer
 from Java5Lexer import Java5Lexer
 from JavaParser import JavaParser
+from GitRepoistory import GitRepository
+from SubversionRepository import SubversionRepository
 
 
 base_svn='http://steel.cs.ua.edu/repos/'
@@ -26,7 +28,7 @@ base_svn='http://steel.cs.ua.edu/repos/'
 
 projects_list = [
                 # url, repo type
-    Project('ant', base_svn + 'ant/ant/core/trunk/', 'svn',
+    Project('ant', base_svn + 'ant/ant/core/trunk/', SubversionRepository,
                 # lexer info
                 {'.java' : [
                            (277860, Java5Lexer)
@@ -39,7 +41,7 @@ projects_list = [
                            (0, JavaParser)
                            ]
                 }),
-    Project('argouml', base_svn + 'argouml/trunk/', 'svn',
+    Project('argouml', base_svn + 'argouml/trunk/', SubversionRepository,
                 {'.java' : [
                            (13020, Java5Lexer)
                          , (8295, Java4Lexer)
@@ -50,7 +52,7 @@ projects_list = [
                            (0, JavaParser)
                            ]
                 }),
-    Project('carol', base_svn + 'carol/trunk/', 'svn',
+    Project('carol', base_svn + 'carol/trunk/', SubversionRepository,
                 {'.java' : [
                            (1290, Java5Lexer)
                          , (0, JavaLexer)
@@ -60,7 +62,7 @@ projects_list = [
                            (0, JavaParser)
                            ]
                 }),
-    Project('columba', base_svn + 'columba/columba/trunk/', 'svn',
+    Project('columba', base_svn + 'columba/columba/trunk/', SubversionRepository,
                 {'.java' : [
                            (0, Java5Lexer)
                            ]
@@ -69,7 +71,7 @@ projects_list = [
                            (0, JavaParser)
                            ]
                 }),
-    Project('dnsjava', base_svn + 'dnsjava/trunk/', 'svn',
+    Project('dnsjava', base_svn + 'dnsjava/trunk/', SubversionRepository,
                 {'.java' : [
                            (0, JavaLexer)
                            ]
@@ -78,7 +80,7 @@ projects_list = [
                            (0, JavaParser)
                            ]
                 }),
-    Project('geclipse', base_svn + 'geclipse/trunk/', 'svn',
+    Project('geclipse', base_svn + 'geclipse/trunk/', SubversionRepository,
                 {'.java' : [
                            (0, Java5Lexer)
                            ]
@@ -87,7 +89,7 @@ projects_list = [
                            (0, JavaParser)
                            ]
                 }),
-    Project('gwt', base_svn + 'google-web-toolkit/trunk/', 'svn',
+    Project('gwt', base_svn + 'google-web-toolkit/trunk/', SubversionRepository,
                 {'.java' : [
                            (1340, Java5Lexer)
                          , (0, Java4Lexer)
@@ -97,7 +99,7 @@ projects_list = [
                            (0, JavaParser)
                            ]
                 }),
-    Project('itext', base_svn + 'itext/trunk/', 'svn',
+    Project('itext', base_svn + 'itext/trunk/', SubversionRepository,
                 {'.java' : [
                            (4290, Java5Lexer)
                          , (0, JavaLexer)
@@ -107,7 +109,7 @@ projects_list = [
                            (0, JavaParser)
                            ]
                 }),
-    Project('jabref', base_svn + 'jabref/trunk/', 'svn',
+    Project('jabref', base_svn + 'jabref/trunk/', SubversionRepository,
                 {'.java' : [
                            (2410, Java5Lexer)
                          , (0, JavaLexer)
@@ -117,7 +119,7 @@ projects_list = [
                            (0, JavaParser)
                            ]
                 }),
-    Project('jedit', base_svn + 'jedit/jEdit/trunk/', 'svn',
+    Project('jedit', base_svn + 'jedit/jEdit/trunk/', SubversionRepository,
                 {'.java' : [
                            (8265, Java5Lexer)
                          , (6800, Java4Lexer)
@@ -128,7 +130,7 @@ projects_list = [
                            (0, JavaParser)
                            ]
                 }),
-    Project('jhotdraw', base_svn + 'jhotdraw/trunk/', 'svn',
+    Project('jhotdraw', base_svn + 'jhotdraw/trunk/', SubversionRepository,
                 {'.java' : [
                            (270, Java5Lexer)
                          , (0, JavaLexer)
@@ -138,7 +140,7 @@ projects_list = [
                            (0, JavaParser)
                            ]
                 }),
-    Project('jhotdraw-git', '/opt/local/svn2gits/jhotdraw/', 'git',
+    Project('jhotdraw-git', '/opt/local/svn2gits/jhotdraw/', GitRepository,
                 {'.java' : [
                            ('145e28ee44dc2ea3e23bec91c9c490af16f2d66a', Java5Lexer)
                          , ('c49519ed6aba0ce98876f389c60f622a35d153fe', JavaLexer)
@@ -148,7 +150,7 @@ projects_list = [
                            ('c49519ed6aba0ce98876f389c60f622a35d153fe', JavaParser)
                            ]
                 }),
-    Project('mucommander', base_svn + 'mucommander/trunk/', 'svn',
+    Project('mucommander', base_svn + 'mucommander/trunk/', SubversionRepository,
                 {'.java' : [
                            (3505, Java5Lexer),
                            (0, JavaLexer)
@@ -158,7 +160,7 @@ projects_list = [
                            (0, JavaParser)
                            ]
                 }),
-    Project('subversive', base_svn + 'subversive/trunk/', 'svn',
+    Project('subversive', base_svn + 'subversive/trunk/', SubversionRepository,
                 {'.java' : [
                            (6940, Java5Lexer)
                          , (0, JavaLexer)
@@ -168,7 +170,7 @@ projects_list = [
                            (0, JavaParser)
                            ]
                 }),
-    Project('vuze', base_svn + 'vuze/client/trunk/', 'svn',
+    Project('vuze', base_svn + 'vuze/client/trunk/', SubversionRepository,
                 {'.java' : [
                            (14990, Java5Lexer)
                          , (5635, Java4Lexer)

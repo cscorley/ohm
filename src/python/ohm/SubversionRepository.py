@@ -110,6 +110,9 @@ class SubversionRepository(Repository):
         if file_ext not in self.project.lexers:
             return None
 
+        if revision_number is None:
+            revision_number = 0
+
         # later:
         # store current lexer in self; then retrieve
         # change lexer when certain revision has been seen?
@@ -140,6 +143,9 @@ class SubversionRepository(Repository):
 
     # warning
     def get_file(self, file_name, revision_number, tries=5):
+        if revision_number is None:
+            revision_number = 0
+
         rev = pysvn.Revision(pysvn.opt_revision_kind.number, revision_number)
 
         # ensure the URL does not have an ending slash
@@ -178,7 +184,11 @@ class SubversionRepository(Repository):
                             file_name, revision_number)
                     break
 
-        return output
+
+        with open(output, 'r') as f:
+            file_contents = f.readlines()
+
+        return file_contents
 
 
     def get_revisions(self):

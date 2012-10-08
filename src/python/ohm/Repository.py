@@ -22,7 +22,7 @@ from Patch import Patch
 class Repository:
     __metaclass__ = ABCMeta
 
-    LogInfo = namedtuple('LogInfo', 'commit_id author committer date message')
+    LogInfo = namedtuple('LogInfo', 'commit_id parent_commit_id author committer date message')
 
     @abstractproperty
     def project(self):

@@ -80,11 +80,12 @@ See LICENSE for details.
    <target
       name = "-compile_python"
       >
+      <!--
       <py-compile
          dir         = "${dir.src.python}/${project.package}"
          optimize    = "${compile.python.optimize}"
          quiet       = "${compile.python.quiet}"
-         />
+         />-->
    </target>
 
    <!--  - - - - - - - - - - - - - - -  -->
