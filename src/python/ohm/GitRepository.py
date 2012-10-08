@@ -127,6 +127,7 @@ class GitRepository(Repository):
                 , message = commit.message
             )
 
+            # not sure how to handle this case yet
             if len(commit.parents) == 0:
                 print("START OF REPO")
                 print(log)
@@ -143,10 +144,6 @@ class GitRepository(Repository):
                     , date = commit.commit_time # + commit.commit_time_zone ?
                     , message = commit.message
                 )
-
-#                dulwich.patch.write_tree_diff(patch_file, self.repo.object_store,
-#                        self.repo[parent].tree, commit.tree)
-#                patch_lines = patch_file.split('\n')
 
                 for ch in dulwich.diff_tree.tree_changes(
                         self.repo.object_store,
@@ -166,19 +163,16 @@ class GitRepository(Repository):
                             (ch.new.path, ch.new.mode, ch.new.sha))
                     patch_lines = patch_file.getvalue()
                     patch_lines = patch_lines.split('\n')
-#                    print(ch.old.sha)
 
                     # parse for the changes
                     diff = GitDiff(self, patch_lines)
                     diff.old_source = ch.old.path
                     diff.new_source = ch.new.path
                     if ch.old.sha is not None:
-                        diff.old_source_text = self.repo[ch.old.sha]
                         self.old_ch = ch.old
                         diff.old_revision_id = log.parent_commit_id
 
                     if ch.new.sha is not None:
-                        diff.new_source_text = self.repo[ch.new.sha]
                         self.new_ch = ch.new
                         diff.new_revision_id = log.commit_id
 
