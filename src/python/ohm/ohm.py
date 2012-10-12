@@ -13,10 +13,10 @@ import sys
 from shutil import rmtree
 from optparse import OptionParser, SUPPRESS_HELP
 
-import config 
+import config
 from Database import Database
 
-from snippets import _uniq, _make_dir
+from snippets import _uniq, _make_dir,short
 
 
 def selinupChanges(db, uid, added, deleted):
@@ -229,12 +229,111 @@ def build_db(db, project, starting_revision, ending_revision):
 
         insert_changes(db, changes, None, uid)
 
+
+def compare_git_svn(db, git_project, svn_project):
+    # This function compares a svn2git project and the original svn project
+    # to ensure each commit from the svn project appears in the svn2git project.
+    # It also returns a mapping of the git commit id's to the svn revision numbers.
+
+    # this dictionary is used throughout as a unique properties dictionary
+    # used to get the UID of the entries in the table its used for. It should
+    # always be reassigned when used.
+    propDict = {
+            'name': git_project.name,
+            'url': git_project.url
+            }
+    # get the project uid
+    git_uid = getUID(db, 'project', ('url',), propDict)
+    propDict = {
+            'name': svn_project.name,
+            'url': svn_project.url
+            }
+    # get the project uid
+    svn_uid = getUID(db, 'project', ('url',), propDict)
+
+    svn_numbers = db.execute('SELECT number FROM revision where project=%s order by id;',
+            (svn_uid,))
+    svn_numbers = [str(x[0]) for x in svn_numbers]
+
+    git_num_msgs = db.execute('SELECT number,message FROM revision where project=%s order by id;',
+            (git_uid,))
+    git_num_msgs = [(str(x), str(y)) for x, y in git_num_msgs]
+
+    mapping = []
+
+    # git-svn-id: http://steel.cs.ua.edu/repos/jhotdraw/trunk@765 85ec8eb5-41d0-4fb3-9b66-b5bfc9158ce2
+    for rev in svn_numbers:
+        composed_rev = "git-svn-id: " + svn_project.url + "@" + rev + " "
+        composed_rev2 = "git-svn-id: " + svn_project.url[:-1] + "@" + rev + " "
+        # strip last character, possibly a /
+
+        ok = False
+
+        for number, message in git_num_msgs:
+            if composed_rev in message or composed_rev2 in message:
+                item = (number, rev)
+                mapping.append(item)
+                print('SUCCESS: %s has %s' % item)
+                ok = True
+
+        if not ok:
+            print('FAILURE: can\'t find %s' % rev)
+
+    return mapping
+
+
 def speed_run(project, starting_revision, ending_revision):
     UserRepository = project.repo
     project_repo = UserRepository(project, starting_revision, ending_revision)
     print(project_repo)
     for log, changes in project_repo.get_revisions():
         pass
+
+def dual_speed_run(project1, project2):
+    # This does not work as expectedy yet. When given a git repo, it
+    # stops on some commits.
+
+    UserRepository = project1.repo
+    project_repo1 = UserRepository(project1)
+    print(project_repo1)
+    p1_gen = project_repo1.get_revisions()
+
+    UserRepository = project2.repo
+    project_repo2 = UserRepository(project2)
+    print(project_repo2)
+    p2_gen = project_repo2.get_revisions()
+
+    n1, n2, p1_log, p1_results, p2_log, p2_results = None, None, None, None, None, None
+    while True:
+        try:
+            n1, p1_log, p1_results = accumulate(p1_gen, p1_log, p1_results)
+            n2, p2_log, p2_results = accumulate(p2_gen, p2_log, p2_results)
+        except StopIteration:
+            break
+
+        if n1 == n2:
+            print('Success: ', short(p1_log.commit_id), short(p2_log.commit_id))
+        else:
+            print('Failure: ', short(p1_log.commit_id), short(p2_log.commit_id))
+
+
+def accumulate(gen, p_log, p_results):
+    next_log, next_results = p_log, p_results
+    new_results = set()
+    while True:
+        if next_results:
+            for e in next_results:
+                new_results.add(e)
+        next_log, next_results = gen.next()
+
+        if p_log is not None and next_log is not None:
+            if p_log.commit_id == next_log.parent_commit_id:
+                break
+        else:
+            break
+
+    return new_results, next_log, next_results
+
 
 def generate(db, project, starting_revision, ending_revision, use_sums,
         type_list, profile_name = '', no_full_name_func=False):
@@ -512,6 +611,8 @@ def main(argv):
             help='Output directory')
     optparser.add_option('-n', '--project_name', dest='project_name',
             help='Project name')
+    optparser.add_option('-m', '--project_name2', dest='project_name2',
+            help='Project name')
     optparser.add_option('-r', '--revision', dest='project_revision',
             help='Project revision to begin upon')
     optparser.add_option('-e', '--revision_end', dest='project_revision_end',
@@ -559,6 +660,21 @@ def main(argv):
 
         project = config.projects[project_name]
 
+    if options.project_name2 is not None:
+        project_name = options.project_name2
+
+        #if project_name.lower() in config.projects:
+        #    project_url = base_svn + config.projects[project_name.lower()][0]
+
+        if project_name not in config.projects:
+            print('Project information not in config.py')
+            sys.exit()
+
+        project2 = config.projects[project_name]
+        dual_speed_run(project, project2)
+
+        sys.exit(0)
+
     # create output directory
     tmp_dir = '/'.join([options.output_dir.rstrip('/')])
     if False == os.path.exists(tmp_dir):
@@ -574,7 +690,8 @@ def main(argv):
             verbose=options.verbose
             )
     if options.tester:
-        tester(db, project, starting_revision, ending_revision)
+    #    tester(db, project, starting_revision, ending_revision)
+        compare_git_svn(db, config.projects["jhotdraw-git"], config.projects["jhotdraw"])
         sys.exit(0)
 
 
