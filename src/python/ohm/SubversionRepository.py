@@ -264,7 +264,7 @@ class SubversionRepository(Repository):
 
     def print_status(self, log):
         self.count += 1
-        print('%f complete (%d/%d) -- Revision %s->%s' % (
+        print('%f complete (%d/%d) -- svn Revision %s..%s' % (
             (float(self.count)/float(self.total_revs))*100,
             self.count, self.total_revs,
             log.parent_commit_id, log.commit_id))

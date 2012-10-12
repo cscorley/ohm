@@ -20,7 +20,7 @@ class GitDiff(Diff):
         index = re.compile('index ([\w]{7})..([\w]{7}) \d+')
         old_file = re.compile('--- ([-/._\w ]+)')
         new_file = re.compile('\+\+\+ ([-/._\w ]+)')
-        chunk = re.compile('@@ -(\d+)(?:,(\d+))? \+(\d+)(?:,(\d+))? @@')
+        chunk = re.compile('@@ -(\d+)(?:,(\d+))? \+(\d+)(?:,(\d+))? @@[\s\S]*')
 
         while start < len(self.diff_file) and not chunk.match(self.diff_file[start]):
             m = index.match(self.diff_file[start])
@@ -46,8 +46,8 @@ class GitDiff(Diff):
                     if self.new_source is None:
                         self.new_source = s
 
-                self.old_revision_id = old_index
-                self.new_revision_id = new_index
+#                self.old_revision_id = old_index
+#                self.new_revision_id = new_index
 
                 start += 2
                 break
@@ -85,7 +85,7 @@ class GitDiff(Diff):
         return diff_divisions
 
     def do_chunk_add_mappings(self, divisions):
-        chunk = re.compile('@@ -(\d+)(?:,(\d+))? \+(\d+)(?:,(\d+))? @@')
+        chunk = re.compile('@@ -(\d+)(?:,(\d+))? \+(\d+)(?:,(\d+))? @@[\s\S]*')
 
         for division in divisions:
             if len(division) == 0:

@@ -44,7 +44,7 @@ def _file_len(fname):
     return i + 1
 
 def short(sha):
-    if sha is not None and len(sha) > 7:
+    if sha is not None and type(sha) == str and len(sha) > 7:
         return sha[:7]
     else:
         return sha
