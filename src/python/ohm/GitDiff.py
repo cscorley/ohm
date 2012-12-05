@@ -22,7 +22,7 @@ class GitDiff(Diff):
         new_file = re.compile('\+\+\+ ([-/._\w ]+)')
         chunk = re.compile('@@ -(\d+)(?:,(\d+))? \+(\d+)(?:,(\d+))? @@[\s\S]*')
 
-        while start < len(self.diff_file) and not chunk.match(self.diff_file[start]):
+        while (start + 2) < len(self.diff_file) and not chunk.match(self.diff_file[start]):
             m = index.match(self.diff_file[start])
             if m:
                 old_index = m.group(1)

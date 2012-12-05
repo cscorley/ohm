@@ -140,16 +140,6 @@ projects_list = [
                            (0, JavaParser)
                            ]
                 }),
-    Project('jhotdraw-git', '/opt/local/svn2gits/jhotdraw/', GitRepository,
-                {'.java' : [
-                           ('145e28ee44dc2ea3e23bec91c9c490af16f2d66a', Java5Lexer)
-                         , ('c49519ed6aba0ce98876f389c60f622a35d153fe', JavaLexer)
-                           ]
-                },
-                {'.java' : [
-                           ('c49519ed6aba0ce98876f389c60f622a35d153fe', JavaParser)
-                           ]
-                }),
     Project('mucommander', base_svn + 'mucommander/trunk/', SubversionRepository,
                 {'.java' : [
                            (3505, Java5Lexer),
@@ -179,6 +169,259 @@ projects_list = [
                 },
                 {'.java' : [
                            (0, JavaParser)
+                           ]
+                }),
+    Project('carol-git', '/opt/local/svn2gits/carol/', GitRepository,
+                {'.java' : [
+                           ('3602887ce672b3e18b02da5851e842c304607732', Java5Lexer)
+                         , ('16580e078a87b5b6a998e11445ab9f8d862cc24b', JavaLexer)
+                           ]
+                },
+                {'.java' : [
+                           ('16580e078a87b5b6a998e11445ab9f8d862cc24b', JavaParser)
+                           ]
+                }),
+    Project('jhotdraw-git', '/opt/local/svn2gits/jhotdraw/', GitRepository,
+                {'.java' : [
+                           ('145e28ee44dc2ea3e23bec91c9c490af16f2d66a', Java5Lexer)
+                         , ('c49519ed6aba0ce98876f389c60f622a35d153fe', JavaLexer)
+                           ]
+                },
+                {'.java' : [
+                           ('c49519ed6aba0ce98876f389c60f622a35d153fe', JavaParser)
+                           ]
+                }),
+
+    Project('ant-git', '/opt/local/gits/ant/', GitRepository,
+                {'.java' : [
+                           ('bb5568e9a9f697bc4f5704a0f3430c147b403ded', Java5Lexer)
+                         , ('82796d9ae06721b8d110381795c726e8ddf464d9', Java4Lexer)
+                         , ('96d856e389bb88f6d0815cd8f48643e5ce8b7957', JavaLexer)
+                         ]
+                },
+                {'.java' : [
+                           ('96d856e389bb88f6d0815cd8f48643e5ce8b7957', JavaParser)
+                           ]
+                }),
+    Project('mylyn-git', '/opt/local/gits/org.eclipse.mylyn/', GitRepository,
+                {'.java' : [
+                            ('f90762d44d73a4ea266dad2c60e5339df4d72edd', Java4Lexer)
+                           ,('b60a58a1d0552a4a9f63cde3d831ee6e7fe30eea', JavaLexer)
+                           ]
+                },
+                {'.java' : [
+                           ('b60a58a1d0552a4a9f63cde3d831ee6e7fe30eea', JavaParser)
+                           ]
+                }),
+    Project('rhino-git', '/opt/local/gits/rhino/', GitRepository,
+                {'.java' : [
+                            ('c0529291ed7d8f77e24904a5a5b0d9e1c4d5e780', Java5Lexer)
+                           ,('505c4221c3a28e0d389b782ef1e7288fbbd484b9', Java4Lexer)
+                           ,('df654e871e2547e30f10321d86a3956c5d0023e1', JavaLexer)
+                           ]
+                },
+                {'.java' : [
+                           ('df654e871e2547e30f10321d86a3956c5d0023e1', JavaParser)
+                           ]
+                }),
+    Project('tomcat-git', '/opt/local/gits/tomcat/', GitRepository,
+                {'.java' : [
+                            ('c38b7baaa710a7c876aef47a27b97614ad9efe60', Java5Lexer)
+                           ,('a84fabcbc6fee8a69253ad92a304b4718e96a7c9', JavaLexer)
+                           ]
+                },
+                {'.java' : [
+                           ('a84fabcbc6fee8a69253ad92a304b4718e96a7c9', JavaParser)
+                           ]
+                }),
+    Project('eclipse.jdt-git', '/opt/local/gits/eclipse/eclipse.jdt', GitRepository,
+                {'.java' : [
+                           ('cfa1802fd838816bbcf89f0bd4277371549a57a7', JavaLexer)
+                           ]
+                },
+                {'.java' : [
+                           ('cfa1802fd838816bbcf89f0bd4277371549a57a7', JavaParser)
+                           ]
+                }),
+    Project('eclipse.jdt.core-git', '/opt/local/gits/eclipse/eclipse.jdt.core', GitRepository,
+                {'.java' : [
+                            ('39e0b3c44033d41fbb2f81071d1364bb178092c7', Java5Lexer) 
+                           ,('83131156491c6d4c0d08e15f25d8dc1f37820d67', Java4Lexer)
+                           ,('be6c0d208933ac936a6ccb6c66b03d3da13e3796', JavaLexer)
+                           ]
+                },
+                {'.java' : [
+                           ('be6c0d208933ac936a6ccb6c66b03d3da13e3796', JavaParser)
+                           ]
+                }),
+    Project('eclipse.jdt.core.binaries-git', '/opt/local/gits/eclipse/eclipse.jdt.core.binaries', GitRepository,
+                {'.java' : [
+                           ('cc383bb3db3c5b891ef2af1319498094757d854b', JavaLexer)
+                           ]
+                },
+                {'.java' : [
+                           ('cc383bb3db3c5b891ef2af1319498094757d854b', JavaParser)
+                           ]
+                }),
+    Project('eclipse.jdt.debug-git', '/opt/local/gits/eclipse/eclipse.jdt.debug', GitRepository,
+                {'.java' : [
+                           ('3c7939022de48bfa72324a4d2451d33cfb56a6d0', JavaLexer)
+                           ]
+                },
+                {'.java' : [
+                           ('3c7939022de48bfa72324a4d2451d33cfb56a6d0', JavaParser)
+                           ]
+                }),
+    Project('eclipse.jdt.ui-git', '/opt/local/gits/eclipse/eclipse.jdt.ui', GitRepository,
+                {'.java' : [
+                            ('3e65f13864c812199e608578bf55a6bf44d66bd8', Java5Lexer)
+                           ,('a7a615deb8d4ff76ac9d7b8f71e611ace2b4f841', JavaLexer)
+                           ]
+                },
+                {'.java' : [
+                           ('a7a615deb8d4ff76ac9d7b8f71e611ace2b4f841', JavaParser)
+                           ]
+                }),
+    Project('eclipse.pde-git', '/opt/local/gits/eclipse/eclipse.pde', GitRepository,
+                {'.java' : [
+                           ('483e60eb275d9ea12b39089dbd6c9460f1bc94bd', JavaLexer)
+                           ]
+                },
+                {'.java' : [
+                           ('483e60eb275d9ea12b39089dbd6c9460f1bc94bd', JavaParser)
+                           ]
+                }),
+    Project('eclipse.pde.build-git', '/opt/local/gits/eclipse/eclipse.pde.build', GitRepository,
+                {'.java' : [
+                           ('b892b41998e5c1ce4328840b2ed737091198fb9c', JavaLexer)
+                           ]
+                },
+                {'.java' : [
+                           ('b892b41998e5c1ce4328840b2ed737091198fb9c', JavaParser)
+                           ]
+                }),
+    Project('eclipse.pde.incubator-git', '/opt/local/gits/eclipse/eclipse.pde.incubator', GitRepository,
+                {'.java' : [
+                            ('3ba664c25c548824433cf97c53d8625fce8c1c33', Java5Lexer)
+                           ,('a62abf7c37c2803f90e9adaa52ce48556ed35c22', JavaLexer)
+                           ]
+                },
+                {'.java' : [
+                           ('a62abf7c37c2803f90e9adaa52ce48556ed35c22', JavaParser)
+                           ]
+                }),
+    Project('eclipse.pde.ui-git', '/opt/local/gits/eclipse/eclipse.pde.ui', GitRepository,
+                {'.java' : [
+                            ('44b82cb053511ab8d57a37abebdfd0047bf64406', Java5Lexer)
+                           ,('e6a553f6674ca2df6c87615f00bd08521ea28782', JavaLexer)
+                           ]
+                },
+                {'.java' : [
+                           ('e6a553f6674ca2df6c87615f00bd08521ea28782', JavaParser)
+                           ]
+                }),
+    Project('eclipse.platform-git', '/opt/local/gits/eclipse/eclipse.platform', GitRepository,
+                {'.java' : [
+                           ('18f7a4997465753f2a6f0de771139022cef38adc', JavaLexer)
+                           ]
+                },
+                {'.java' : [
+                           ('18f7a4997465753f2a6f0de771139022cef38adc', JavaParser)
+                           ]
+                }),
+    Project('eclipse.platform.common-git', '/opt/local/gits/eclipse/eclipse.platform.common', GitRepository,
+                {'.java' : [
+                           ('265ddd82b02165eac84b216284088b10a5fc9bc8', JavaLexer)
+                           ]
+                },
+                {'.java' : [
+                           ('265ddd82b02165eac84b216284088b10a5fc9bc8', JavaParser)
+                           ]
+                }),
+    Project('eclipse.platform.debug-git', '/opt/local/gits/eclipse/eclipse.platform.debug', GitRepository,
+                {'.java' : [
+                           ('3e4fc4400f54e51207e1b92bdc1232e6e68d5e88', JavaLexer)
+                           ]
+                },
+                {'.java' : [
+                           ('3e4fc4400f54e51207e1b92bdc1232e6e68d5e88', JavaParser)
+                           ]
+                }),
+    Project('eclipse.platform.releng-git', '/opt/local/gits/eclipse/eclipse.platform.releng', GitRepository,
+                {'.java' : [
+                           ('8b2f736da5e4a8f3928ba2e7f9112f4a64e0b2a7', JavaLexer)
+                           ]
+                },
+                {'.java' : [
+                           ('8b2f736da5e4a8f3928ba2e7f9112f4a64e0b2a7', JavaParser)
+                           ]
+                }),
+    Project('eclipse.platform.resources-git', '/opt/local/gits/eclipse/eclipse.platform.resources', GitRepository,
+                {'.java' : [
+                           ('866420f1502fea72fcebd9bfe620525e1c2809b2', JavaLexer)
+                           ]
+                },
+                {'.java' : [
+                           ('866420f1502fea72fcebd9bfe620525e1c2809b2', JavaParser)
+                           ]
+                }),
+    Project('eclipse.platform.runtime-git', '/opt/local/gits/eclipse/eclipse.platform.runtime', GitRepository,
+                {'.java' : [ # This repo has two starting commits... ugh
+                            ('c57c9c7b15110defec127454c17db8052e6ce193', Java5Lexer)
+                           ,('90ab4c814663028047ebd1f43ad2ba014a72afba', JavaLexer)
+                           ,('c7107b730da427925e7ffbee9bc3f859aeb4bfce', JavaLexer)
+                           ]
+                },
+                {'.java' : [
+                           ('90ab4c814663028047ebd1f43ad2ba014a72afba', JavaParser)
+                           ,('c7107b730da427925e7ffbee9bc3f859aeb4bfce', JavaParser)
+                           ]
+                }),
+    Project('eclipse.platform.swt-git', '/opt/local/gits/eclipse/eclipse.platform.swt', GitRepository,
+                {'.java' : [
+                           ('3275970ab8046022b8d2069b5c21bf117c223db7', JavaLexer)
+                           ]
+                },
+                {'.java' : [
+                           ('3275970ab8046022b8d2069b5c21bf117c223db7', JavaParser)
+                           ]
+                }),
+    Project('eclipse.platform.team-git', '/opt/local/gits/eclipse/eclipse.platform.team', GitRepository,
+                {'.java' : [
+                           ('7e3be1fe036be304c22583c9bf88abb0dfe9fa9d', JavaLexer)
+                           ]
+                },
+                {'.java' : [
+                           ('7e3be1fe036be304c22583c9bf88abb0dfe9fa9d', JavaParser)
+                           ]
+                }),
+    Project('eclipse.platform.text-git', '/opt/local/gits/eclipse/eclipse.platform.text', GitRepository,
+                {'.java' : [
+                           ('5b099119cfb6820c819b5b6d5bb9c2f9331b3f9a', JavaLexer)
+                           ]
+                },
+                {'.java' : [
+                           ('5b099119cfb6820c819b5b6d5bb9c2f9331b3f9a', JavaParser)
+                           ]
+                }),
+    Project('eclipse.platform.ua-git', '/opt/local/gits/eclipse/eclipse.platform.ua', GitRepository,
+                {'.java' : [
+                           ('172bc6c37636db342545a9540675833c93a77a51', JavaLexer)
+                           ]
+                },
+                {'.java' : [
+                           ('172bc6c37636db342545a9540675833c93a77a51', JavaParser)
+                           ]
+                }),
+    Project('eclipse.platform.ui-git', '/opt/local/gits/eclipse/eclipse.platform.ui', GitRepository,
+                {'.java' : [ # this repo has two starting commits.
+                           ('ebe1261467bae6c23442ae776759f7aeb797878e', JavaLexer)
+                           ,('4545bf2949077f9652403edf10bf797f688a634b', JavaLexer)
+                           ]
+                },
+                {'.java' : [
+                           ('ebe1261467bae6c23442ae776759f7aeb797878e', JavaParser)
+                           ,('4545bf2949077f9652403edf10bf797f688a634b', JavaParser)
                            ]
                 }),
         ]
