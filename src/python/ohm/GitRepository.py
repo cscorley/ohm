@@ -51,25 +51,36 @@ class GitRepository(Repository):
         self.changes = None
         self.log = None
 
+        self.default_lexer = None
+        self.default_parser = None
+
         # sort out lexer and parser lists
         self.lexers = dict()
         for ext, lexers in self.project.lexers.iteritems():
             self.lexers[ext] = list()
             for lexer in lexers:
-                sl = short(lexer[0])
-                if sl in self.revList:
-                    i = self.revList.index(sl)
-                    self.lexers[ext].append((i,lexer[0],lexer[1]))
+                if lexer[0] is None:
+                    self.default_lexer = lexer[1]
+                else:
+                    sl = short(lexer[0])
+                    if sl in self.revList:
+                        i = self.revList.index(sl)
+                        self.lexers[ext].append((i,lexer[0],lexer[1]))
+
         print(self.lexers)
 
         self.parsers = dict()
         for ext, parsers in self.project.parsers.iteritems():
             self.parsers[ext] = list()
             for parser in parsers:
-                sl = short(parser[0])
-                if sl in self.revList:
-                    i = self.revList.index(sl)
-                    self.parsers[ext].append((i,parser[0],parser[1]))
+                if parser[0] is None:
+                    self.default_parser = parser[1]
+                else:
+                    sl = short(parser[0])
+                    if sl in self.revList:
+                        i = self.revList.index(sl)
+                        self.parsers[ext].append((i,parser[0],parser[1]))
+
         print(self.parsers)
 
     def __str__(self):
@@ -98,9 +109,8 @@ class GitRepository(Repository):
                 i = self.revList.index(sl)
                 if i > index:
                     return lexer
-            else:
-                print(sl, " not in revlist")
 
+        return self.default_lexer
 
     def get_parser(self, revision_number, file_ext):
         if file_ext not in self.parsers:
@@ -117,6 +127,8 @@ class GitRepository(Repository):
                 i = self.revList.index(sl)
                 if i > index:
                     return parser
+
+        return self.default_parser
 
 
     # warning

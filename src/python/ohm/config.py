@@ -203,7 +203,7 @@ projects_list = [
                            ('96d856e389bb88f6d0815cd8f48643e5ce8b7957', JavaParser)
                            ]
                 }),
-    Project('mylyn-git', '/opt/local/gits/org.eclipse.mylyn/', GitRepository,
+    Project('org.eclipse.mylyn-git', '/opt/local/gits/mylyn/org.eclipse.mylyn/', GitRepository,
                 {'.java' : [
                             ('f90762d44d73a4ea266dad2c60e5339df4d72edd', Java4Lexer)
                            ,('b60a58a1d0552a4a9f63cde3d831ee6e7fe30eea', JavaLexer)
@@ -211,6 +211,90 @@ projects_list = [
                 },
                 {'.java' : [
                            ('b60a58a1d0552a4a9f63cde3d831ee6e7fe30eea', JavaParser)
+                           ]
+                }),
+    Project('org.eclipse.mylyn.builds-git', '/opt/local/gits/mylyn/org.eclipse.mylyn.builds/', GitRepository,
+                {'.java' : [
+                            ('98c9e545ef2b7a6305b02d4ec72194c7a725b6d8', Java5Lexer),
+                            ('b305f9dfd1c18945d992ce439f4212fdb1a7d1fc', JavaLexer)
+                           ]
+                },
+                {'.java' : [
+                           ('b305f9dfd1c18945d992ce439f4212fdb1a7d1fc', JavaParser)
+                           ]
+                }),
+    Project('org.eclipse.mylyn.commons-git', '/opt/local/gits/mylyn/org.eclipse.mylyn.commons/', GitRepository,
+                {'.java' : [
+                            ('8bc2ece30ced42e2e6e3ae059e281fa22589c5c4', Java5Lexer),
+                            ('cc3dc0512e2e25c0d56d2a48987fe3e691967d68', JavaLexer)
+                           ]
+                },
+                {'.java' : [
+                           ('cc3dc0512e2e25c0d56d2a48987fe3e691967d68', JavaParser)
+                           ]
+                }),
+    Project('org.eclipse.mylyn.context-git', '/opt/local/gits/mylyn/org.eclipse.mylyn.context/', GitRepository,
+                {'.java' : [
+                           ('2eb7fee1524c654f99b7719ffb8b950fb4444eae', Java5Lexer)
+                           ]
+                },
+                {'.java' : [
+                           ('2eb7fee1524c654f99b7719ffb8b950fb4444eae', JavaParser)
+                           ]
+                }),
+    Project('org.eclipse.mylyn.context.mft-git', '/opt/local/gits/mylyn/org.eclipse.mylyn.context.mft/', GitRepository,
+                {'.java' : [
+                           ('baa2bacc604200f49753f02df513663b19b1d53c', JavaLexer)
+                           ]
+                },
+                {'.java' : [
+                           ('baa2bacc604200f49753f02df513663b19b1d53c', JavaParser)
+                           ]
+                }),
+    Project('org.eclipse.mylyn.docs-git', '/opt/local/gits/mylyn/org.eclipse.mylyn.docs/', GitRepository,
+                {'.java' : [
+                           ('480c77ed1de098611ecc943840118d7298f45398', Java5Lexer)
+                           ]
+                },
+                {'.java' : [
+                           ('480c77ed1de098611ecc943840118d7298f45398', JavaParser)
+                           ]
+                }),
+    Project('org.eclipse.mylyn.incubator-git', '/opt/local/gits/mylyn/org.eclipse.mylyn.incubator/', GitRepository,
+                {'.java' : [
+                            ('7ffc4f04bad9d1680f7da8f38a9072bbb8374e57', Java5Lexer),
+                            ('b399ad45fe566f5fe7bc60003914b3f5eaf24616', JavaLexer)
+                           ]
+                },
+                {'.java' : [
+                           ('b399ad45fe566f5fe7bc60003914b3f5eaf24616', JavaParser)
+                           ]
+                }),
+    Project('org.eclipse.mylyn.reviews-git', '/opt/local/gits/mylyn/org.eclipse.mylyn.reviews/', GitRepository,
+                {'.java' : [
+                           ('f5dddc8d9ff12b162df47e3277cabf0dae0c1268', Java5Lexer)
+                           ]
+                },
+                {'.java' : [
+                           ('f5dddc8d9ff12b162df47e3277cabf0dae0c1268', JavaParser)
+                           ]
+                }),
+    Project('org.eclipse.mylyn.tasks-git', '/opt/local/gits/mylyn/org.eclipse.mylyn.tasks/', GitRepository,
+                {'.java' : [
+                           ('7320e6f5ba8114f927eeeed9f0b11ecd2041f414', Java5Lexer)
+                           ]
+                },
+                {'.java' : [
+                           ('7320e6f5ba8114f927eeeed9f0b11ecd2041f414', JavaParser)
+                           ]
+                }),
+    Project('org.eclipse.mylyn.versions-git', '/opt/local/gits/mylyn/org.eclipse.mylyn.versions/', GitRepository,
+                {'.java' : [
+                           ('bc636f73a0c6ebba200258bfb927a5a894b5c574', Java5Lexer)
+                           ]
+                },
+                {'.java' : [
+                           ('bc636f73a0c6ebba200258bfb927a5a894b5c574', JavaParser)
                            ]
                 }),
     Project('rhino-git', '/opt/local/gits/rhino/', GitRepository,
@@ -245,7 +329,7 @@ projects_list = [
                 }),
     Project('eclipse.jdt.core-git', '/opt/local/gits/eclipse/eclipse.jdt.core', GitRepository,
                 {'.java' : [
-                            ('39e0b3c44033d41fbb2f81071d1364bb178092c7', Java5Lexer) 
+                            ('39e0b3c44033d41fbb2f81071d1364bb178092c7', Java5Lexer)
                            ,('83131156491c6d4c0d08e15f25d8dc1f37820d67', Java4Lexer)
                            ,('be6c0d208933ac936a6ccb6c66b03d3da13e3796', JavaLexer)
                            ]
@@ -415,7 +499,9 @@ projects_list = [
                 }),
     Project('eclipse.platform.ui-git', '/opt/local/gits/eclipse/eclipse.platform.ui', GitRepository,
                 {'.java' : [ # this repo has two starting commits.
-                           ('ebe1261467bae6c23442ae776759f7aeb797878e', JavaLexer)
+                            ('5c70b61e7c1608d7c9a63ef664880396b422239e', Java5Lexer)
+                           ,('05a9019e560f21f34df13e56a7cd5d627e564d93', Java4Lexer)
+                           ,('ebe1261467bae6c23442ae776759f7aeb797878e', JavaLexer)
                            ,('4545bf2949077f9652403edf10bf797f688a634b', JavaLexer)
                            ]
                 },

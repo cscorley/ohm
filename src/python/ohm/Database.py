@@ -166,7 +166,11 @@ class Database:
     def execute(self, commandstr, args):
         if self.verbose:
             print(self._cursor.mogrify(commandstr, args))
-        self._cursor.execute(commandstr, args)
+        try:
+            self._cursor.execute(commandstr, args)
+        except psycopg2.DataError:
+            return None
+
         try:
             return self._cursor.fetchall()
         except psycopg2.ProgrammingError:
