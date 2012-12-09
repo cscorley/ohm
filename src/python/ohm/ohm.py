@@ -165,10 +165,10 @@ def getUID(db, table, id_key, propDict):
         valstr = valstr.rstrip(',')
 
         # need to insert value!
-        result = db.execute('INSERT INTO {table} ({props}) VALUES ({vals}) RETURNING id;\
-                '.format(table=table, props=propstr, vals=valstr),
-                tuple(propDict.values()))
+        result = db.execute('INSERT INTO {table} ({props}) VALUES ({vals}) RETURNING id;'.format(
+            table=table, props=propstr, vals=valstr), tuple(propDict.values()))
         db.commit()
+        result = result[0][0]
     else:
         result = result[0][0]
 
